@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StopTrading — Penny Stock Terminal</title>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="logo">Stop<span>Trading</span></div>
+    <div id="tabs">
+      <button class="tab-btn active" onclick="switchTab('scanner')">Scanner</button>
+      <button class="tab-btn" onclick="switchTab('watchlist')">Watchlist</button>
+      <button class="tab-btn" onclick="switchTab('paper')">Paper Trade</button>
+      <button class="tab-btn" onclick="switchTab('autotrade')">Auto Trade</button>
+      <button class="tab-btn" onclick="switchTab('sentiment')">Sentiment</button>
+      <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+    </div>
+    <div class="status-bar">
+      <div id="mode-pill" class="status-pill paper">PAPER</div>
+      <div id="auto-pill" class="status-pill auto-off">AUTO OFF</div>
+      <div id="balance-top" class="status-pill paper">$10,000.00</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- ── Scanner ── -->
+    <div id="scanner-panel" class="tab-panel active">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="runScan()" id="scan-btn">
+          <span id="scan-btn-inner">⚡ Scan Now</span>
+        </button>
+        <span id="scan-meta" class="meta">Scans ~100 penny stocks under $5 · Ranked by momentum &amp; volume</span>
+        <span id="scan-ts" class="refresh-tag"></span>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="data-table" id="scanner-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="num">Price</th>
+              <th class="num">Change %</th>
+              <th class="num">Volume</th>
+              <th class="num">Vol Spike</th>
+              <th>Score</th>
+              <th>Sentiment</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="scanner-body">
+            <tr class="empty-row"><td colspan="8">Click "Scan Now" to find penny stocks</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Watchlist ── -->
+    <div id="watchlist-panel" class="tab-panel">
+      <div class="add-row">
+        <input id="wl-input" class="form-control" type="text" placeholder="Add symbol (e.g. SNDL)" maxlength="10"
+          onkeydown="if(event.key==='Enter') addToWatchlist()">
+        <button class="btn btn-primary" onclick="addToWatchlist()">+ Add</button>
+        <span class="refresh-tag" id="wl-ts"></span>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="data-table" id="watchlist-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="num">Price</th>
+              <th class="num">Change %</th>
+              <th class="num">Volume</th>
+              <th class="num">Position</th>
+              <th class="num">P&amp;L</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-body">
+            <tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Paper Trade ── -->
+    <div id="paper-panel" class="tab-panel">
+      <div class="paper-stats" id="paper-stats">
+        <div class="stat-box">
+          <div class="stat-label">Cash Balance</div>
+          <div class="stat-value up" id="pt-balance">$10,000.00</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Open P&amp;L</div>
+          <div class="stat-value" id="pt-pl">$0.00</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Positions</div>
+          <div class="stat-value" id="pt-pos-count">0</div>
+        </div>
+      </div>
+
+      <div class="trade-form">
+        <div class="section-title">Execute Trade</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Symbol</label>
+            <input id="trade-symbol" class="form-control" type="text" placeholder="SNDL" maxlength="10"
+              style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-group">
+            <label>Shares</label>
+            <input id="trade-shares" class="form-control" type="number" placeholder="100" min="1">
+          </div>
+          <button class="btn btn-buy" onclick="executeTrade('buy')">▲ Buy</button>
+          <button class="btn btn-sell" onclick="executeTrade('sell')">▼ Sell</button>
+          <button class="btn btn-ghost" onclick="resetPaper()" title="Reset paper account">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="section-title">Open Positions</div>
+      <div class="card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <table class="data-table" id="positions-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="num">Shares</th>
+              <th class="num">Avg Cost</th>
+              <th class="num">Current</th>
+              <th class="num">Value</th>
+              <th class="num">P&amp;L</th>
+              <th class="num">P&amp;L %</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="positions-body">
+            <tr class="empty-row"><td colspan="8">No open positions</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-title">Trade History</div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="data-table" id="history-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Action</th>
+              <th>Symbol</th>
+              <th class="num">Shares</th>
+              <th class="num">Price</th>
+              <th class="num">Total</th>
+              <th class="num">P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr class="empty-row"><td colspan="7">No trades yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Auto Trade ── -->
+    <div id="autotrade-panel" class="tab-panel">
+      <div class="at-header">
+        <div class="toggle-wrap">
+          <div id="at-toggle" class="toggle" onclick="toggleAutoTrade()"></div>
+          <span id="at-toggle-label" class="toggle-label" style="color:var(--text2)">Auto Trade OFF</span>
+        </div>
+        <span style="color:var(--text2); font-size:12px;">Trades paper account automatically based on momentum signals from your watchlist</span>
+      </div>
+      <div class="at-settings" id="at-settings-cards">
+        <div class="card">
+          <div class="card-title">Buy Trigger</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input id="at-buy-thr" class="form-control" type="number" step="0.5" min="0" style="width:80px;">
+            <span style="color:var(--text2);">% momentum (change since prev close)</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Sell Target</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input id="at-sell-tgt" class="form-control" type="number" step="0.5" min="0" style="width:80px;">
+            <span style="color:var(--text2);">% profit</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Stop Loss</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input id="at-stop" class="form-control" type="number" step="0.5" min="0" style="width:80px;">
+            <span style="color:var(--text2);">% loss</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:20px;" onclick="saveAutoSettings()">Save Settings</button>
+      <div class="section-title">Activity Log</div>
+      <div class="at-log" id="at-log">
+        <div style="color:var(--text3); text-align:center; padding:20px;">No activity yet</div>
+      </div>
+    </div>
+
+    <!-- ── Sentiment ── -->
+    <div id="sentiment-panel" class="tab-panel">
+      <div class="sent-search">
+        <input id="sent-input" class="form-control" type="text" placeholder="Enter symbol (e.g. CLOV)"
+          maxlength="10" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter') lookupSentiment()">
+        <button class="btn btn-primary" onclick="lookupSentiment()">Analyze</button>
+      </div>
+      <div id="sent-result"></div>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div id="settings-panel" class="tab-panel">
+      <div class="settings-section">
+        <h3>Alpaca Paper Trading</h3>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>API Key</label>
+            <input id="s-alpaca-paper-key" class="form-control" type="password" placeholder="PK...">
+          </div>
+          <div class="form-group">
+            <label>API Secret</label>
+            <input id="s-alpaca-paper-secret" class="form-control" type="password" placeholder="...">
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Alpaca Live Trading</h3>
+        <div style="color:var(--red); font-size:11px; margin-bottom:10px; font-weight:600;">
+          ⚠ Live trading uses real money. Enable with caution.
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Live API Key</label>
+            <input id="s-alpaca-live-key" class="form-control" type="password" placeholder="PK...">
+          </div>
+          <div class="form-group">
+            <label>Live API Secret</label>
+            <input id="s-alpaca-live-secret" class="form-control" type="password" placeholder="...">
+          </div>
+        </div>
+        <div style="margin-top:12px; display:flex; align-items:center; gap:12px;">
+          <div id="live-toggle" class="toggle" onclick="toggleLiveMode()"></div>
+          <span id="live-toggle-label" style="font-size:13px; color:var(--text2);">Live Mode OFF</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Reddit API</h3>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Client ID</label>
+            <input id="s-reddit-id" class="form-control" type="password" placeholder="...">
+          </div>
+          <div class="form-group">
+            <label>Client Secret</label>
+            <input id="s-reddit-secret" class="form-control" type="password" placeholder="...">
+          </div>
+          <div class="form-group">
+            <label>User Agent</label>
+            <input id="s-reddit-ua" class="form-control" type="text" placeholder="StopTrading/1.0">
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Paper Account</h3>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Starting Balance ($)</label>
+            <input id="s-start-bal" class="form-control" type="number" min="100" step="100">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- Live Mode Confirmation Modal -->
+<div id="live-modal">
+  <div class="live-modal-box">
+    <div class="warning-icon">⚠️</div>
+    <h2>ENABLE LIVE TRADING?</h2>
+    <p>
+      This will enable <strong>real money trades</strong> via your Alpaca Live account.
+      You can lose your entire balance. Paper trading is reset in live mode.
+      <br><br>
+      <strong style="color:var(--red);">Are you absolutely sure?</strong>
+    </p>
+    <div class="modal-btns">
+      <button class="btn btn-danger" onclick="confirmLiveMode()">Yes, Enable Live</button>
+      <button class="btn btn-ghost" onclick="closeLiveModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+var currentTab = 'scanner';
+var refreshIntervals = {};
+var liveMode = false;
+
+// ─── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.toLowerCase().trim() === name ||
+      (name === 'paper' && b.textContent.trim() === 'Paper Trade') ||
+      (name === 'autotrade' && b.textContent.trim() === 'Auto Trade') ||
+      (name === 'sentiment' && b.textContent.trim() === 'Sentiment') ||
+      (name === 'settings' && b.textContent.trim() === 'Settings') ||
+      (name === 'scanner' && b.textContent.trim() === 'Scanner') ||
+      (name === 'watchlist' && b.textContent.trim() === 'Watchlist')
+    );
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById(name + '-panel').classList.add('active');
+  currentTab = name;
+  if (name === 'watchlist') loadWatchlist();
+  if (name === 'paper') loadPaper();
+  if (name === 'autotrade') loadAutoTrade();
+  if (name === 'settings') loadSettings();
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  type = type || 'info';
+  var el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(function() { el.remove(); }, 3500);
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function fmt$(n) { return '$' + (n || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtPct(n) { return (n >= 0 ? '+' : '') + (n || 0).toFixed(2) + '%'; }
+function fmtVol(n) {
+  if (!n) return '—';
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
+  return n.toString();
+}
+function plClass(n) { return n > 0 ? 'up' : (n < 0 ? 'dn' : 'neutral'); }
+
+// ─── API helper ───────────────────────────────────────────────────────────────
+function api(path, opts) {
+  opts = opts || {};
+  return fetch(path, opts).then(function(r) { return r.json(); });
+}
+function post(path, body) {
+  return api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+}
+
+// ─── Scanner ──────────────────────────────────────────────────────────────────
+function runScan() {
+  var btn = document.getElementById('scan-btn');
+  var inner = document.getElementById('scan-btn-inner');
+  btn.disabled = true;
+  inner.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Scanning...';
+  document.getElementById('scanner-body').innerHTML = '<tr class="loading-row"><td colspan="8"><div class="spinner"></div> Fetching ~100 stocks...</td></tr>';
+  api('/api/scan').then(function(d) {
+    renderScannerTable(d.stocks || []);
+    if (d.ts) {
+      document.getElementById('scan-ts').textContent = 'Last scan: ' + new Date(d.ts * 1000).toLocaleTimeString();
+    }
+  }).catch(function(e) {
+    toast('Scan failed: ' + e.message, 'error');
+    document.getElementById('scanner-body').innerHTML = '<tr class="empty-row"><td colspan="8">Scan failed. Check console.</td></tr>';
+  }).finally(function() {
+    btn.disabled = false;
+    inner.textContent = '⚡ Scan Now';
+  });
+}
+
+function renderScannerTable(stocks) {
+  var body = document.getElementById('scanner-body');
+  if (!stocks.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="8">No results found</td></tr>';
+    return;
+  }
+  body.innerHTML = stocks.map(function(s) {
+    var scoreColor = s.score >= 60 ? 'high' : (s.score >= 30 ? 'mid' : 'low');
+    var scoreW = Math.max(4, s.score) + 'px';
+    var sentLabel = s.sentiment > 10 ? '<span class="badge badge-up">Bullish</span>' :
+                    s.sentiment < -10 ? '<span class="badge badge-dn">Bearish</span>' :
+                    '<span class="badge badge-neutral">Neutral</span>';
+    return '<tr>' +
+      '<td><strong>' + s.symbol + '</strong></td>' +
+      '<td class="num">' + fmt$(s.price) + '</td>' +
+      '<td class="num ' + plClass(s.change_pct) + '">' + fmtPct(s.change_pct) + '</td>' +
+      '<td class="num">' + fmtVol(s.volume) + '</td>' +
+      '<td class="num">' + s.vol_spike.toFixed(1) + 'x</td>' +
+      '<td><div class="score-bar"><div class="score-fill ' + scoreColor + '" style="width:' + scoreW + '"></div><span class="score-val">' + s.score + '</span></div></td>' +
+      '<td>' + sentLabel + '</td>' +
+      '<td><button class="btn btn-ghost btn-sm" onclick="quickAddWatchlist(\'' + s.symbol + '\')">+ Watch</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function quickAddWatchlist(sym) {
+  post('/api/watchlist/add', {symbol: sym}).then(function() {
+    toast(sym + ' added to watchlist', 'success');
+  });
+}
+
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+function loadWatchlist() {
+  api('/api/watchlist').then(function(d) {
+    renderWatchlist(d.watchlist || []);
+    document.getElementById('wl-ts').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  }).catch(function() {
+    document.getElementById('watchlist-body').innerHTML = '<tr class="empty-row"><td colspan="7">Failed to load</td></tr>';
+  });
+}
+
+function renderWatchlist(items) {
+  var body = document.getElementById('watchlist-body');
+  if (!items.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="7">No symbols in watchlist. Add one above.</td></tr>';
+    return;
+  }
+  body.innerHTML = items.map(function(s) {
+    var posCell = s.shares ? s.shares + ' shares' : '—';
+    var plCell = s.pl !== null ? '<span class="' + plClass(s.pl) + '">' + fmt$(s.pl) + ' (' + fmtPct(s.pl_pct) + ')</span>' : '—';
+    return '<tr>' +
+      '<td><strong>' + s.symbol + '</strong></td>' +
+      '<td class="num">' + (s.error ? '<span style="color:var(--text3)">N/A</span>' : fmt$(s.price)) + '</td>' +
+      '<td class="num ' + plClass(s.change_pct) + '">' + fmtPct(s.change_pct) + '</td>' +
+      '<td class="num">' + fmtVol(s.volume) + '</td>' +
+      '<td class="num">' + posCell + '</td>' +
+      '<td class="num">' + plCell + '</td>' +
+      '<td><button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="removeFromWatchlist(\'' + s.symbol + '\')">✕</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function addToWatchlist() {
+  var sym = document.getElementById('wl-input').value.toUpperCase().trim();
+  if (!sym) return;
+  post('/api/watchlist/add', {symbol: sym}).then(function(d) {
+    document.getElementById('wl-input').value = '';
+    toast(sym + ' added to watchlist', 'success');
+    loadWatchlist();
+  }).catch(function() { toast('Failed to add', 'error'); });
+}
+
+function removeFromWatchlist(sym) {
+  post('/api/watchlist/remove', {symbol: sym}).then(function() {
+    toast(sym + ' removed', 'info');
+    loadWatchlist();
+  });
+}
+
+// ─── Paper Trade ──────────────────────────────────────────────────────────────
+function loadPaper() {
+  api('/api/paper').then(function(d) {
+    document.getElementById('pt-balance').textContent = fmt$(d.balance);
+    document.getElementById('pt-pl').className = 'stat-value ' + plClass(d.total_pl);
+    document.getElementById('pt-pl').textContent = fmt$(d.total_pl);
+    document.getElementById('pt-pos-count').textContent = d.positions.length;
+    document.getElementById('balance-top').textContent = fmt$(d.balance);
+    renderPositions(d.positions || []);
+    renderHistory(d.history || []);
+  });
+}
+
+function renderPositions(positions) {
+  var body = document.getElementById('positions-body');
+  if (!positions.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="8">No open positions</td></tr>';
+    return;
+  }
+  body.innerHTML = positions.map(function(p) {
+    return '<tr>' +
+      '<td><strong>' + p.symbol + '</strong></td>' +
+      '<td class="num">' + p.shares + '</td>' +
+      '<td class="num">' + fmt$(p.avg_cost) + '</td>' +
+      '<td class="num">' + fmt$(p.current_price) + '</td>' +
+      '<td class="num">' + fmt$(p.value) + '</td>' +
+      '<td class="num ' + plClass(p.pl) + '">' + fmt$(p.pl) + '</td>' +
+      '<td class="num ' + plClass(p.pl_pct) + '">' + fmtPct(p.pl_pct) + '</td>' +
+      '<td><button class="btn btn-sell btn-sm" onclick="quickSell(\'' + p.symbol + '\',' + p.shares + ')">Sell All</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderHistory(history) {
+  var body = document.getElementById('history-body');
+  if (!history.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="7">No trades yet</td></tr>';
+    return;
+  }
+  body.innerHTML = history.slice(0, 50).map(function(h) {
+    return '<tr>' +
+      '<td>' + h.ts + '</td>' +
+      '<td><span class="badge ' + (h.action === 'BUY' ? 'badge-up' : 'badge-dn') + '">' + h.action + '</span></td>' +
+      '<td><strong>' + h.symbol + '</strong></td>' +
+      '<td class="num">' + h.shares + '</td>' +
+      '<td class="num">' + fmt$(h.price) + '</td>' +
+      '<td class="num">' + fmt$(h.total) + '</td>' +
+      '<td class="num ' + plClass(h.pl || 0) + '">' + (h.pl !== undefined ? fmt$(h.pl) : '—') + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function executeTrade(action) {
+  var sym = document.getElementById('trade-symbol').value.toUpperCase().trim();
+  var shares = parseInt(document.getElementById('trade-shares').value, 10);
+  if (!sym || !shares || shares < 1) { toast('Enter symbol and shares', 'error'); return; }
+  post('/api/paper/' + action, {symbol: sym, shares: shares}).then(function(d) {
+    if (d.ok) {
+      toast(d.msg, 'success');
+      loadPaper();
+    } else {
+      toast(d.error || 'Trade failed', 'error');
+    }
+  }).catch(function() { toast('Network error', 'error'); });
+}
+
+function quickSell(sym, shares) {
+  post('/api/paper/sell', {symbol: sym, shares: shares}).then(function(d) {
+    if (d.ok) { toast(d.msg, 'success'); loadPaper(); }
+    else { toast(d.error, 'error'); }
+  });
+}
+
+function resetPaper() {
+  if (!confirm('Reset paper account to starting balance? All positions and history will be lost.')) return;
+  post('/api/paper/reset', {}).then(function() {
+    toast('Paper account reset', 'info');
+    loadPaper();
+  });
+}
+
+// ─── Auto Trade ───────────────────────────────────────────────────────────────
+function loadAutoTrade() {
+  api('/api/autotrade').then(function(d) {
+    var tog = document.getElementById('at-toggle');
+    tog.classList.toggle('on', d.enabled);
+    document.getElementById('at-toggle-label').textContent = d.enabled ? 'Auto Trade ON' : 'Auto Trade OFF';
+    document.getElementById('at-toggle-label').style.color = d.enabled ? 'var(--green)' : 'var(--text2)';
+    document.getElementById('auto-pill').textContent = d.enabled ? 'AUTO ON' : 'AUTO OFF';
+    document.getElementById('auto-pill').className = 'status-pill ' + (d.enabled ? 'auto-on' : 'auto-off');
+    document.getElementById('at-buy-thr').value = d.buy_threshold;
+    document.getElementById('at-sell-tgt').value = d.sell_target;
+    document.getElementById('at-stop').value = d.stop_loss;
+    renderAutoLog(d.log || []);
+  });
+}
+
+function renderAutoLog(log) {
+  var el = document.getElementById('at-log');
+  if (!log.length) {
+    el.innerHTML = '<div style="color:var(--text3); text-align:center; padding:20px;">No activity yet</div>';
+    return;
+  }
+  el.innerHTML = log.map(function(e) {
+    return '<div class="log-entry">' +
+      '<span class="log-ts">' + e.ts + '</span>' +
+      '<span class="log-action ' + e.action + '">' + e.action + '</span>' +
+      '<span class="log-msg">' + e.msg + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleAutoTrade() {
+  post('/api/autotrade/toggle', {}).then(function(d) {
+    loadAutoTrade();
+    toast('Auto trade ' + (d.enabled ? 'ENABLED' : 'DISABLED'), d.enabled ? 'success' : 'info');
+  });
+}
+
+function saveAutoSettings() {
+  var cfg = {
+    buy_momentum_threshold: parseFloat(document.getElementById('at-buy-thr').value) || 5,
+    sell_profit_target: parseFloat(document.getElementById('at-sell-tgt').value) || 10,
+    stop_loss_pct: parseFloat(document.getElementById('at-stop').value) || 5
+  };
+  post('/api/settings', cfg).then(function() { toast('Settings saved', 'success'); });
+}
+
+// ─── Sentiment ────────────────────────────────────────────────────────────────
+function lookupSentiment() {
+  var sym = document.getElementById('sent-input').value.toUpperCase().trim();
+  if (!sym) { toast('Enter a symbol', 'error'); return; }
+  document.getElementById('sent-result').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div><br><span style="color:var(--text2)">Analyzing ' + sym + '...</span></div>';
+  api('/api/sentiment?symbol=' + encodeURIComponent(sym)).then(function(d) {
+    renderSentiment(d);
+  }).catch(function() {
+    document.getElementById('sent-result').innerHTML = '<div style="color:var(--red);padding:20px;">Failed to analyze</div>';
+  });
+}
+
+function renderSentiment(d) {
+  var color = d.score > 10 ? 'var(--green)' : (d.score < -10 ? 'var(--red)' : 'var(--text2)');
+  var headlinesHtml = d.headlines && d.headlines.length
+    ? d.headlines.map(function(h) { return '<div class="headline-item">• ' + h + '</div>'; }).join('')
+    : '<div style="color:var(--text3);">No recent headlines</div>';
+  document.getElementById('sent-result').innerHTML =
+    '<div class="sent-card">' +
+      '<div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">' +
+        '<div>' +
+          '<div class="sent-score-big" style="color:' + color + '">' + (d.score > 0 ? '+' : '') + d.score + '</div>' +
+          '<div class="sent-label" style="color:' + color + '">' + d.label + '</div>' +
+          '<div style="color:var(--text2); font-size:11px; margin-top:4px;">' + d.symbol + '</div>' +
+        '</div>' +
+        '<div class="sent-grid">' +
+          '<div class="sent-stat"><div class="sent-stat-label">Reddit Mentions</div><div class="sent-stat-val">' + d.reddit_mentions + '</div></div>' +
+          '<div class="sent-stat"><div class="sent-stat-label">News Articles</div><div class="sent-stat-val">' + d.news_count + '</div></div>' +
+          '<div class="sent-stat"><div class="sent-stat-label" style="color:var(--green)">Bullish Signals</div><div class="sent-stat-val up">' + d.bullish_signals + '</div></div>' +
+          '<div class="sent-stat"><div class="sent-stat-label" style="color:var(--red)">Bearish Signals</div><div class="sent-stat-val dn">' + d.bearish_signals + '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="headlines"><div class="section-title" style="margin-top:16px;">Recent Headlines</div>' + headlinesHtml + '</div>' +
+    '</div>';
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+function loadSettings() {
+  api('/api/settings').then(function(d) {
+    document.getElementById('s-start-bal').value = d.starting_balance || 10000;
+    document.getElementById('s-reddit-ua').value = d.reddit_user_agent || '';
+    var liveOn = d.live_mode || false;
+    liveMode = liveOn;
+    updateLiveToggle(liveOn);
+  });
+}
+
+function updateLiveToggle(on) {
+  var tog = document.getElementById('live-toggle');
+  var lbl = document.getElementById('live-toggle-label');
+  tog.classList.toggle('on', on);
+  lbl.textContent = on ? 'Live Mode ON — REAL MONEY' : 'Live Mode OFF';
+  lbl.style.color = on ? 'var(--red)' : 'var(--text2)';
+  document.getElementById('mode-pill').className = 'status-pill ' + (on ? 'live' : 'paper');
+  document.getElementById('mode-pill').textContent = on ? 'LIVE' : 'PAPER';
+}
+
+function toggleLiveMode() {
+  if (!liveMode) {
+    document.getElementById('live-modal').classList.add('show');
+  } else {
+    liveMode = false;
+    post('/api/settings', {live_mode: false}).then(function() {
+      updateLiveToggle(false);
+      toast('Live mode disabled', 'info');
+    });
+  }
+}
+
+function confirmLiveMode() {
+  liveMode = true;
+  post('/api/settings', {live_mode: true}).then(function() {
+    updateLiveToggle(true);
+    closeLiveModal();
+    toast('LIVE MODE ENABLED — Real money at risk!', 'error');
+  });
+}
+
+function closeLiveModal() {
+  document.getElementById('live-modal').classList.remove('show');
+}
+
+function saveSettings() {
+  var cfg = {
+    alpaca_paper_key: document.getElementById('s-alpaca-paper-key').value,
+    alpaca_paper_secret: document.getElementById('s-alpaca-paper-secret').value,
+    alpaca_live_key: document.getElementById('s-alpaca-live-key').value,
+    alpaca_live_secret: document.getElementById('s-alpaca-live-secret').value,
+    reddit_client_id: document.getElementById('s-reddit-id').value,
+    reddit_client_secret: document.getElementById('s-reddit-secret').value,
+    reddit_user_agent: document.getElementById('s-reddit-ua').value,
+    starting_balance: parseFloat(document.getElementById('s-start-bal').value) || 10000
+  };
+  post('/api/settings', cfg).then(function() {
+    toast('Settings saved', 'success');
+    document.getElementById('s-alpaca-paper-key').value = '';
+    document.getElementById('s-alpaca-paper-secret').value = '';
+    document.getElementById('s-alpaca-live-key').value = '';
+    document.getElementById('s-alpaca-live-secret').value = '';
+    document.getElementById('s-reddit-id').value = '';
+    document.getElementById('s-reddit-secret').value = '';
+  }).catch(function() { toast('Save failed', 'error'); });
+}
+
+// ─── Auto-refresh ─────────────────────────────────────────────────────────────
+function startAutoRefresh() {
+  setInterval(function() {
+    if (currentTab === 'watchlist') loadWatchlist();
+    if (currentTab === 'paper') loadPaper();
+    if (currentTab === 'autotrade') loadAutoTrade();
+  }, 30000);
+  // Balance always updates
+  setInterval(function() {
+    api('/api/paper').then(function(d) {
+      document.getElementById('balance-top').textContent = fmt$(d.balance);
+    });
+  }, 60000);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(function init() {
+  loadSettings();
+  startAutoRefresh();
+  // Fix tab button active state
+  document.querySelectorAll('.tab-btn').forEach(function(b, i) {
+    b.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(x) { x.classList.remove('active'); });
+      b.classList.add('active');
+    });
+  });
+})();
+</script>
+</body>
+</html>
