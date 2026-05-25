@@ -1,0 +1,9 @@
+flask
+yfinance
+praw
+textblob
+pandas
+numpy
+requests
+websocket-client
+pyinstaller

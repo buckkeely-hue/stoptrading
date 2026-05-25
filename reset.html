@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StopTrading — Reset Password</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f172a; color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 40px 36px; width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .logo { font-size: 22px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; }
+  .sub  { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+  label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; letter-spacing: .04em; margin-top: 16px; }
+  input[type=text], input[type=password] {
+    width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+    color: #e2e8f0; font-size: 15px; padding: 10px 14px; outline: none; transition: border-color .15s;
+  }
+  input[type=text] { font-family: monospace; letter-spacing: 0.2em; font-size: 20px; text-align: center; }
+  input:focus { border-color: #38bdf8; }
+  .send-btn {
+    width: 100%; margin-top: 4px; background: #1e3a4a; color: #38bdf8;
+    border: 1px solid #38bdf8; border-radius: 8px; font-size: 14px; font-weight: 600;
+    padding: 11px; cursor: pointer; transition: background .15s;
+  }
+  .send-btn:hover:not(:disabled) { background: #1a4a60; }
+  .send-btn:disabled { opacity: 0.6; cursor: default; }
+  button[type=submit] {
+    width: 100%; margin-top: 20px; background: #0369a1; color: #fff; border: none;
+    border-radius: 8px; font-size: 15px; font-weight: 600; padding: 11px; cursor: pointer; transition: background .15s;
+  }
+  button[type=submit]:hover:not(:disabled) { background: #0284c7; }
+  button[type=submit]:disabled { opacity: 0.5; cursor: default; }
+  .sent-notice {
+    display: none; margin-top: 14px; background: rgba(56,189,248,.1);
+    border: 1px solid rgba(56,189,248,.25); border-radius: 8px;
+    color: #7dd3fc; font-size: 13px; padding: 10px 14px; line-height: 1.5;
+  }
+  .msg {
+    display: none; margin-top: 14px; border-radius: 6px;
+    font-size: 13px; padding: 9px 12px; text-align: center;
+  }
+  .msg.err { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
+  .msg.ok  { background: rgba(34,197,94,.15);  border: 1px solid rgba(34,197,94,.3);  color: #4ade80; }
+  a { color: #38bdf8; text-decoration: none; font-size: 13px; display: block; text-align: center; margin-top: 18px; }
+  a:hover { text-decoration: underline; }
+  #step2 { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">StopTrading</div>
+  <div class="sub">Reset password</div>
+
+  <!-- Step 1: request code -->
+  <div id="step1">
+    <p style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:20px">
+      A 6-digit code will be sent to your configured phone or email address.
+    </p>
+    <button class="send-btn" id="sendBtn" type="button">Send Code</button>
+    <div class="sent-notice" id="sentNotice"></div>
+    <div class="msg" id="step1err"></div>
+  </div>
+
+  <!-- Step 2: enter code + new password -->
+  <form id="step2" autocomplete="off">
+    <label>6-DIGIT CODE</label>
+    <input type="text" id="code" maxlength="6" placeholder="000000" autofocus autocomplete="one-time-code" inputmode="numeric">
+    <label>NEW PASSWORD</label>
+    <input type="password" id="pw1" autocomplete="new-password" placeholder="New password (min 8 chars)">
+    <label>CONFIRM NEW PASSWORD</label>
+    <input type="password" id="pw2" autocomplete="new-password" placeholder="Confirm new password">
+    <button type="submit">Reset Password</button>
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <a href="/login">← Back to login</a>
+</div>
+<script>
+var codeSent = false;
+
+document.getElementById('sendBtn').addEventListener('click', function() {
+  var btn = this;
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+  fetch('/api/reset-password/request', {method: 'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        codeSent = true;
+        var channelLabel = {sms: 'text message', email: 'email', ntfy: 'push notification'}[d.channel] || d.channel;
+        var notice = document.getElementById('sentNotice');
+        notice.textContent = 'Code sent via ' + channelLabel + ' to ' + d.dest + '. Enter it below.';
+        notice.style.display = 'block';
+        btn.textContent = '✓ Code sent — resend';
+        btn.disabled = false;
+        document.getElementById('step1err').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        document.getElementById('code').focus();
+      } else {
+        var err = document.getElementById('step1err');
+        err.className = 'msg err';
+        err.textContent = d.error || 'Failed to send code';
+        err.style.display = 'block';
+        btn.textContent = 'Send Code';
+        btn.disabled = false;
+      }
+    }).catch(function() {
+      var err = document.getElementById('step1err');
+      err.className = 'msg err';
+      err.textContent = 'Server error — try again';
+      err.style.display = 'block';
+      document.getElementById('sendBtn').textContent = 'Send Code';
+      document.getElementById('sendBtn').disabled = false;
+    });
+});
+
+document.getElementById('step2').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var code = document.getElementById('code').value.trim();
+  var pw1  = document.getElementById('pw1').value;
+  var pw2  = document.getElementById('pw2').value;
+  var msg  = document.getElementById('msg');
+  msg.style.display = 'none';
+
+  if (code.length !== 6) { show('err', 'Enter the 6-digit code'); return; }
+  if (pw1.length < 8)    { show('err', 'Password must be at least 8 characters'); return; }
+  if (pw1 !== pw2)        { show('err', 'Passwords do not match'); return; }
+
+  fetch('/api/reset-password/confirm', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({token: code, password: pw1})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) {
+      show('ok', 'Password reset! Redirecting to login…');
+      setTimeout(function() { window.location.href = '/login'; }, 1800);
+    } else {
+      show('err', d.error || 'Invalid or expired code');
+      document.getElementById('code').value = '';
+      document.getElementById('code').focus();
+    }
+  }).catch(function() { show('err', 'Server error — try again'); });
+});
+
+function show(type, text) {
+  var el = document.getElementById('msg');
+  el.className = 'msg ' + type;
+  el.textContent = text;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>

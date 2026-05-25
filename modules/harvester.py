@@ -1,0 +1,1427 @@
+import yfinance as yf
+import numpy as np
+import threading
+import time
+import json
+import os
+from datetime import datetime, timezone, timedelta
+from modules.signals import SignalAggregator
+try:
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo('America/New_York')
+except ImportError:
+    _ET = None   # fallback: UTC-4 approximation used below
+
+HARVEST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'harvests.json')
+
+from modules.universe import FALLBACK as TOP_PENNY_UNIVERSE
+
+# Sessions where new buys are allowed; DEAD_ZONE and OVERNIGHT are skipped
+_BUY_SESSIONS = {'PRE_MARKET', 'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON', 'CLOSE'}
+
+
+def _pdt_window_dates(today) -> set:
+    """Return set of 'YYYY-MM-DD' strings for the last 5 Mon–Fri business days (including today)."""
+    result = set()
+    d = today
+    while len(result) < 5:
+        if d.weekday() < 5:
+            result.add(d.strftime('%Y-%m-%d'))
+        d -= timedelta(days=1)
+    return result
+
+
+def _get_session():
+    """Return current ET trading session name. Returns 'HOLIDAY' on weekends/NYSE holidays."""
+    now_et = datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
+    try:
+        from modules.scheduler import _is_trading_day
+        if not _is_trading_day(now_et):
+            return 'HOLIDAY'
+    except Exception:
+        if now_et.weekday() >= 5:   # weekend fallback if scheduler import fails
+            return 'HOLIDAY'
+    m = now_et.hour * 60 + now_et.minute
+    if m < 4 * 60:        return 'OVERNIGHT'
+    if m < 9 * 60 + 30:   return 'PRE_MARKET'
+    if m < 10 * 60 + 30:  return 'OPEN_MOMENTUM'
+    if m < 12 * 60:       return 'STANDARD'
+    if m < 14 * 60:       return 'DEAD_ZONE'
+    if m < 15 * 60 + 30:  return 'AFTERNOON'
+    if m < 16 * 60:       return 'CLOSE'
+    return 'OVERNIGHT'
+
+class HarvestPosition:
+    def __init__(self, symbol, shares, entry_price, capital):
+        self.symbol = symbol
+        self.shares = shares
+        self.entry_price = entry_price
+        self.capital = capital          # total capital deployed
+        self.harvests_done = 0
+        self.total_harvested = 0.0
+        self.started = datetime.now().isoformat()
+        self.status = 'active'          # active | harvesting | exiting | closed
+        self.log = []
+
+    def to_dict(self):
+        return {
+            'symbol': self.symbol,
+            'shares': self.shares,
+            'entry_price': self.entry_price,
+            'capital': self.capital,
+            'harvests_done': self.harvests_done,
+            'total_harvested': round(self.total_harvested, 2),
+            'started': self.started,
+            'status': self.status,
+            'log': self.log[-20:],
+        }
+
+
+class StockHarvester:
+    def __init__(self, paper_trader, config, universe=None):
+        self.paper_trader = paper_trader
+        self.config = config
+        self.universe = universe   # DynamicUniverse — optional
+        self.positions = {}      # symbol -> HarvestPosition
+        self.log = []
+        self.running = False
+        self._thread = None
+        self._lock = threading.Lock()
+        self.signals = SignalAggregator(config)
+        self._float_cache = {}   # symbol -> (float_shares, timestamp)
+        self._load()
+
+    # ── Persistence ──────────────────────────────────────────────────────────
+
+    def _load(self):
+        try:
+            if os.path.exists(HARVEST_FILE):
+                with open(HARVEST_FILE) as f:
+                    data = json.load(f)
+                self.log = data.get('log', [])
+        except Exception:
+            pass
+
+    def _save(self):
+        try:
+            data = {
+                'positions': {s: p.to_dict() for s, p in self.positions.items()},
+                'log': self.log[-200:],
+            }
+            with open(HARVEST_FILE, 'w') as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
+    # ── Top 50 Mover Scan ─────────────────────────────────────────────────────
+
+    def scan_movers(self, extra_symbols=None):
+        """Fetch top penny stocks from universe, score by movement quality, return ranked list."""
+        universe = self.universe.get() if self.universe else TOP_PENNY_UNIVERSE
+        if extra_symbols:
+            universe = list(dict.fromkeys(list(universe) + [s.upper() for s in extra_symbols if s.upper() not in universe]))
+        try:
+            data = yf.download(
+                tickers=' '.join(universe),
+                period='2d',
+                interval='1h',
+                group_by='ticker',
+                auto_adjust=True,
+                progress=False,
+                threads=True,
+                timeout=20
+            )
+        except Exception:
+            return []
+
+        results = []
+        for symbol in universe:
+            try:
+                if len(universe) == 1:
+                    hist = data
+                else:
+                    if symbol not in data.columns.get_level_values(0):
+                        continue
+                    hist = data[symbol].dropna()
+
+                if hist.empty or len(hist) < 4:
+                    continue
+
+                price = float(hist['Close'].iloc[-1])
+                if price <= 0 or price >= 5:
+                    continue
+
+                # Float filter: only micro-caps (≤10M float) produce explosive moves on thin volume
+                fl = self._float_cache.get(symbol, (0, 0))[0]
+                if fl > 0 and fl > 10_000_000:
+                    continue
+
+                prev_close = float(hist['Close'].iloc[-2])
+                change_1h = ((price - prev_close) / prev_close * 100) if prev_close > 0 else 0
+
+                open_5d = float(hist['Close'].iloc[0])
+                change_5d = ((price - open_5d) / open_5d * 100) if open_5d > 0 else 0
+
+                volume = int(hist['Volume'].iloc[-1]) if not np.isnan(hist['Volume'].iloc[-1]) else 0
+                avg_vol = int(hist['Volume'].mean())
+                # Dollar volume filter uses avg hourly vol × 6.5 bars ≈ full-day liquidity
+                # Avoids filtering thin late-day bars that aren't representative
+                if price * avg_vol * 6.5 < 50_000:
+                    continue
+                vol_ratio = volume / avg_vol if avg_vol > 0 else 1.0
+
+                # Momentum slope via linear regression on last 12 hourly bars
+                recent = hist['Close'].tail(12).values
+                x = np.arange(len(recent))
+                slope = np.polyfit(x, recent, 1)[0] if len(recent) >= 3 else 0
+                slope_pct = (slope / price * 100) if price > 0 else 0
+
+                # Volatility (std dev / mean) — higher = more opportunity
+                volatility = float(hist['Close'].tail(20).std() / hist['Close'].tail(20).mean() * 100) if len(hist) >= 5 else 0
+
+                # Base technical score
+                tech_score = 0
+                tech_score += min(max(slope_pct * 10, 0), 35)
+                tech_score += min(vol_ratio / 5 * 25, 25)
+                tech_score += min(abs(change_1h) / 10 * 20, 20)
+                tech_score += min(volatility / 5 * 20, 20)
+
+                results.append({
+                    'symbol': symbol,
+                    'price': round(price, 4),
+                    'change_1h': round(change_1h, 2),
+                    'change_5d': round(change_5d, 2),
+                    'volume': volume,
+                    'vol_ratio': round(vol_ratio, 2),
+                    'slope_pct': round(slope_pct, 4),
+                    'volatility': round(volatility, 2),
+                    'tech_score': round(min(tech_score, 100), 1),
+                    'signal_score': 0,       # filled in after signal pass
+                    'signal': 'SCANNING',
+                    'score': round(min(tech_score, 100), 1),
+                    'in_harvest': symbol in self.positions and self.positions[symbol].status == 'active',
+                })
+            except Exception:
+                continue
+
+        # Signal scoring is on-demand (🔍 button) — don't block the scan
+        for r in results:
+            r['score'] = r['tech_score']
+
+        results.sort(key=lambda x: x['score'], reverse=True)
+        return results[:50]
+
+    # ── Harvest Engine ───────────────────────────────────────────────────────
+
+    def start_harvest(self, symbol, capital):
+        """Open a harvest position using paper_trader."""
+        symbol = symbol.upper().strip()
+        with self._lock:
+            if symbol in self.positions and self.positions[symbol].status == 'active':
+                return {'error': symbol + ' already being harvested'}
+
+            try:
+                ticker = yf.Ticker(symbol)
+                price = float(ticker.fast_info.last_price)
+                if price <= 0:
+                    return {'error': 'Could not get price for ' + symbol}
+            except Exception as e:
+                return {'error': str(e)}
+
+            shares = int(capital / price)
+            if shares < 1:
+                return {'error': 'Insufficient capital for 1 share at $' + str(price)}
+
+            result = self.paper_trader.buy(symbol, shares)
+            if not result.get('ok'):
+                return {'error': result.get('error', 'Buy failed')}
+
+            pos = HarvestPosition(symbol, shares, price, capital)
+            pos.log.append(self._entry(symbol, 'OPEN', shares, price, 'Harvest started'))
+            self.positions[symbol] = pos
+            self._log('OPEN', symbol, shares, price, capital, 'Harvest started')
+            self._save()
+            return {'ok': True, 'symbol': symbol, 'shares': shares, 'price': price}
+
+    def stop_harvest(self, symbol):
+        """Manually close a harvest position."""
+        symbol = symbol.upper()
+        with self._lock:
+            pos = self.positions.get(symbol)
+            if not pos or pos.status == 'closed':
+                return {'error': 'No active harvest for ' + symbol}
+            return self._close_position(pos, 'Manual close')
+
+    def _check_positions(self):
+        """Core harvest loop — runs every 60s in background thread."""
+        tx_cost_pct = float(self.config.get('tx_cost_pct', 0.5))
+        harvest_trigger = float(self.config.get('harvest_trigger_pct', 10.0))
+        exit_trigger = float(self.config.get('exit_trigger_pct', 5.0))
+
+        with self._lock:
+            for symbol, pos in list(self.positions.items()):
+                if pos.status != 'active':
+                    continue
+                try:
+                    ticker = yf.Ticker(symbol)
+                    price = float(ticker.fast_info.last_price)
+                    if price <= 0:
+                        continue
+
+                    gain_pct = (price - pos.entry_price) / pos.entry_price * 100
+                    net_gain_pct = gain_pct - tx_cost_pct  # subtract round-trip cost
+
+                    # Harvest: profit > tx_cost + harvest_trigger
+                    if net_gain_pct >= harvest_trigger:
+                        self._do_harvest(pos, price, net_gain_pct)
+
+                    # Exit: margin has compressed to exit_trigger or below
+                    elif pos.harvests_done > 0 and net_gain_pct <= exit_trigger:
+                        self._close_position(pos, 'Margin compressed to {:.1f}% — exit'.format(net_gain_pct))
+
+                    # Stop loss: -15% — protect capital
+                    elif gain_pct <= -15:
+                        self._close_position(pos, 'Stop loss hit at {:.1f}%'.format(gain_pct))
+
+                except Exception:
+                    continue
+            self._save()
+
+    def _do_harvest(self, pos, price, net_gain_pct):
+        """Harvest 50% of position profit, reinvest remainder."""
+        harvest_shares = max(1, pos.shares // 2)
+        result = self.paper_trader.sell(pos.symbol, harvest_shares)
+        if not result.get('ok'):
+            return
+
+        harvest_value = harvest_shares * price
+        pos.total_harvested += harvest_value
+        pos.harvests_done += 1
+        pos.shares -= harvest_shares
+
+        # Reinvest harvested value: buy more shares
+        reinvest_shares = int(harvest_value / price)
+        if reinvest_shares >= 1:
+            buy_result = self.paper_trader.buy(pos.symbol, reinvest_shares)
+            if buy_result.get('ok'):
+                pos.shares += reinvest_shares
+                note = 'Harvested {} shares @ ${:.4f} ({:.1f}% gain) → reinvested {} shares'.format(
+                    harvest_shares, price, net_gain_pct, reinvest_shares)
+            else:
+                note = 'Harvested {} shares @ ${:.4f} ({:.1f}% gain) — reinvest failed'.format(
+                    harvest_shares, price, net_gain_pct)
+        else:
+            note = 'Harvested {} shares @ ${:.4f} ({:.1f}% gain)'.format(harvest_shares, price, net_gain_pct)
+
+        pos.entry_price = price  # reset basis to current price
+        pos.log.append(self._entry(pos.symbol, 'HARVEST', harvest_shares, price, note))
+        self._log('HARVEST', pos.symbol, harvest_shares, price, harvest_value, note)
+
+    def _close_position(self, pos, reason):
+        result = self.paper_trader.sell(pos.symbol, pos.shares)
+        pos.status = 'closed'
+        note = reason + ' | Total harvested: ${:.2f}'.format(pos.total_harvested)
+        pos.log.append(self._entry(pos.symbol, 'CLOSE', pos.shares, 0, note))
+        self._log('CLOSE', pos.symbol, pos.shares, 0, pos.total_harvested, note)
+        return {'ok': True, 'reason': reason}
+
+    # ── Background Thread ─────────────────────────────────────────────────────
+
+    def start_monitor(self):
+        if self.running:
+            return
+        self.running = True
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+        self._thread.start()
+        threading.Thread(target=self._prefetch_floats, daemon=True).start()
+
+    def stop_monitor(self):
+        self.running = False
+
+    def _get_float(self, symbol):
+        """Return float shares cached for 4 hours. Returns 0 if unknown."""
+        cached = self._float_cache.get(symbol)
+        if cached and (time.time() - cached[1]) < 14400:
+            return cached[0]
+        try:
+            info = yf.Ticker(symbol).info
+            fl = int(info.get('floatShares') or info.get('sharesOutstanding') or 0)
+            self._float_cache[symbol] = (fl, time.time())
+            return fl
+        except Exception:
+            self._float_cache[symbol] = (0, time.time())
+            return 0
+
+    def _prefetch_floats(self):
+        """Background: warm float cache for all universe symbols before market open."""
+        time.sleep(5)
+        while True:
+            try:
+                symbols = self.universe.get() if self.universe else TOP_PENNY_UNIVERSE
+                for sym in symbols:
+                    if sym not in self._float_cache or (time.time() - self._float_cache[sym][1]) > 14400:
+                        self._get_float(sym)
+                        time.sleep(0.4)
+            except Exception:
+                pass
+            time.sleep(4 * 3600)
+
+    def _loop(self):
+        while self.running:
+            try:
+                self._check_positions()
+            except Exception:
+                pass
+            time.sleep(60)
+
+    # ── State ─────────────────────────────────────────────────────────────────
+
+    def get_state(self):
+        state_positions = []
+        with self._lock:
+            for symbol, pos in self.positions.items():
+                try:
+                    ticker = yf.Ticker(symbol)
+                    price = float(ticker.fast_info.last_price)
+                except Exception:
+                    price = pos.entry_price
+
+                gain_pct = (price - pos.entry_price) / pos.entry_price * 100 if pos.entry_price > 0 else 0
+                d = pos.to_dict()
+                d['current_price'] = round(price, 4)
+                d['gain_pct'] = round(gain_pct, 2)
+                d['current_value'] = round(pos.shares * price, 2)
+                state_positions.append(d)
+
+        return {
+            'positions': state_positions,
+            'log': self.log[-50:],
+            'monitoring': self.running,
+        }
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _entry(self, symbol, action, shares, price, note):
+        return {
+            'time': datetime.now().strftime('%H:%M:%S'),
+            'action': action,
+            'shares': shares,
+            'price': round(price, 4),
+            'note': note,
+        }
+
+    def _log(self, action, symbol, shares, price, value, note):
+        self.log.append({
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'action': action,
+            'symbol': symbol,
+            'shares': shares,
+            'price': round(price, 4),
+            'value': round(value, 2),
+            'note': note,
+        })
+
+
+# ── AutoPilot ─────────────────────────────────────────────────────────────────
+
+AUTOPILOT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'autopilot.json')
+
+class AutoPilot:
+    """
+    Fully autonomous paper trading engine.
+    - Scans penny stocks every 5 minutes
+    - Buys top candidate if daily spend < $100 limit
+    - Harvests at 10% net gain, reinvests
+    - Exits when margin drops to <= 5% after at least one harvest
+    - Hard stop-loss at -15%
+    - All decisions logged with reasoning
+    """
+
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None):
+        self.harvester  = harvester
+        self.paper      = paper_trader
+        self.config     = config
+        self.engine     = engine     # RealtimeEngine — optional
+        self.catalyst   = catalyst   # CatalystEngine — optional
+        self.notifier   = notifier   # Notifier — optional, silently skipped if None
+        self.halts      = halts      # HaltMonitor — optional
+        self.ssr        = ssr        # SSRMonitor — optional
+        self.macro      = macro      # MacroSignalAgent — optional
+        self.behavioral = behavioral # BehavioralAgent — optional
+        self.insider    = insider    # InsiderTradeAgent — optional
+        self.earnings   = earnings   # EarningsGuard — optional
+        self.congress   = congress   # CongressAgent — optional
+        self.running   = False
+        self._thread = None
+        self._lock = threading.Lock()
+        self.log = []
+        self.daily_spent = 0.0
+        self.daily_date = datetime.now().strftime('%Y-%m-%d')
+        self.stats = {
+            'total_trades': 0,
+            'total_harvests': 0,
+            'total_profit': 0.0,
+            'started': None,
+            'wins': 0,
+            'losses': 0,
+            'total_win_pct': 0.0,
+            'total_loss_pct': 0.0,
+        }
+        self._position_harvests   = {}   # symbol -> harvest count for this position
+        self._position_hwm        = {}   # symbol -> high-water mark price (trailing stop)
+        self._position_opened     = {}   # symbol -> datetime when position was opened
+        self._consecutive_losses  = 0    # straight losses since last winning exit
+        self._daily_start_balance = 0.0  # balance at start of current trading day
+        self._daily_pnl_floor_hit = False # True once daily loss limit is breached
+        self._gapped_symbols      = set() # symbols gap-checked today ('SYM_YYYY-MM-DD')
+        self._gap_date            = ''    # date string for _gapped_symbols reset
+        self._position_entry_rvol = {}   # symbol -> RVOL at entry (volume exhaustion reference)
+        self._momentum_cache      = {}   # 'SYM_HH:MM' -> (slope, cascade, rvol) per-minute cache
+        # PDT tracking: accounts under $25k limited to 3 day trades per rolling 5-business-day window
+        self._day_trades_log      = []   # list of 'YYYY-MM-DD' strings when a day trade completed
+        self._load()
+
+    def _load(self):
+        try:
+            if os.path.exists(AUTOPILOT_FILE):
+                with open(AUTOPILOT_FILE) as f:
+                    d = json.load(f)
+                self.log = d.get('log', [])
+                self.stats = d.get('stats', self.stats)
+                saved_date = d.get('daily_date', '')
+                if saved_date == datetime.now().strftime('%Y-%m-%d'):
+                    self.daily_spent          = d.get('daily_spent', 0.0)
+                    self.daily_date           = saved_date
+                    self._daily_start_balance = d.get('daily_start_balance', 0.0)
+                    self._daily_pnl_floor_hit = d.get('daily_pnl_floor_hit', False)
+                self._consecutive_losses = d.get('consecutive_losses', 0)
+                self._day_trades_log     = d.get('day_trades_log', [])
+        except Exception:
+            pass
+
+    def _save(self):
+        try:
+            with open(AUTOPILOT_FILE, 'w') as f:
+                json.dump({
+                    'log':                 self.log[-500:],
+                    'stats':               self.stats,
+                    'daily_spent':         self.daily_spent,
+                    'daily_date':          self.daily_date,
+                    'running':             self.running,
+                    'consecutive_losses':  self._consecutive_losses,
+                    'daily_start_balance': self._daily_start_balance,
+                    'daily_pnl_floor_hit': self._daily_pnl_floor_hit,
+                    'day_trades_log':      self._day_trades_log,
+                }, f, indent=2)
+        except Exception:
+            pass
+
+    def resume(self):
+        """Resume thread after a service restart without resetting the paper account."""
+        if self.running:
+            return {'error': 'AutoPilot already running'}
+        self.running = True
+        self._entry('SYSTEM', 'AutoPilot resumed after service restart — continuing from saved state')
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+        self._thread.start()
+        return {'ok': True}
+
+    def start(self, starting_balance=500.0):
+        if self.running:
+            return {'error': 'AutoPilot already running'}
+        # Reset paper account to starting balance
+        with self.paper._lock:
+            self.paper._state['balance'] = starting_balance
+            self.paper._state['positions'] = {}
+            self.paper._state['history'] = []
+            self.paper._save()
+        self.daily_spent = 0.0
+        self.daily_date = datetime.now().strftime('%Y-%m-%d')
+        self.stats['started'] = datetime.now().isoformat()
+        self.stats['total_trades'] = 0
+        self.stats['total_harvests'] = 0
+        self.stats['total_profit'] = 0.0
+        self.log = []
+        self._position_harvests   = {}
+        self._position_hwm        = {}
+        self._position_opened     = {}
+        self._position_entry_rvol = {}
+        self._momentum_cache      = {}
+        state = self.paper.get_state()
+        self._daily_start_balance = state.get('balance', starting_balance)
+        self._consecutive_losses  = 0
+        self._daily_pnl_floor_hit = False
+        self._gapped_symbols      = set()
+        self._gap_date            = datetime.now().strftime('%Y-%m-%d')
+        self._entry('SYSTEM', 'AutoPilot started — $%.2f paper balance, $100/day limit' % starting_balance)
+        self.running = True
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+        self._thread.start()
+        self._save()
+        return {'ok': True}
+
+    def stop(self):
+        self.running = False
+        self._entry('SYSTEM', 'AutoPilot stopped by user')
+        self._save()
+        return {'ok': True}
+
+    def _loop(self):
+        while self.running:
+            try:
+                self._tick()
+            except Exception as e:
+                self._entry('ERROR', str(e))
+            self._save()
+            time.sleep(300)  # scan every 5 minutes
+
+    def _tick(self):
+        today = datetime.now().strftime('%Y-%m-%d')
+        if today != self.daily_date:
+            self.daily_date           = today
+            self.daily_spent          = 0.0
+            self._daily_pnl_floor_hit = False
+            self._consecutive_losses  = 0
+            self._gapped_symbols      = set()
+            self._gap_date            = today
+            bal = self.paper.get_state().get('balance', 0)
+            self._daily_start_balance = bal
+            self._entry('SYSTEM', 'New trading day — circuit breakers reset, starting balance ${:.2f}'.format(bal))
+
+        # Seed daily_start_balance on the very first tick after resume/start
+        if self._daily_start_balance == 0.0:
+            self._daily_start_balance = self.paper.get_state().get('balance', 0)
+
+        # Time-of-day session gate
+        session = _get_session()
+        if session == 'HOLIDAY':
+            self._entry('HOLIDAY', 'NYSE market closed (holiday/weekend) — no trading today')
+            return   # prices unavailable; skip all monitoring
+        elif session == 'DEAD_ZONE':
+            self._entry('SESSION', 'DEAD_ZONE (12:00-14:00 ET) — monitoring positions, no new buys')
+        elif session == 'OVERNIGHT':
+            self._entry('SESSION', 'OVERNIGHT — monitoring positions only, no new buys')
+
+        # EOD forced-close — exit all open positions at start of CLOSE session
+        if session == 'CLOSE' and self.config.get('force_eod_close', False):
+            state = self.paper.get_state()
+            for pos in state.get('positions', []):
+                sym    = pos['symbol']
+                shrs   = int(pos['shares'])
+                if shrs <= 0:
+                    continue
+                try:
+                    eod_price = float(yf.Ticker(sym).fast_info.last_price)
+                    if eod_price <= 0:
+                        continue
+                    result = self.paper.sell(sym, shrs)
+                    if result.get('ok'):
+                        eod_entry  = float(pos['avg_cost'])
+                        eod_profit = self._net_profit(shrs, eod_price, eod_entry)
+                        self.stats['total_profit'] += eod_profit
+                        self._cleanup_position(sym)
+                        eod_pct = (eod_price - eod_entry) / eod_entry * 100 if eod_entry > 0 else 0
+                        if eod_profit >= 0:
+                            self.stats['wins'] += 1
+                            self.stats['total_win_pct'] += eod_pct
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self.stats['total_loss_pct'] += abs(eod_pct)
+                            self._consecutive_losses += 1
+                        self._entry('EOD-CLOSE',
+                            '{} — forced end-of-day close | {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
+                                sym, shrs, eod_price, eod_profit))
+                        from modules.notify import msg_exit
+                        self._notify(msg_exit('EOD-CLOSE', sym, 'forced end-of-day close', eod_profit))
+                except Exception as e:
+                    self._entry('ERROR', '{} EOD-CLOSE failed: {}'.format(sym, str(e)))
+            return   # skip remaining tick after EOD close
+
+        # Parameters
+        tx_cost_pct  = float(self.config.get('tx_cost_pct', 3.0))
+        harvest_trig = float(self.config.get('harvest_trigger_pct', 7.0))
+        exit_trig    = float(self.config.get('exit_trigger_pct', 2.0))
+        daily_limit  = float(self.config.get('daily_spend_limit', 100.0))
+
+        # ── Step 1: Monitor existing positions ──────────────────────────────
+        # Flush per-minute momentum cache at start of each tick
+        self._momentum_cache = {}
+
+        state = self.paper.get_state()
+        for pos in state.get('positions', []):
+            symbol = pos['symbol']
+            try:
+                price = float(yf.Ticker(symbol).fast_info.last_price)
+                entry = float(pos['avg_cost'])
+                shares = int(pos['shares'])
+                if entry <= 0 or shares <= 0 or price <= 0:
+                    continue
+
+                gain_pct = (price - entry) / entry * 100
+                net_gain = gain_pct - tx_cost_pct
+                harvests_done = self._position_harvests.get(symbol, 0)
+
+                # Update high-water mark and open timestamp
+                hwm = max(price, self._position_hwm.get(symbol, price))
+                self._position_hwm[symbol] = hwm
+                if symbol not in self._position_opened:
+                    self._position_opened[symbol] = datetime.now()
+                drop_from_hwm = (hwm - price) / hwm * 100 if hwm > 0 else 0
+                days_open = self._business_days_open(self._position_opened[symbol])
+
+                # ── EARNINGS-EXIT: force exit before earnings report ───────────
+                if self.earnings and self.earnings.should_force_exit(symbol):
+                    result = self.paper.sell(symbol, shares)
+                    if result.get('ok'):
+                        profit = self._net_profit(shares, price, entry)
+                        # Stats mutated ONLY after confirmed sell
+                        self.stats['total_profit'] += profit
+                        self._cleanup_position(symbol)
+                        if profit >= 0:
+                            self.stats['wins'] += 1
+                            self.stats['total_win_pct'] += gain_pct
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self.stats['total_loss_pct'] += abs(gain_pct)
+                            self._consecutive_losses += 1
+                        note = '{} — EARNINGS-EXIT: report due tomorrow | {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
+                            symbol, shares, price, profit)
+                        self._entry('EARNINGS-EXIT', note)
+                        from modules.notify import msg_exit
+                        self._notify(msg_exit('EARNINGS-EXIT', symbol, 'earnings due tomorrow', profit), 'alert')
+                    else:
+                        self._entry('ERROR', '{} EARNINGS-EXIT sell failed: {}'.format(
+                            symbol, result.get('error', 'unknown')))
+                    continue
+
+                # ── GAP-EXIT: overnight gap down >10% ──────────────────────────
+                if self._check_overnight_gap(symbol):
+                    result = self.paper.sell(symbol, shares)
+                    if result.get('ok'):
+                        loss = self._net_profit(shares, price, entry)
+                        self.stats['total_profit'] += loss
+                        self._cleanup_position(symbol)
+                        self.stats['losses'] += 1
+                        self.stats['total_loss_pct'] += abs(gain_pct)
+                        self._consecutive_losses += 1
+                        note = '{} — gapped down >10% from prior close | sold ALL {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
+                            symbol, shares, price, loss)
+                        self._entry('GAP-EXIT', note)
+                        from modules.notify import msg_exit
+                        self._notify(msg_exit('GAP-EXIT', symbol, 'Overnight gap >10%', loss), 'alert')
+                    else:
+                        self._entry('ERROR', '{} GAP-EXIT sell failed: {}'.format(
+                            symbol, result.get('error', 'unknown')))
+                    continue
+
+                # ── FINAL-EXIT oracle: full exit when multiple signals say rally is over ──
+                should_exit, exit_reason = self._should_exit_permanently(
+                    symbol, price, net_gain, days_open, harvests_done, session)
+                if should_exit and net_gain > tx_cost_pct:
+                    result = self.paper.sell(symbol, shares)
+                    if result.get('ok'):
+                        profit = self._net_profit(shares, price, entry)
+                        self.stats['total_profit'] += profit
+                        self._cleanup_position(symbol)
+                        if profit >= 0:
+                            self.stats['wins'] += 1
+                            self.stats['total_win_pct'] += gain_pct
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self.stats['total_loss_pct'] += abs(gain_pct)
+                            self._consecutive_losses += 1
+                        note = '{} — FINAL-EXIT: {} | sold ALL {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
+                            symbol, exit_reason, shares, price, profit)
+                        self._entry('FINAL-EXIT', note)
+                        from modules.notify import msg_exit
+                        self._notify(msg_exit('FINAL-EXIT', symbol, exit_reason, profit))
+                    continue
+
+                # ── EVASIVE: cascade sell detected — shed 75% to protect gains ──────────
+                _, cascade, _ = self._momentum_snapshot(symbol)
+                if cascade and net_gain > tx_cost_pct:
+                    evasive_shares = max(1, int(shares * 0.75))
+                    result = self.paper.sell(symbol, evasive_shares)
+                    if result.get('ok'):
+                        protected = self._net_profit(evasive_shares, price, entry)
+                        self.stats['total_profit'] += protected
+                        self._position_harvests[symbol] = harvests_done + 1
+                        note = '{} — cascade sell detected | shed {} shares (75%) @ ${:.4f} | ' \
+                               'protected ${:.2f} | {} shares remain'.format(
+                                   symbol, evasive_shares, price, protected, shares - evasive_shares)
+                        self._entry('EVASIVE', note)
+                        from modules.notify import msg_evasive
+                        self._notify(msg_evasive(symbol, evasive_shares, price, protected), 'alert')
+                    continue   # re-evaluate the remainder next cycle
+
+                # ── HARVEST: net gain >= trigger (dynamic fraction) ────────────────────
+                if net_gain >= harvest_trig:
+                    frac          = self._harvest_fraction(symbol, days_open, harvests_done, session)
+                    harvest_shares = max(1, int(shares * frac))
+                    result = self.paper.sell(symbol, harvest_shares)
+                    if result.get('ok'):
+                        profit = self._net_profit(harvest_shares, price, entry)
+                        self.stats['total_harvests'] += 1
+                        self.stats['total_profit']   += profit
+                        self._position_harvests[symbol] = harvests_done + 1
+                        note = '{} — sold {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | profit ${:.2f} | ' \
+                               'reinvesting (momentum slope {:.2f}%/bar)'.format(
+                                   symbol, frac * 100, harvest_shares, price, net_gain, profit,
+                                   self._momentum_snapshot(symbol)[0])
+                        self._entry('HARVEST', note)
+                        from modules.notify import msg_harvest
+                        self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
+                                                  harvests_done + 1))
+                        # Reinvest harvest proceeds (skip if we harvested majority)
+                        reinvest = max(0, harvest_shares - 1) if frac >= 0.75 else harvest_shares
+                        if reinvest >= 1 and self.daily_spent + (reinvest * price) <= daily_limit:
+                            buy = self.paper.buy(symbol, reinvest)
+                            if buy.get('ok'):
+                                self.daily_spent += reinvest * price
+                                self._entry('REINVEST',
+                                    '{} — bought {} shares @ ${:.4f} (reinvested harvest)'.format(
+                                        symbol, reinvest, price))
+
+                else:
+                    # Trailing stop — tightens as position ages: 15% day-0, 10% day-1, 7% day-2+
+                    trail_pct = 15.0 if days_open == 0 else (10.0 if days_open == 1 else 7.0)
+                    if drop_from_hwm >= trail_pct:
+                        result = self.paper.sell(symbol, shares)
+                        if result.get('ok'):
+                            loss = self._net_profit(shares, price, entry)
+                            self.stats['total_profit'] += loss
+                            self._cleanup_position(symbol)
+                            self.stats['losses'] += 1
+                            self.stats['total_loss_pct'] += abs(gain_pct)
+                            self._consecutive_losses += 1
+                            note = '{} — sold ALL {} shares @ ${:.4f} | {:.1f}% drop from HWM ${:.4f} ' \
+                                   '(trail={:.0f}% day {}) | net P&L ${:.2f}'.format(
+                                       symbol, shares, price, drop_from_hwm, hwm, trail_pct, days_open, loss)
+                            self._entry('TRAIL-STOP', note)
+                            from modules.notify import msg_exit
+                            self._notify(msg_exit('TRAIL-STOP', symbol,
+                                '{:.1f}% drop from HWM'.format(drop_from_hwm), loss), 'alert')
+
+                    # Time-exit: up >2% after 2 hours — take the profit, don't overstay
+                    elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 7200 and net_gain >= 2.0:
+                        result = self.paper.sell(symbol, shares)
+                        if result.get('ok'):
+                            profit = self._net_profit(shares, price, entry)
+                            self.stats['total_profit'] += profit
+                            self._cleanup_position(symbol)
+                            self.stats['wins'] += 1
+                            self.stats['total_win_pct'] += gain_pct
+                            self._consecutive_losses = 0
+                            note = '{} — sold ALL {} shares @ ${:.4f} | 2h time-exit | {:.1f}% gain | net P&L ${:.2f}'.format(
+                                symbol, shares, price, net_gain, profit)
+                            self._entry('TIME-EXIT', note)
+                            from modules.notify import msg_exit
+                            self._notify(msg_exit('TIME-EXIT', symbol,
+                                '2h time-exit at {:.1f}%'.format(net_gain), profit))
+
+                    # Time-stop: stale position after 3 days with no profit
+                    elif days_open >= 3 and net_gain <= 0:
+                        result = self.paper.sell(symbol, shares)
+                        if result.get('ok'):
+                            loss = self._net_profit(shares, price, entry)
+                            self.stats['total_profit'] += loss
+                            self._cleanup_position(symbol)
+                            self.stats['losses'] += 1
+                            self.stats['total_loss_pct'] += abs(gain_pct)
+                            self._consecutive_losses += 1
+                            note = '{} — sold ALL {} shares @ ${:.4f} | {} biz days open, ' \
+                                   'no profit ({:.1f}%) | net P&L ${:.2f}'.format(
+                                       symbol, shares, price, days_open, net_gain, loss)
+                            self._entry('TIME-STOP', note)
+                            from modules.notify import msg_exit
+                            self._notify(msg_exit('TIME-STOP', symbol,
+                                '{} days open, no profit'.format(days_open), loss), 'alert')
+
+                    # Exit: only after at least one harvest when margin compresses
+                    elif harvests_done > 0 and net_gain <= exit_trig:
+                        result = self.paper.sell(symbol, shares)
+                        if result.get('ok'):
+                            profit = self._net_profit(shares, price, entry)
+                            self.stats['total_profit'] += profit
+                            self._cleanup_position(symbol)
+                            pct = (price - entry) / entry * 100 if entry > 0 else 0
+                            if pct >= 0:
+                                self.stats['wins'] += 1
+                                self.stats['total_win_pct'] += pct
+                                self._consecutive_losses = 0
+                            else:
+                                self.stats['losses'] += 1
+                                self.stats['total_loss_pct'] += abs(pct)
+                                self._consecutive_losses += 1
+                            note = '{} — sold ALL {} shares @ ${:.4f} | margin {:.1f}% ≤ {:.0f}% ' \
+                                   'after {} harvest(s) | net P&L ${:.2f}'.format(
+                                       symbol, shares, price, net_gain, exit_trig, harvests_done, profit)
+                            self._entry('EXIT', note)
+                            from modules.notify import msg_exit
+                            self._notify(msg_exit('EXIT', symbol,
+                                'margin {:.1f}% after {} harvests'.format(net_gain, harvests_done), profit))
+
+            except Exception as e:
+                self._entry('ERROR', '{} monitor failed: {}'.format(symbol, str(e)))
+
+        # ── Step 2: Look for new buy opportunity ────────────────────────────
+        if session not in _BUY_SESSIONS:
+            return
+
+        # Wait for the 5-minute opening range to confirm direction before buying
+        now_et = datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
+        if session == 'OPEN_MOMENTUM' and now_et.hour == 9 and now_et.minute < 35:
+            self._entry('SESSION', 'Waiting for 9:35 opening range confirmation — no buys yet')
+            return
+
+        balance = self.paper.get_state().get('balance', 0)
+        positions = [p['symbol'] for p in self.paper.get_state().get('positions', [])]
+
+        if len(positions) >= 5:
+            self._entry('LIMIT', 'Max 5 positions held — no new buys until one is sold')
+            return
+
+        if self.daily_spent >= daily_limit:
+            self._entry('LIMIT', 'Daily spend limit $%.0f reached — no new buys today' % daily_limit)
+            return
+
+        # PDT rule gate — FINRA Rule 4210: accounts under $25,000 may execute at most
+        # 3 day trades (same-day round trips) in any rolling 5-business-day window.
+        account_value = self.paper.get_state().get('balance', 0)
+        if account_value < 25000:
+            now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
+            window    = _pdt_window_dates(now_date)
+            recent_dts = sum(1 for ds in self._day_trades_log if ds in window)
+            if recent_dts >= 3:
+                self._entry('PDT',
+                    'Day-trade guard: {} same-day round-trips in rolling 5-biz-day window — '
+                    'cool-off applied as risk control (note: FINRA PDT rule abolished June 2026; '
+                    'this guard runs regardless to limit overtrading; account ${:.0f})'.format(
+                        recent_dts, account_value))
+                return
+            elif recent_dts == 2:
+                self._entry('PDT', 'Day-trade guard: {}/3 same-day round-trips used — one remaining'.format(recent_dts))
+
+        # Market regime gate: no new buys when SPY is down > 1.5%
+        spy_chg = self._market_regime()
+        if spy_chg <= -1.5:
+            self._entry('REGIME', 'SPY {:.2f}% — bearish tape, no new buys this cycle'.format(spy_chg))
+            return
+
+        # Macro environment gate: skip new buys when seasonal/economic/unrest signals are severely adverse
+        if self.macro and not self.macro.is_favorable():
+            macro_score = self.macro.get_score()
+            self._entry('MACRO', 'Macro environment unfavorable (score {:+d}) — skipping new buys'.format(macro_score))
+            return
+
+        # Daily drawdown circuit breaker — halt if down >max_daily_loss_pct% from day open
+        max_dd_pct = float(self.config.get('max_daily_loss_pct', 10.0))
+        drawdown = self._daily_drawdown_pct(balance)
+        if drawdown >= max_dd_pct:
+            if not self._daily_pnl_floor_hit:
+                self._daily_pnl_floor_hit = True
+                reason = 'Daily loss floor hit — down {:.1f}% (${:.2f}) from day open — no new buys for rest of session'.format(
+                    drawdown, self._daily_start_balance - balance)
+                self._entry('HALT', reason)
+                from modules.notify import msg_halt
+                self._notify(msg_halt(reason), 'alert')
+            return
+
+        # Consecutive loss guard — cool-off after N straight losing trades
+        max_streak = int(self.config.get('max_consecutive_losses', 3))
+        if self._consecutive_losses >= max_streak:
+            reason = '{} consecutive losses — cooling off this cycle, no new buys'.format(
+                self._consecutive_losses)
+            self._entry('HALT', reason)
+            from modules.notify import msg_halt
+            self._notify(msg_halt(reason), 'alert')
+            return
+
+        remaining_today = daily_limit - self.daily_spent
+        kelly_size = self._kelly_size(balance)
+        # Hard cap: never deploy more than position_size_pct% of balance in one trade
+        pos_cap = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
+        buy_amount = min(kelly_size, remaining_today, balance, pos_cap)
+        if buy_amount < 5:
+            self._entry('SKIP', 'Insufficient capital for new buy (available: $%.2f)' % buy_amount)
+            return
+
+        # Scan for best candidate
+        # Pull Reddit trending, insider cluster, and congress buys as bonus universe additions
+        reddit_tickers = []
+        if self.behavioral:
+            reddit_tickers = [t['ticker'] for t in self.behavioral.get_trending_tickers(min_velocity=10)]
+            if reddit_tickers:
+                self._entry('BEHAVIORAL', 'Reddit trending additions: {}'.format(', '.join(reddit_tickers[:8])))
+        if self.insider:
+            cluster = [t['ticker'] for t in self.insider.get_cluster_tickers(min_filings=2)]
+            if cluster:
+                self._entry('INSIDER', 'Insider cluster buy additions: {}'.format(', '.join(cluster[:6])))
+                reddit_tickers = list(dict.fromkeys(reddit_tickers + cluster))
+        if self.congress:
+            cong_items = self.congress.get_buying_tickers(min_members=1)
+            cong = [t['ticker'] for t in cong_items]
+            if cong:
+                self._entry('CONGRESS', 'Congress buy additions: {}'.format(', '.join(cong[:6])))
+                reddit_tickers = list(dict.fromkeys(reddit_tickers + cong))
+        self._entry('SCAN', 'Scanning top movers for buy opportunity...')
+        try:
+            movers = self.harvester.scan_movers(extra_symbols=reddit_tickers)
+            is_momentum_session = session == 'OPEN_MOMENTUM'
+            min_change_1h = 2.0 if is_momentum_session else 3.0
+            min_rvol      = 3.0 if is_momentum_session else 2.0
+            candidates = [m for m in movers
+                          if m['symbol'] not in positions
+                          and m['price'] > 0
+                          and m['price'] < 5
+                          and m['change_1h'] > min_change_1h
+                          and m['vol_ratio'] > min_rvol
+                          and m['change_5d'] < 15.0]  # skip exhausted runners already up >15%
+
+            # Earnings guard: never open a position within 2 days of earnings
+            if self.earnings:
+                pre_count = len(candidates)
+                candidates = [c for c in candidates if not self.earnings.should_block_buy(c['symbol'])]
+                blocked = pre_count - len(candidates)
+                if blocked:
+                    self._entry('EARNINGS', '{} candidates blocked — earnings within {} days'.format(
+                        blocked, 2))
+                # Register any new tickers for earnings tracking
+                for c in candidates:
+                    self.earnings.register(c['symbol'])
+
+            # Halt guard: never buy into a live trading halt
+            if self.halts:
+                pre_count = len(candidates)
+                candidates = [c for c in candidates if not self.halts.is_halted(c['symbol'])]
+                if len(candidates) < pre_count:
+                    self._entry('HALT', '{} candidates blocked — currently halted'.format(pre_count - len(candidates)))
+
+            # Catalyst + dilution guard filter
+            if self.catalyst:
+                pre_count = len(candidates)
+                candidates = [
+                    c for c in candidates
+                    if not self.catalyst.is_diluting(c['symbol'])
+                    and self.catalyst.get_score(c['symbol']) >= 0
+                ]
+                blocked = pre_count - len(candidates)
+                if blocked > 0:
+                    self._entry('CATALYST', '{} candidates blocked by dilution guard'.format(blocked))
+
+            if not candidates:
+                self._entry('SCAN', 'No qualifying candidates found this cycle')
+                return
+
+            # Blend realtime engine score into ranking if available
+            if self.engine:
+                for c in candidates:
+                    try:
+                        rt = self.engine.score(c['symbol'])
+                        rt_score = rt.get('composite_score', 0)
+                        c['combined_score'] = round(c['score'] * 0.6 + rt_score * 0.4, 1)
+                        c['rt_signal'] = rt.get('signal', '')
+                        c['rt_score'] = rt_score
+                    except Exception:
+                        c['combined_score'] = c['score']
+                        c['rt_signal'] = ''
+                        c['rt_score'] = 0
+                candidates = [c for c in candidates if c.get('rt_signal') != 'AVOID']
+                candidates.sort(key=lambda x: x.get('combined_score', 0), reverse=True)
+            else:
+                for c in candidates:
+                    c['combined_score'] = c['score']
+                    c['rt_signal'] = ''
+                    c['rt_score'] = 0
+
+            # Boost candidates: halt-resume, SSR, behavioral, macro, insider, congress
+            macro_score = self.macro.get_score() if self.macro else 0
+            for c in candidates:
+                sym = c['symbol']
+                bonus = 0
+                if self.halts and self.halts.is_resume_play(sym):
+                    bonus += 20
+                    c['rt_signal'] = 'RESUME'
+                if self.ssr and self.ssr.is_ssr(sym):
+                    bonus += 10
+                if self.behavioral:
+                    beh = self.behavioral.get_score(sym)
+                    bonus += max(-10, min(20, beh))
+                    c['behavioral_score'] = beh
+                if macro_score != 0:
+                    bonus += max(-10, min(10, macro_score // 2))
+                if self.insider:
+                    insider_bonus = self.insider.get_score(sym)
+                    bonus += insider_bonus
+                    if insider_bonus > 0:
+                        c['insider_signal'] = 'CLUSTER_BUY'
+                if self.congress:
+                    congress_bonus = self.congress.get_score(sym)
+                    bonus += congress_bonus
+                    if congress_bonus > 0:
+                        c['congress_signal'] = 'BUYING'
+                if bonus:
+                    c['combined_score'] = round(c.get('combined_score', c['score']) + bonus, 1)
+            if any(c.get('combined_score', 0) != c['score'] for c in candidates):
+                candidates.sort(key=lambda x: x.get('combined_score', 0), reverse=True)
+
+            if not candidates:
+                self._entry('SCAN', 'All candidates rated AVOID by realtime signals — skipping')
+                return
+
+            # VWAP filter: skip candidates trading > 5% above intraday VWAP
+            while candidates:
+                top = candidates[0]
+                vwap, _ = self._get_vwap(top['symbol'])
+                if vwap and top['price'] > vwap * 1.05:
+                    self._entry('VWAP',
+                        '{} at ${:.4f} is {:.1f}% above VWAP ${:.4f} — skipping'.format(
+                            top['symbol'], top['price'], (top['price'] / vwap - 1) * 100, vwap))
+                    candidates.pop(0)
+                else:
+                    break
+            if not candidates:
+                self._entry('VWAP', 'All candidates above VWAP — no clean entry this cycle')
+                return
+
+            best   = candidates[0]
+            symbol = best['symbol']
+            price  = best['price']
+
+            # 1-min entry confirmation: reject if momentum is actively declining or cascade forming
+            entry_slope, entry_cascade, _ = self._momentum_snapshot(symbol)
+            if entry_cascade:
+                self._entry('ENTRY-SKIP',
+                    '{} cascade pattern on 1m bars at entry — skipping this cycle'.format(symbol))
+                return
+            if entry_slope < -0.5:
+                self._entry('ENTRY-SKIP',
+                    '{} 1m slope {:.2f}%/bar declining at entry — skipping this cycle'.format(
+                        symbol, entry_slope))
+                return
+
+            # Spread guard: estimated H-L spread must be < 40% of harvest target
+            est_spread = self._estimate_spread_pct(symbol)
+            spread_limit = harvest_trig * 0.40
+            if est_spread > spread_limit:
+                self._entry('SPREAD',
+                    '{} estimated spread {:.1f}% > {:.1f}% limit (40% of {:.0f}% harvest target) '
+                    '— entry not viable'.format(symbol, est_spread, spread_limit, harvest_trig))
+                return
+
+            shares = max(1, int(buy_amount / price))
+            cost   = shares * price
+            rvol   = self._get_rvol(symbol)
+            cat_score = self.catalyst.get_score(symbol) if self.catalyst else 0
+
+            result = self.paper.buy(symbol, shares)
+            if result.get('ok'):
+                self.daily_spent += cost
+                self.stats['total_trades'] += 1
+                self._position_harvests[symbol] = 0
+                self._position_entry_rvol[symbol] = rvol   # save for volume-exhaustion check
+                rt_info     = ' | RT:{} ({:.0f})'.format(
+                    best.get('rt_signal', ''), best.get('rt_score', 0)) if self.engine else ''
+                cat_info    = ' | CAT:{:+d}'.format(cat_score) if self.catalyst else ''
+                spy_info    = ' | SPY:{:+.1f}%'.format(spy_chg) if spy_chg != 0 else ''
+                spread_info = ' | spread~{:.1f}%'.format(est_spread)
+                combined_score = best.get('combined_score', best.get('score', 0))
+                self._entry('BUY',
+                    '{} — {} shares @ ${:.4f} | cost ${:.2f} | kelly ${:.0f} | '
+                    'score {:.0f}{}{}{}{} | 1h:{:+.1f}% rvol:{:.1f}x'.format(
+                        symbol, shares, price, cost, kelly_size,
+                        combined_score, rt_info, cat_info, spy_info, spread_info,
+                        best.get('change_1h', 0), rvol))
+                from modules.notify import msg_buy
+                self._notify(msg_buy(symbol, shares, price, cost, combined_score))
+            else:
+                self._entry('ERROR', 'Buy failed: {}'.format(result.get('error', 'unknown')))
+
+        except Exception as e:
+            self._entry('SCAN', 'Scan error: ' + str(e))
+
+    # ── Helper Methods ─────────────────────────────────────────────────────────
+
+    def _get_rvol(self, symbol):
+        """Relative volume: today's volume vs 5-day average. Returns ratio."""
+        try:
+            hist = yf.Ticker(symbol).history(period='5d', interval='1d')
+            if len(hist) < 2:
+                return 1.0
+            today_vol = float(hist['Volume'].iloc[-1])
+            avg_vol   = float(hist['Volume'].iloc[:-1].mean())
+            return round(today_vol / avg_vol, 2) if avg_vol > 0 else 1.0
+        except Exception:
+            return 1.0
+
+    def _kelly_size(self, balance):
+        """
+        Kelly Criterion position sizing.
+        f* = (p*b - q) / b  where b = avg_win / avg_loss
+        Clamped to 5%-25% of balance; falls back to config per_trade when history < 10.
+        """
+        wins   = self.stats.get('wins', 0)
+        losses = self.stats.get('losses', 0)
+        config_size = float(self.config.get('per_trade_capital', 50.0))
+        if wins + losses < 10:
+            return min(config_size, balance * 0.15)
+
+        p       = wins / (wins + losses)
+        q       = 1 - p
+        avg_win  = self.stats.get('total_win_pct', 0) / wins   if wins   > 0 else 7.0
+        avg_loss = self.stats.get('total_loss_pct', 0) / losses if losses > 0 else 10.0
+        b = avg_win / avg_loss if avg_loss > 0 else 1.5
+        f = (p * b - q) / b
+        f = max(0.05, min(f, 0.25))   # hard cap 5%-25%
+        return round(balance * f, 2)
+
+    def _market_regime(self):
+        """Return SPY 1-day change %. Negative = bearish tape."""
+        try:
+            spy = yf.Ticker('SPY').history(period='2d', interval='1d')
+            if len(spy) < 2:
+                return 0.0
+            prev = float(spy['Close'].iloc[-2])
+            curr = float(spy['Close'].iloc[-1])
+            return round((curr - prev) / prev * 100, 2) if prev > 0 else 0.0
+        except Exception:
+            return 0.0
+
+    def _get_vwap(self, symbol):
+        """Intraday VWAP from today's 1-min bars. Returns (vwap, price) or (None, None)."""
+        try:
+            hist = yf.Ticker(symbol).history(period='1d', interval='1m')
+            if hist.empty or hist['Volume'].sum() == 0:
+                return None, None
+            tp = (hist['High'] + hist['Low'] + hist['Close']) / 3
+            vwap = float((tp * hist['Volume']).sum() / hist['Volume'].sum())
+            price = float(hist['Close'].iloc[-1])
+            return round(vwap, 4), round(price, 4)
+        except Exception:
+            return None, None
+
+    def _notify(self, message: str, level: str = 'info'):
+        """Send notification if notifier is configured — never raises."""
+        try:
+            if self.notifier:
+                self.notifier.send(message, level)
+        except Exception:
+            pass
+
+    def _momentum_snapshot(self, symbol: str):
+        """
+        Fetch 1-min bars and return (slope_5bar_pct, cascade_bool, rvol).
+        Cached per symbol per minute so 5 positions = 5 calls total per tick, not 25+.
+        slope_5bar_pct: % change over last 5 bars (positive = uptrend)
+        cascade: True when 3 consecutive red bars with volume > 1.5× avg minute vol
+        rvol: last bar volume vs intraday avg minute volume
+        """
+        cache_key = '{}_{}'.format(symbol, datetime.now().strftime('%H:%M'))
+        if cache_key in self._momentum_cache:
+            return self._momentum_cache[cache_key]
+        result = (0.0, False, 1.0)
+        try:
+            hist = yf.Ticker(symbol).history(period='1d', interval='1m')
+            if len(hist) < 6:
+                self._momentum_cache[cache_key] = result
+                return result
+            closes   = hist['Close'].values
+            volumes  = hist['Volume'].values
+            avg_vol  = float(volumes.mean()) if volumes.mean() > 0 else 1.0
+            # 5-bar slope as % change
+            slope = (closes[-1] - closes[-5]) / closes[-5] * 100 if closes[-5] > 0 else 0.0
+            # Cascade: last 3 bars each closing lower than prior, with elevated avg volume
+            cascade = (
+                closes[-1] < closes[-2] < closes[-3] < closes[-4] and
+                float(volumes[-3:].mean()) > avg_vol * 1.5
+            )
+            rvol = float(volumes[-1]) / avg_vol
+            result = (round(slope, 3), cascade, round(rvol, 2))
+        except Exception:
+            pass
+        self._momentum_cache[cache_key] = result
+        return result
+
+    def _harvest_fraction(self, symbol: str, days_open: int, harvests_done: int, session: str) -> float:
+        """
+        Dynamic sell fraction at harvest time (0.25 – 0.80).
+        Strong momentum + first harvest → sell less, let the trade develop.
+        Fading momentum / old position / late session → sell more, protect gains.
+        """
+        slope, cascade, rvol = self._momentum_snapshot(symbol)
+
+        base = 0.50
+
+        if slope > 0.3 and rvol > 2.0 and harvests_done == 0 and days_open == 0:
+            base = 0.25   # strong first-harvest momentum — stay in the trade
+        elif slope < 0.0 or rvol < 1.0:
+            base = 0.65   # momentum fading — harvest more now
+
+        # Each additional harvest increases aggressiveness (diminishing edge)
+        base = min(0.80, base + harvests_done * 0.10)
+
+        # Late-day sessions: lock in more before close
+        if session in ('CLOSE', 'AFTERNOON'):
+            base = max(base, 0.65)
+
+        return round(base, 2)
+
+    def _should_exit_permanently(self, symbol: str, price: float,
+                                  net_gain: float, days_open: int, harvests_done: int,
+                                  session: str) -> tuple:
+        """
+        Multi-signal oracle: (True, reason) when full exit beats continuing to harvest.
+        Checked before the standard harvest gate.
+        """
+        slope, cascade, rvol = self._momentum_snapshot(symbol)
+
+        # 1. Exceptional gain — lock everything in, don't be greedy
+        if net_gain >= 25.0:
+            return True, 'Exceptional {:.1f}% gain — full exit'.format(net_gain)
+
+        # 2. Multiple harvests done + price has fallen back below VWAP → rally spent
+        if harvests_done >= 3:
+            vwap, _ = self._get_vwap(symbol)
+            if vwap and price < vwap:
+                return True, '{} harvests + price below VWAP — rally exhausted'.format(harvests_done)
+
+        # 3. Volume collapse on a profitable position → no fuel to continue
+        entry_rvol = self._position_entry_rvol.get(symbol, 2.0)
+        if rvol < 0.5 and entry_rvol > 1.5 and net_gain > 0:
+            return True, 'Volume collapsed {:.1f}x (was {:.1f}x at entry) — exit {:.1f}% gain'.format(
+                rvol, entry_rvol, net_gain)
+
+        # 4. CLOSE session + multi-day hold with any profit → don't carry overnight again
+        if session == 'CLOSE' and days_open >= 1 and net_gain > 0:
+            return True, 'CLOSE session, day-{} position — taking {:.1f}% gain, no overnight'.format(
+                days_open + 1, net_gain)
+
+        # 5. Momentum has reversed hard after 2+ harvests
+        if harvests_done >= 2 and slope < -0.5:
+            return True, '{} harvests + momentum reversed ({:.2f}%/bar) — final exit'.format(
+                harvests_done, slope)
+
+        return False, ''
+
+    def _cleanup_position(self, symbol):
+        """Remove all per-position tracking state after a close."""
+        self._position_harvests.pop(symbol, None)
+        self._position_hwm.pop(symbol, None)
+        opened = self._position_opened.pop(symbol, None)
+        # If opened and closed on the same calendar day → counts as a PDT day trade
+        if opened:
+            today_str = (datetime.now(_ET) if _ET else datetime.now()).strftime('%Y-%m-%d')
+            if opened.strftime('%Y-%m-%d') == today_str:
+                self._day_trades_log.append(today_str)
+                # Keep only last 30 days to bound memory
+                self._day_trades_log = self._day_trades_log[-60:]
+
+    def _business_days_open(self, opened_dt: datetime) -> int:
+        """Count Mon–Fri business days elapsed since opened_dt (not calendar days)."""
+        opened = opened_dt.date() if hasattr(opened_dt, 'date') else opened_dt
+        today  = (datetime.now(_ET) if _ET else datetime.now()).date()
+        count  = 0
+        d      = opened
+        while d < today:
+            if d.weekday() < 5:
+                count += 1
+            d += timedelta(days=1)
+        return count
+
+    def _net_profit(self, shares: int, price: float, entry: float) -> float:
+        """Net profit after subtracting round-trip transaction cost."""
+        gross  = shares * (price - entry)
+        tx     = shares * entry * float(self.config.get('tx_cost_pct', 3.0)) / 100.0
+        return round(gross - tx, 2)
+
+    def _daily_drawdown_pct(self, current_balance):
+        """
+        Current day's realized drawdown as % of day-open balance.
+        Uses (cash + positions at avg_cost) so deploying capital doesn't
+        false-trigger the floor — only actual losses do.
+        """
+        if self._daily_start_balance <= 0:
+            return 0.0
+        state = self.paper.get_state()
+        pos_value = sum(p['shares'] * p['avg_cost'] for p in state.get('positions', []))
+        total = current_balance + pos_value
+        return max(0.0, (self._daily_start_balance - total) / self._daily_start_balance * 100)
+
+    def _estimate_spread_pct(self, symbol):
+        """
+        Proxy for bid-ask spread: avg (High-Low)/Close over last 10 one-minute bars.
+        Fails open (returns 0.0) so a yfinance timeout never silently blocks a trade.
+        """
+        try:
+            hist = yf.Ticker(symbol).history(period='1d', interval='1m').tail(10)
+            if hist.empty or len(hist) < 3:
+                return 0.0
+            spread = ((hist['High'] - hist['Low']) / hist['Close'].replace(0, float('nan'))).mean() * 100
+            return round(float(spread), 2)
+        except Exception:
+            return 0.0
+
+    def _check_overnight_gap(self, symbol):
+        """
+        True if today's daily bar is >10% below yesterday's close (gap-down risk).
+        Runs once per symbol per calendar day — subsequent calls return False.
+        """
+        today = datetime.now().strftime('%Y-%m-%d')
+        if today != self._gap_date:
+            self._gapped_symbols = set()
+            self._gap_date = today
+        gap_key = '{}_{}'.format(symbol, today)
+        if gap_key in self._gapped_symbols:
+            return False
+        self._gapped_symbols.add(gap_key)
+        try:
+            hist = yf.Ticker(symbol).history(period='2d', interval='1d')
+            if len(hist) < 2:
+                return False
+            prev  = float(hist['Close'].iloc[-2])
+            today_close = float(hist['Close'].iloc[-1])
+            return prev > 0 and (today_close - prev) / prev * 100 <= -10.0
+        except Exception:
+            return False
+
+    def _entry(self, action, note):
+        entry = {
+            'time': datetime.now().strftime('%H:%M:%S'),
+            'action': action,
+            'note': note,
+        }
+        self.log.append(entry)
+
+    def get_status(self):
+        state   = self.paper.get_state()
+        balance = state.get('balance', 0)
+        return {
+            'running':     self.running,
+            'balance':     balance,
+            'positions':   state.get('positions', []),
+            'daily_spent': round(self.daily_spent, 2),
+            'daily_limit': float(self.config.get('daily_spend_limit', 100.0)),
+            'stats':       self.stats,
+            'log':         list(reversed(self.log[-100:])),
+            'guardrails': {
+                'daily_pnl_floor_hit':    self._daily_pnl_floor_hit,
+                'daily_drawdown_pct':     round(self._daily_drawdown_pct(balance), 1),
+                'daily_start_balance':    round(self._daily_start_balance, 2),
+                'consecutive_losses':     self._consecutive_losses,
+                'max_consecutive_losses': int(self.config.get('max_consecutive_losses', 3)),
+                'max_daily_loss_pct':     float(self.config.get('max_daily_loss_pct', 10.0)),
+            },
+            'pdt': {
+                'day_trades_this_week': sum(
+                    1 for ds in self._day_trades_log
+                    if ds in _pdt_window_dates(
+                        (datetime.now(_ET) if _ET else datetime.now()).date()
+                    )
+                ),
+                'limit': 3,
+                'rule':  'FINRA Rule 4210 — max 3 day trades per 5-day window for accounts <$25k',
+            },
+        }

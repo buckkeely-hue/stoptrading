@@ -1,0 +1,29 @@
+[
+  {
+    "id": "news_001",
+    "headline": "NVDA announces massive share dilution of 500 million new shares",
+    "summary": "NVIDIA Corporation announced today a public offering of 500 million shares.",
+    "ticker": "NVDA",
+    "created": 1748000000
+  },
+  {
+    "id": "news_002",
+    "headline": "AAPL reports record quarterly earnings, beats estimates",
+    "summary": "Apple Inc. reported Q2 earnings of $2.18 per share, beating analyst estimates.",
+    "ticker": "AAPL",
+    "created": 1748000100
+  },
+  {
+    "id": "news_003",
+    "headline": "MEME stock soars 400% on heavy short squeeze volume",
+    "summary": "Shares of MEME jumped over 400% in pre-market trading on retail momentum.",
+    "ticker": "MEME",
+    "created": 1748000200
+  },
+  {
+    "id": "news_001",
+    "headline": "Duplicate article — same id as first entry",
+    "ticker": "NVDA",
+    "created": 1748000300
+  }
+]

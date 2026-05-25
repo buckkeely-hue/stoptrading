@@ -1,0 +1,51 @@
+[
+  {
+    "Ticker": "NVDA",
+    "Transaction": "Purchase",
+    "Representative": "Rep. Jane Smith",
+    "Date": "2026-05-20",
+    "Range": "$50,001 - $100,000"
+  },
+  {
+    "Ticker": "NVDA",
+    "Transaction": "Purchase",
+    "Senator": "Sen. John Doe",
+    "Date": "2026-05-18",
+    "Range": "$15,001 - $50,000"
+  },
+  {
+    "Ticker": "MSFT",
+    "Transaction": "Sale (Full)",
+    "Representative": "Rep. Alice Brown",
+    "Date": "2026-05-15",
+    "Range": "$1,001 - $15,000"
+  },
+  {
+    "Ticker": "AAPL",
+    "Transaction": "Purchase",
+    "Representative": "Rep. Bob Jones",
+    "Date": "2026-05-10",
+    "Range": "$1,001 - $15,000"
+  },
+  {
+    "Ticker": "TSLA",
+    "Transaction": "Sale (Partial)",
+    "Representative": "Rep. Carol White",
+    "TransactionDate": "2026-04-01",
+    "Amount": "$1,001 - $15,000"
+  },
+  {
+    "Ticker": "TOOLONGR",
+    "Transaction": "Purchase",
+    "Representative": "Rep. X",
+    "Date": "2026-05-22",
+    "Range": "$1,001 - $15,000"
+  },
+  {
+    "Ticker": "",
+    "Transaction": "Purchase",
+    "Representative": "Rep. Y",
+    "Date": "2026-05-22",
+    "Range": "$1,001 - $15,000"
+  }
+]

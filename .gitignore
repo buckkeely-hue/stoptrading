@@ -1,0 +1,23 @@
+# Credentials and secrets — never commit
+config.json
+.auth
+token.json
+
+# Live trading state
+autopilot.json
+harvests.json
+paper_trades.json
+accounting.json
+scheduler.json
+trial.json
+
+# Logs and runtime
+server.log
+service.log
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
