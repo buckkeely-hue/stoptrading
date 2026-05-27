@@ -1,0 +1,11 @@
+{
+  "log": [
+    {
+      "time": "2026-05-26 15:05:07",
+      "message": "\ud83d\udcc8 EOD: P&L $+0.00 | 0 trades | 0% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    }
+  ]
+}
