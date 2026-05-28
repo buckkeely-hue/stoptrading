@@ -155,12 +155,14 @@ class FinnhubStream:
         self.symbols = symbols
         self._ws = None
         self.running = False
+        self._reconnect_count = 0
 
     def start(self):
         key = self.config.get('finnhub_key', '')
         if not key or not HAS_WEBSOCKET:
             return
         self.running = True
+        self._reconnect_count = 0
         t = threading.Thread(target=self._connect, args=(key,), daemon=True)
         t.start()
 
@@ -196,11 +198,12 @@ class FinnhubStream:
             pass
 
         def on_close(ws, *args):
-            if self.running:
-                # Reconnect in a new thread to avoid recursive call-stack growth
+            if self.running and self._reconnect_count < 3:
+                self._reconnect_count += 1
                 def _reconnect():
-                    time.sleep(5)
-                    self._connect(key)
+                    time.sleep(min(30, 5 * self._reconnect_count))
+                    if self.running:
+                        self._connect(key)
                 threading.Thread(target=_reconnect, daemon=True).start()
 
         try:
