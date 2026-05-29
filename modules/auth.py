@@ -64,18 +64,27 @@ def _load_or_create() -> dict:
     if os.path.exists(AUTH_FILE):
         with open(AUTH_FILE) as f:
             _creds = json.load(f)
+        # Backfill recovery_code if missing from older .auth files
+        if 'recovery_code' not in _creds:
+            _creds['recovery_code'] = secrets.token_urlsafe(10)
+            _write()
+            print(f'\n  [StopTrading] Emergency recovery code: {_creds["recovery_code"]}')
+            print('  (shown once — saved to .auth)\n')
         return _creds
     # First run — generate credentials
-    password   = secrets.token_urlsafe(14)
-    salt       = secrets.token_hex(16)
-    secret_key = secrets.token_hex(32)
-    _creds = {'salt': salt, 'hash': _hash(password, salt), 'secret_key': secret_key}
+    password      = secrets.token_urlsafe(14)
+    salt          = secrets.token_hex(16)
+    secret_key    = secrets.token_hex(32)
+    recovery_code = secrets.token_urlsafe(10)
+    _creds = {'salt': salt, 'hash': _hash(password, salt),
+              'secret_key': secret_key, 'recovery_code': recovery_code}
     _write()
     print('\n' + '=' * 62)
     print('  StopTrading — first-run login credentials')
-    print(f'  Password : {password}')
-    print(f'  URL      : http://localhost:5175/login')
-    print(f'             https://trade.buckkeely.com/login')
+    print(f'  Password      : {password}')
+    print(f'  Recovery code : {recovery_code}')
+    print(f'  URL           : http://localhost:5175/login')
+    print(f'                  https://trade.buckkeely.com/login')
     print('  (credentials saved to .auth — keep this file private)')
     print('=' * 62 + '\n')
     return _creds
@@ -133,10 +142,12 @@ def _mask_email(email: str) -> str:
 
 def _send_otp(code: str, config: dict) -> tuple:
     """
-    Try SMS → ntfy → SMTP email in order.
-    Returns (ok: bool, channel: str, masked_dest: str).
+    Deliver OTP via ALL configured channels simultaneously.
+    Returns (ok: bool, channel: str, masked_dest: str) for the first success,
+    but always attempts every configured channel.
     """
     msg = f'Your StopTrading verification code: {code}  (expires 15 min)'
+    results = []
 
     # ── Twilio SMS ────────────────────────────────────────────────────────────
     sid = (config.get('twilio_account_sid') or '').strip()
@@ -153,7 +164,7 @@ def _send_otp(code: str, config: dict) -> tuple:
                 headers={'Authorization': f'Basic {cred}',
                          'Content-Type': 'application/x-www-form-urlencoded'})
             urllib.request.urlopen(req, timeout=10)
-            return True, 'sms', _mask_phone(to)
+            results.append((True, 'sms', _mask_phone(to)))
         except Exception:
             pass
 
@@ -167,11 +178,11 @@ def _send_otp(code: str, config: dict) -> tuple:
                 headers={'Title': 'StopTrading Auth', 'Priority': 'high'},
                 method='POST')
             urllib.request.urlopen(req, timeout=8)
-            return True, 'ntfy', topic
+            results.append((True, 'ntfy', topic))
         except Exception:
             pass
 
-    # ── Gmail API (OAuth2) ────────────────────────────────────────────────────
+    # ── Gmail API (OAuth2) — always attempt when configured ───────────────────
     gmail_client_id     = (config.get('gmail_client_id') or '').strip()
     gmail_client_secret = (config.get('gmail_client_secret') or '').strip()
     gmail_refresh_token = (config.get('gmail_refresh_token') or '').strip()
@@ -180,7 +191,6 @@ def _send_otp(code: str, config: dict) -> tuple:
     gmail_from          = (config.get('smtp_user') or notify_email).strip()
     if gmail_client_id and gmail_client_secret and gmail_refresh_token and notify_email:
         try:
-            # Refresh access token
             token_data = urllib.parse.urlencode({
                 'client_id':     gmail_client_id,
                 'client_secret': gmail_client_secret,
@@ -215,7 +225,7 @@ def _send_otp(code: str, config: dict) -> tuple:
                              'Content-Type': 'application/json'},
                     method='POST')
                 urllib.request.urlopen(send_req, timeout=10)
-                return True, 'email', _mask_email(notify_email)
+                results.append((True, 'email', _mask_email(notify_email)))
         except Exception:
             pass
 
@@ -245,11 +255,40 @@ def _send_otp(code: str, config: dict) -> tuple:
                 s.starttls(context=ctx)
                 s.login(smtp_user, smtp_pass)
                 s.sendmail(smtp_user, notify_email, raw)
-            return True, 'email', _mask_email(notify_email)
+            results.append((True, 'smtp', _mask_email(notify_email)))
         except Exception:
             pass
 
+    if results:
+        # Return the best channel (sms > email > ntfy) while having fired all of them
+        for preferred in ('sms', 'email', 'smtp', 'ntfy'):
+            for r in results:
+                if r[1] == preferred:
+                    return r
+        return results[0]
     return False, 'none', ''
+
+
+def emergency_reset(recovery_code: str, new_password: str) -> bool:
+    """Set a new password using the persistent recovery code (no OTP required)."""
+    creds = _load_or_create()
+    stored = creds.get('recovery_code', '')
+    if not stored or not secrets.compare_digest(str(recovery_code).strip(), str(stored)):
+        return False
+    set_password(new_password)
+    # Rotate the recovery code after use
+    global _creds
+    _creds['recovery_code'] = secrets.token_urlsafe(10)
+    _write()
+    print(f'\n  [StopTrading] New recovery code: {_creds["recovery_code"]}\n')
+    return True
+
+
+def get_recovery_hint() -> str:
+    """Return the last 4 chars of the recovery code as a hint."""
+    creds = _load_or_create()
+    code  = creds.get('recovery_code', '')
+    return '...' + code[-4:] if len(code) >= 4 else '????'
 
 
 def _six_digit_code() -> str:

@@ -7,7 +7,8 @@ from flask import Flask, request, jsonify, send_from_directory, session, redirec
 from modules.auth import (require_auth, check_password, get_secret_key,
                           generate_reset_token, consume_reset_token,
                           generate_change_token, consume_change_token,
-                          check_rate_limit, record_failed_attempt, clear_rate_limit)
+                          check_rate_limit, record_failed_attempt, clear_rate_limit,
+                          emergency_reset, get_recovery_hint)
 
 from config import load_config, save_config
 from modules.scanner import StockScanner
@@ -229,6 +230,23 @@ def api_reset_confirm():
     if consume_reset_token(token, pw):
         return jsonify({'ok': True})
     return jsonify({'ok': False, 'error': 'Invalid or expired code'}), 401
+
+
+@app.route('/api/reset-password/emergency', methods=['POST'])
+def api_emergency_reset():
+    data = request.get_json(force=True) or {}
+    code = str(data.get('recovery_code', '')).strip()
+    pw   = data.get('password', '')
+    if len(pw) < 8:
+        return jsonify({'ok': False, 'error': 'Password must be at least 8 characters'}), 400
+    if emergency_reset(code, pw):
+        return jsonify({'ok': True})
+    return jsonify({'ok': False, 'error': 'Invalid recovery code'}), 401
+
+
+@app.route('/api/reset-password/recovery-hint')
+def api_recovery_hint():
+    return jsonify({'hint': get_recovery_hint()})
 
 
 @app.route('/index.css')

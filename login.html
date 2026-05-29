@@ -63,6 +63,45 @@
     padding: 9px 12px;
     text-align: center;
   }
+  .ok {
+    display: none;
+    margin-top: 14px;
+    background: rgba(34,197,94,.12);
+    border: 1px solid rgba(34,197,94,.3);
+    border-radius: 6px;
+    color: #86efac;
+    font-size: 13px;
+    padding: 9px 12px;
+    text-align: center;
+  }
+  .recovery-card {
+    display: none;
+    margin-top: 20px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .recovery-card h3 { font-size: 13px; color: #f59e0b; margin-bottom: 12px; }
+  .recovery-card input {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    margin-bottom: 8px;
+    font-family: monospace;
+  }
+  .recovery-card input:focus { border-color: #f59e0b; }
+  .recovery-card button {
+    background: #b45309;
+    margin-top: 4px;
+  }
+  .recovery-card button:hover { background: #d97706; }
+  .hint { font-size: 11px; color: #475569; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -75,7 +114,22 @@
     <button type="submit">Sign in</button>
     <div class="err" id="err">Incorrect password</div>
   </form>
-  <a href="/reset" style="display:block;text-align:center;margin-top:18px;font-size:13px;color:#475569;text-decoration:none;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='#475569'">Forgot password?</a>
+  <div style="display:flex;gap:16px;margin-top:18px;justify-content:center">
+    <a href="/reset" style="font-size:13px;color:#475569;text-decoration:none;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='#475569'">Forgot password?</a>
+    <span style="color:#334155">·</span>
+    <a href="#" onclick="toggleRecovery();return false;" style="font-size:13px;color:#475569;text-decoration:none;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='#475569'">Lost access?</a>
+  </div>
+
+  <div class="recovery-card" id="recovery-card">
+    <h3>🔑 Emergency Recovery</h3>
+    <div class="hint" id="recovery-hint">Loading recovery code hint…</div>
+    <input type="text" id="rec-code" placeholder="Recovery code" autocomplete="off">
+    <input type="password" id="rec-pw" placeholder="New password (min 8 chars)" autocomplete="new-password">
+    <input type="password" id="rec-pw2" placeholder="Confirm new password" autocomplete="new-password">
+    <button onclick="doRecovery()">Set New Password</button>
+    <div class="err" id="rec-err"></div>
+    <div class="ok"  id="rec-ok">Password updated — redirecting…</div>
+  </div>
 </div>
 <script>
 document.getElementById('form').addEventListener('submit', function(e) {
@@ -101,6 +155,46 @@ document.getElementById('form').addEventListener('submit', function(e) {
     err.style.display = 'block';
   });
 });
+
+function toggleRecovery() {
+  var card = document.getElementById('recovery-card');
+  var visible = card.style.display === 'block';
+  card.style.display = visible ? 'none' : 'block';
+  if (!visible) {
+    fetch('/api/reset-password/recovery-hint')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        document.getElementById('recovery-hint').textContent = 'Recovery code ends in: ' + (d.hint || '????');
+      }).catch(function() {});
+    document.getElementById('rec-code').focus();
+  }
+}
+
+function doRecovery() {
+  var code = document.getElementById('rec-code').value.trim();
+  var pw   = document.getElementById('rec-pw').value;
+  var pw2  = document.getElementById('rec-pw2').value;
+  var err  = document.getElementById('rec-err');
+  var ok   = document.getElementById('rec-ok');
+  err.style.display = 'none';
+  ok.style.display  = 'none';
+  if (!code) { err.textContent = 'Enter your recovery code.'; err.style.display = 'block'; return; }
+  if (pw.length < 8) { err.textContent = 'Password must be at least 8 characters.'; err.style.display = 'block'; return; }
+  if (pw !== pw2)    { err.textContent = 'Passwords do not match.'; err.style.display = 'block'; return; }
+  fetch('/api/reset-password/emergency', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({recovery_code: code, password: pw})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) {
+      ok.style.display = 'block';
+      setTimeout(function() { window.location.href = '/login'; }, 1500);
+    } else {
+      err.textContent = d.error || 'Invalid recovery code.';
+      err.style.display = 'block';
+    }
+  });
+}
 </script>
 </body>
 </html>
