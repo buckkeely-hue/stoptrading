@@ -540,6 +540,9 @@ class AutoPilot:
         self._day_trades_log      = []   # list of 'YYYY-MM-DD' strings when a day trade completed
         self._pdt_last_log        = 0.0  # epoch — suppress duplicate PDT log spam (log at most once/30m)
         self._session_last_log    = 0.0  # epoch — suppress SESSION/SKIP spam (log at most once/30m)
+        # ORB stream fast-buy: track which symbols have already fired today
+        self._orb_fired    = set()       # symbols where stream ORB-buy fired this session
+        self._orb_buy_lock = threading.Lock()  # prevents concurrent ORB buys
         # Real-time architecture
         self._stream_lock         = threading.Lock()  # serialises stream-triggered sells
         self._premarket_watchlist = []   # [{symbol, gap_pct, ...}] built pre-open, used at OPEN
@@ -656,6 +659,7 @@ class AutoPilot:
             self._consecutive_losses  = 0
             self._gapped_symbols      = set()
             self._gap_date            = today
+            self._orb_fired           = set()    # reset ORB fast-buy history each day
             bal = self.paper.get_state().get('balance', 0)
             self._daily_start_balance = bal
             self._entry('SYSTEM', 'New trading day — circuit breakers reset, starting balance ${:.2f}'.format(bal))
@@ -1340,6 +1344,15 @@ class AutoPilot:
             shares = max(1, int(buy_amount / price))
             cost   = shares * price
             rvol   = self._get_rvol(symbol)
+
+            # RVOL gate: require at least 1.2× average volume — low-volume entries rarely follow through
+            min_rvol = float(self.config.get('min_entry_rvol', 1.2))
+            if rvol < min_rvol:
+                self._entry('RVOL-GATE',
+                    '{} rvol {:.1f}x below {:.1f}x minimum — waiting for volume confirmation'.format(
+                        symbol, rvol, min_rvol))
+                return
+
             cat_score = self.catalyst.get_score(symbol) if self.catalyst else 0
 
             result = self.paper.buy(symbol, shares)
@@ -1372,7 +1385,7 @@ class AutoPilot:
 
     def _get_live_price(self, symbol: str) -> float:
         """
-        Price priority: Finnhub stream tick (<60s old) → velocity tracker → yfinance.
+        Price priority: Polygon/Finnhub stream tick (<60s old) → velocity tracker → yfinance.
         Eliminates yfinance round-trips for positions when streaming is active.
         """
         if self.engine and hasattr(self.engine, 'cache'):
@@ -1407,12 +1420,29 @@ class AutoPilot:
 
     def _on_stream_price(self, symbol: str, price: float, volume: int):  # noqa: ARG002 volume unused here, used by cache accumulator
         """
-        Fast-path callback invoked by RealtimeCache on every Finnhub/velocity tick.
-        Only checks the stop-loss condition — harvest/exit logic runs in _tick().
-        Uses a non-blocking lock so that a slow position check never stalls the stream.
+        Fast-path callback invoked by RealtimeCache on every Polygon/Finnhub tick.
+        Two fast-paths:
+          1. ORB breakout buy — fires immediately when price crosses ORB trigger
+          2. Stream stop-loss — fires immediately when position hits max-loss threshold
+        Both are non-blocking so the stream message thread is never stalled.
         """
         if not self.running or price <= 0:
             return
+
+        # ── Fast-path 1: ORB breakout buy ──────────────────────────────────────
+        # Bypasses the 60s scan loop — entry fires within 1 stream tick of breakout
+        if (self.orb and symbol not in self._orb_fired
+                and _get_session() in _BUY_SESSIONS - {'PRE_MARKET', 'AFTERNOON', 'CLOSE'}):
+            orb_lvl = self.orb.get_orb_level(symbol)
+            if orb_lvl:
+                orb_high = float(orb_lvl.get('high', 0))
+                if orb_high > 0 and price > orb_high * 1.005:
+                    self._orb_fired.add(symbol)   # mark before spawning to prevent duplicate
+                    threading.Thread(
+                        target=self._orb_fast_buy, args=(symbol, price, orb_high),
+                        daemon=True).start()
+
+        # ── Fast-path 2: stream stop-loss ──────────────────────────────────────
         positions = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}
         if symbol not in positions:
             return
@@ -1450,6 +1480,72 @@ class AutoPilot:
                 self._save()
         finally:
             self._stream_lock.release()
+
+    def _orb_fast_buy(self, symbol: str, trigger_price: float, orb_high: float):
+        """
+        Stream-triggered ORB breakout buy.  Executes immediately when Polygon stream
+        reports a price above the ORB high + 0.5% — no yfinance scan latency.
+        Runs in a daemon thread; uses _orb_buy_lock to prevent concurrent entries.
+        """
+        if not self._orb_buy_lock.acquire(blocking=False):
+            return
+        try:
+            # Session guard: ORB only valid during OPEN_MOMENTUM and STANDARD sessions
+            session = _get_session()
+            if session not in ('OPEN_MOMENTUM', 'STANDARD'):
+                return
+
+            # PDT guard
+            account_value = self.paper.get_state().get('balance', 0)
+            if account_value < 25_000:
+                now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
+                window = _pdt_window_dates(now_date)
+                if sum(1 for ds in self._day_trades_log if ds in window) >= 3:
+                    return
+
+            # Capital guard
+            balance       = self.paper.get_state().get('balance', 0)
+            daily_limit   = float(self.config.get('daily_spend_limit', 100.0))
+            remaining     = daily_limit - self.daily_spent
+            kelly         = self._kelly_size(balance)
+            pos_cap       = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
+            buy_amount    = min(kelly, remaining, balance, pos_cap)
+            if buy_amount < 5:
+                return
+
+            # Price ceiling and floor
+            if trigger_price < 0.50 or trigger_price >= 10.0:
+                return
+
+            # No existing position in this symbol
+            state    = self.paper.get_state()
+            existing = {p['symbol'] for p in state.get('positions', [])}
+            if symbol in existing:
+                return
+
+            # Execute buy at stream price
+            shares = max(1, int(buy_amount / trigger_price))
+            result = self.paper.buy(symbol, shares, price_override=trigger_price)
+            if result.get('ok'):
+                cost = shares * trigger_price
+                self.daily_spent += cost
+                self.stats['total_trades'] += 1
+                self._position_harvests[symbol]   = 0
+                self._position_entry_rvol[symbol] = 2.0   # ORB entries are volume-confirmed by definition
+                self._position_hwm[symbol]        = trigger_price
+                self._position_opened[symbol]     = datetime.now()
+                orb_pct = (trigger_price / orb_high - 1) * 100
+                note = ('{} — STREAM-ORB: {} shares @ ${:.4f} | cost ${:.2f} | '
+                        'ORB break +{:.1f}% above first-5m high ${:.3f}').format(
+                    symbol, shares, trigger_price, cost, orb_pct, orb_high)
+                self._entry('BUY', note)
+                from modules.notify import msg_buy
+                self._notify(msg_buy(symbol, shares, trigger_price, cost, 85))
+                self._save()
+        except Exception as e:
+            self._entry('ERROR', 'ORB fast-buy {}: {}'.format(symbol, str(e)))
+        finally:
+            self._orb_buy_lock.release()
 
     # ── Helper Methods ─────────────────────────────────────────────────────────
 

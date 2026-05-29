@@ -17,7 +17,7 @@ import time
 import json
 import requests
 import yfinance as yf
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from collections import defaultdict, deque
 import xml.etree.ElementTree as ET
 
@@ -247,6 +247,98 @@ class FinnhubStream:
                 url, on_open=on_open, on_message=on_message,
                 on_error=on_error, on_close=on_close
             )
+            self._ws.run_forever()
+        except Exception:
+            pass
+
+
+# ── Polygon.io WebSocket stream ───────────────────────────────────────────────
+
+class PolygonStream:
+    """
+    Polygon.io per-second aggregate WebSocket (A.* subscription).
+    Provides real-time price/volume data — replaces Finnhub when polygon_key is set.
+    Auth flow: connect → receive 'connected' → send auth → receive 'auth_success' → subscribe.
+    Starter plan ($29/mo) covers all NYSE/NASDAQ/OTC symbols with no symbol limit.
+    """
+
+    def __init__(self, cache, config, symbols):
+        self.cache    = cache
+        self.config   = config
+        self.symbols  = symbols
+        self._ws      = None
+        self.running  = False
+        self._reconnect_count = 0
+
+    def start(self):
+        key = self.config.get('polygon_key', '')
+        if not key or not HAS_WEBSOCKET:
+            return
+        self.running = True
+        self._reconnect_count = 0
+        threading.Thread(target=self._connect, args=(key,), daemon=True).start()
+
+    def stop(self):
+        self.running = False
+        if self._ws:
+            try:
+                self._ws.close()
+            except Exception:
+                pass
+
+    def _connect(self, key):
+        # Key embedded in URL (Polygon alternate auth) + sent as auth message after connect
+        url = 'wss://socket.polygon.io/stocks?apiKey=' + key
+        self._auth_failed = False
+
+        def on_message(ws, message):
+            try:
+                msgs = json.loads(message)
+                if not isinstance(msgs, list):
+                    msgs = [msgs]
+                for msg in msgs:
+                    ev     = msg.get('ev')
+                    status = msg.get('status', '')
+                    if ev == 'connected':
+                        ws.send(json.dumps({'action': 'auth', 'params': key}))
+                    elif ev == 'status' and status == 'auth_success':
+                        subs = ','.join('A.' + s for s in self.symbols[:200])
+                        ws.send(json.dumps({'action': 'subscribe', 'params': subs}))
+                    elif ev == 'status' and status in ('auth_failed', 'not_authenticated'):
+                        self._auth_failed = True   # stop reconnecting on bad key
+                        ws.close()
+                    elif ev == 'A':    # per-second aggregate bar
+                        symbol = str(msg.get('sym', '')).replace('/', '').upper()
+                        price  = float(msg.get('c', 0))
+                        volume = int(msg.get('v', 0))
+                        if symbol and price > 0:
+                            self.cache.add_tick(symbol, price, volume)
+                    elif ev == 'T':    # individual trade tick
+                        symbol = str(msg.get('sym', '')).replace('/', '').upper()
+                        price  = float(msg.get('p', 0))
+                        volume = int(msg.get('s', 0))
+                        if symbol and price > 0:
+                            self.cache.add_tick(symbol, price, volume)
+            except Exception:
+                pass
+
+        def on_error(ws, error):
+            # 401 means invalid/expired key — stop retrying
+            if '401' in str(error) or 'Unauthorized' in str(error):
+                self._auth_failed = True
+
+        def on_close(ws, *args):
+            if self.running and not self._auth_failed and self._reconnect_count < 5:
+                self._reconnect_count += 1
+                def _reconnect():
+                    time.sleep(min(60, 5 * self._reconnect_count))
+                    if self.running and not self._auth_failed:
+                        self._connect(key)
+                threading.Thread(target=_reconnect, daemon=True).start()
+
+        try:
+            self._ws = websocket.WebSocketApp(url, on_message=on_message,
+                                               on_error=on_error, on_close=on_close)
             self._ws.run_forever()
         except Exception:
             pass
@@ -598,9 +690,13 @@ class RealtimeEngine:
             NewsPoller(self.cache, self.symbols, self.config),
         ]
 
-        # Add Finnhub WebSocket if key configured
+        # Real-time WebSocket price stream — prefer Polygon (real-time OTC coverage),
+        # fall back to Finnhub, skip if neither key is configured.
+        polygon_key = self.config.get('polygon_key', '')
         finnhub_key = self.config.get('finnhub_key', '')
-        if finnhub_key and HAS_WEBSOCKET:
+        if polygon_key and HAS_WEBSOCKET:
+            feeds.append(PolygonStream(self.cache, self.config, self.symbols))
+        elif finnhub_key and HAS_WEBSOCKET:
             feeds.append(FinnhubStream(self.cache, self.config, self.symbols))
 
         for feed in feeds:
