@@ -116,24 +116,30 @@ class StockHarvester:
     # ── Top 50 Mover Scan ─────────────────────────────────────────────────────
 
     def scan_movers(self, extra_symbols=None):
-        """Fetch top penny stocks from universe, score by movement quality, return ranked list."""
+        """Fetch top penny stocks from universe, score by movement quality, return ranked list.
+
+        Uses 5-minute bars (period='5d') so signal fires intraday instead of waiting for
+        the hourly bar to close. change_1h field is now change-from-today's-open for
+        API compatibility.
+        """
         universe = self.universe.get() if self.universe else TOP_PENNY_UNIVERSE
         if extra_symbols:
             universe = list(dict.fromkeys(list(universe) + [s.upper() for s in extra_symbols if s.upper() not in universe]))
         try:
             data = yf.download(
                 tickers=' '.join(universe),
-                period='2d',
-                interval='1h',
+                period='5d',
+                interval='5m',
                 group_by='ticker',
                 auto_adjust=True,
                 progress=False,
                 threads=True,
-                timeout=20
+                timeout=30
             )
         except Exception:
             return []
 
+        today_date = datetime.now().date()
         results = []
         for symbol in universe:
             try:
@@ -147,39 +153,72 @@ class StockHarvester:
                 if hist.empty or len(hist) < 4:
                     continue
 
-                price = float(hist['Close'].iloc[-1])
-                if price < 0.50 or price >= 5:
+                # Split into today's bars vs full history for different metrics
+                try:
+                    today_bars = hist[hist.index.date == today_date]
+                except Exception:
+                    today_bars = hist.tail(78)
+                if today_bars.empty or len(today_bars) < 2:
+                    today_bars = hist.tail(78)
+
+                price = float(today_bars['Close'].iloc[-1])
+                if price < 0.50 or price >= 10.0:
                     continue
 
-                # Float filter: only micro-caps (≤10M float) produce explosive moves on thin volume
+                # Float filter: micro-caps produce explosive moves; large-float stocks filtered out
                 fl = self._float_cache.get(symbol, (0, 0))[0]
                 if fl > 0 and fl > 10_000_000:
                     continue
 
-                prev_close = float(hist['Close'].iloc[-2])
-                change_1h = ((price - prev_close) / prev_close * 100) if prev_close > 0 else 0
+                # change_from_open: compare to today's 9:30 open (more signal than bar-vs-bar)
+                open_price = float(today_bars['Close'].iloc[0])
+                change_1h = ((price - open_price) / open_price * 100) if open_price > 0 else 0
 
+                # 5-day context: use full history
                 open_5d = float(hist['Close'].iloc[0])
                 change_5d = ((price - open_5d) / open_5d * 100) if open_5d > 0 else 0
 
-                volume = int(hist['Volume'].iloc[-1]) if not np.isnan(hist['Volume'].iloc[-1]) else 0
-                avg_vol = int(hist['Volume'].mean())
-                # Dollar volume filter uses avg hourly vol × 6.5 bars ≈ full-day liquidity
-                # Avoids filtering thin late-day bars that aren't representative
-                if price * avg_vol * 6.5 < 100_000:
+                # Volume on today's 5m bars
+                volume = int(today_bars['Volume'].iloc[-1]) if not np.isnan(today_bars['Volume'].iloc[-1]) else 0
+                avg_vol_5m = int(today_bars['Volume'].mean())
+                total_today_vol = int(today_bars['Volume'].sum())
+                # Dollar volume: today's cumulative volume × price ≥ $100K
+                if price * total_today_vol < 100_000:
                     continue
-                vol_ratio = volume / avg_vol if avg_vol > 0 else 1.0
+                # Higher threshold for stocks above $5 (they require real conviction)
+                if price >= 5.0 and price * total_today_vol < 500_000:
+                    continue
+                vol_ratio = volume / avg_vol_5m if avg_vol_5m > 0 else 1.0
 
-                # Momentum slope via linear regression on last 12 hourly bars
-                recent = hist['Close'].tail(12).values
+                # Momentum slope via linear regression on last 12 five-minute bars
+                recent = today_bars['Close'].tail(12).values
                 x = np.arange(len(recent))
                 slope = np.polyfit(x, recent, 1)[0] if len(recent) >= 3 else 0
                 slope_pct = (slope / price * 100) if price > 0 else 0
 
                 # Upside volatility: only reward bars that closed higher (directional momentum)
-                tail = hist['Close'].tail(20)
+                tail = today_bars['Close'].tail(20)
                 up_bars = tail[tail.diff().fillna(0) > 0]
                 upside_vol = float(up_bars.std() / tail.mean() * 100) if len(up_bars) >= 3 else 0
+
+                # Momentum acceleration: consecutive green bars + volume acceleration
+                # "Rocket setup" — each green bar with more volume than the last
+                recent_c = today_bars['Close'].tail(6).values
+                recent_v = today_bars['Volume'].tail(6).values
+                green_streak = 0
+                for j in range(len(recent_c) - 1, 0, -1):
+                    if recent_c[j] > recent_c[j - 1]:
+                        green_streak += 1
+                    else:
+                        break
+                vol_accel = (
+                    len(recent_v) >= 6 and
+                    float(recent_v[-1] + recent_v[-2]) / 2 > float(recent_v[-4] + recent_v[-5]) / 2
+                )
+
+                # Float rotation: today's volume as fraction of float
+                # >10% = elevated conviction; >100% = float fully turned over (potential exhaustion)
+                float_rotation = total_today_vol / fl if fl > 0 else 0.0
 
                 # Base technical score
                 tech_score = 0
@@ -187,6 +226,17 @@ class StockHarvester:
                 tech_score += min(vol_ratio / 5 * 25, 25)
                 tech_score += min(abs(change_1h) / 10 * 20, 20)
                 tech_score += min(upside_vol / 5 * 20, 20)
+
+                # Momentum acceleration bonus: up to +20 for 4-bar rocket, +15 for vol accel
+                tech_score += min(green_streak * 5, 20)
+                if vol_accel and green_streak >= 2:
+                    tech_score += 15
+
+                # Float rotation bonus: heavily traded relative to float = institutional attention
+                if 0 < float_rotation < 1.5:
+                    tech_score += min(float_rotation * 20, 20)
+                elif float_rotation >= 1.5:
+                    tech_score -= 15   # over-extended — float turned over 1.5×
 
                 results.append({
                     'symbol': symbol,
@@ -197,8 +247,10 @@ class StockHarvester:
                     'vol_ratio': round(vol_ratio, 2),
                     'slope_pct': round(slope_pct, 4),
                     'volatility': round(upside_vol, 2),
+                    'green_streak': green_streak,
+                    'float_rotation': round(float_rotation, 3),
                     'tech_score': round(min(tech_score, 100), 1),
-                    'signal_score': 0,       # filled in after signal pass
+                    'signal_score': 0,
                     'signal': 'SCANNING',
                     'score': round(min(tech_score, 100), 1),
                     'in_harvest': symbol in self.positions and self.positions[symbol].status == 'active',
@@ -439,7 +491,7 @@ class AutoPilot:
     - All decisions logged with reasoning
     """
 
-    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None):
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None):
         self.harvester  = harvester
         self.paper      = paper_trader
         self.config     = config
@@ -453,6 +505,7 @@ class AutoPilot:
         self.insider    = insider    # InsiderTradeAgent — optional
         self.earnings   = earnings   # EarningsGuard — optional
         self.congress   = congress   # CongressAgent — optional
+        self.orb        = orb        # ORBAgent — optional
         self.running   = False
         self._thread = None
         self._lock = threading.Lock()
@@ -836,13 +889,13 @@ class AutoPilot:
                         self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
                                                   harvests_done + 1))
                         # Reinvest only on moderate harvests — aggressive exits (≥75%) mean we want out
+                        # Reinvested capital is recycled proceeds, NOT new deployment — exempt from daily_limit
                         reinvest = 0 if frac >= 0.75 else harvest_shares
-                        if reinvest >= 1 and self.daily_spent + (reinvest * price) <= daily_limit:
+                        if reinvest >= 1:
                             buy = self.paper.buy(symbol, reinvest)
                             if buy.get('ok'):
-                                self.daily_spent += reinvest * price
                                 self._entry('REINVEST',
-                                    '{} — bought {} shares @ ${:.4f} (reinvested harvest)'.format(
+                                    '{} — bought {} shares @ ${:.4f} (reinvested harvest, exempt daily limit)'.format(
                                         symbol, reinvest, price))
 
                 else:
@@ -1018,12 +1071,19 @@ class AutoPilot:
             return
 
         # Scan for best candidate
-        # Pull Reddit trending, insider cluster, and congress buys as bonus universe additions
+        # Pull Reddit trending, ORB breakouts, insider cluster, and congress buys as bonus universe additions
         reddit_tickers = []
         if self.behavioral:
             reddit_tickers = [t['ticker'] for t in self.behavioral.get_trending_tickers(min_velocity=10)]
             if reddit_tickers:
                 self._entry('BEHAVIORAL', 'Reddit trending additions: {}'.format(', '.join(reddit_tickers[:8])))
+        if self.orb:
+            orb_breaks = self.orb.get_breakouts()
+            if orb_breaks:
+                orb_syms = [b['symbol'] for b in orb_breaks]
+                self._entry('ORB', 'Opening range breakouts: {} (top: {} +{:.1f}%)'.format(
+                    len(orb_breaks), orb_breaks[0]['symbol'], orb_breaks[0]['breakout_pct']))
+                reddit_tickers = list(dict.fromkeys(reddit_tickers + orb_syms))
         if self.insider:
             cluster = [t['ticker'] for t in self.insider.get_cluster_tickers(min_filings=2)]
             if cluster:
@@ -1044,7 +1104,7 @@ class AutoPilot:
             candidates = [m for m in movers
                           if m['symbol'] not in positions
                           and m['price'] > 0
-                          and m['price'] < 5
+                          and m['price'] < 10.0
                           and m['change_1h'] > min_change_1h
                           and m['vol_ratio'] > min_rvol
                           and m['change_5d'] < 15.0]  # skip exhausted runners already up >15%
@@ -1158,6 +1218,19 @@ class AutoPilot:
                     gap_bonus = min(25, int(gap_info.get('gap_pct', 0) * 1.5))
                     bonus += gap_bonus
                     c['rt_signal'] = 'GAP-{:.0f}%'.format(gap_info['gap_pct'])
+                # ORB breakout — price broke above first-5m candle high
+                if self.orb:
+                    orb_lvl = self.orb.get_orb_level(sym)
+                    if orb_lvl:
+                        orb_high = orb_lvl.get('high', 0)
+                        if orb_high > 0 and c['price'] > orb_high * 1.005:
+                            orb_pct = (c['price'] / orb_high - 1) * 100
+                            orb_bonus = min(20, int(orb_pct * 3))
+                            bonus += orb_bonus
+                            c['rt_signal'] = c.get('rt_signal') or 'ORB+{:.1f}%'.format(orb_pct)
+                # Rocket setup: consecutive green bars with volume acceleration
+                if c.get('green_streak', 0) >= 3:
+                    bonus += min(c['green_streak'] * 3, 12)   # up to +12 for 4-bar streak
                 if bonus:
                     c['combined_score'] = round(c.get('combined_score', c['score']) + bonus, 1)
             if any(c.get('combined_score', 0) != c['score'] for c in candidates):

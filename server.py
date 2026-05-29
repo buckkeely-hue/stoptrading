@@ -34,6 +34,7 @@ from modules.behavioral      import BehavioralAgent
 from modules.form4           import InsiderTradeAgent
 from modules.earnings_guard  import EarningsGuard
 from modules.congress_trades import CongressAgent
+from modules.orb             import ORBAgent
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -105,10 +106,12 @@ earnings.start()
 earnings.warm(universe.get())   # pre-warm cache before market open
 congress    = CongressAgent(config)
 congress.start()
+orb         = ORBAgent(universe)
+orb.start()
 autopilot = AutoPilot(harvester, paper_trader, config, engine=engine, catalyst=catalyst,
                       notifier=notifier, halts=halts, ssr=ssr,
                       macro=macro, behavioral=behavioral,
-                      insider=insider, earnings=earnings, congress=congress)
+                      insider=insider, earnings=earnings, congress=congress, orb=orb)
 ledger    = AccountingLedger(config, paper_trader)
 trial     = TrialManager(autopilot, paper_trader, harvester, config)
 scheduler = DailyScheduler(autopilot, paper_trader, load_config)
