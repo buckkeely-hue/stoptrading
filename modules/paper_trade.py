@@ -58,17 +58,20 @@ class PaperTrader:
                 price = float(hist['Close'].iloc[-1])
         return price
 
-    def buy(self, symbol, shares):
+    def buy(self, symbol, shares, price_override=None):
         symbol = symbol.upper().strip()
         shares = int(shares)
         if shares <= 0:
             return {'error': 'Shares must be positive'}
 
         with self._lock:
-            try:
-                price = self._get_price(symbol)
-            except Exception as e:
-                return {'error': f'Could not fetch price: {e}'}
+            if price_override is not None:
+                price = float(price_override)
+            else:
+                try:
+                    price = self._get_price(symbol)
+                except Exception as e:
+                    return {'error': f'Could not fetch price: {e}'}
 
             if price <= 0:
                 return {'error': f'Invalid price for {symbol}'}
@@ -103,7 +106,7 @@ class PaperTrader:
             self._fire({'type': 'BUY', **result})
             return result
 
-    def sell(self, symbol, shares):
+    def sell(self, symbol, shares, price_override=None):
         symbol = symbol.upper().strip()
         shares = int(shares)
         if shares <= 0:
@@ -116,10 +119,13 @@ class PaperTrader:
             if pos[symbol]['shares'] < shares:
                 return {'error': f'Only have {pos[symbol]["shares"]} shares of {symbol}'}
 
-            try:
-                price = self._get_price(symbol)
-            except Exception as e:
-                return {'error': f'Could not fetch price: {e}'}
+            if price_override is not None:
+                price = float(price_override)
+            else:
+                try:
+                    price = self._get_price(symbol)
+                except Exception as e:
+                    return {'error': f'Could not fetch price: {e}'}
 
             if price <= 0:
                 return {'error': f'Invalid price for {symbol}'}

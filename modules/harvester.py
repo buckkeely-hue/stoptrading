@@ -481,6 +481,10 @@ class AutoPilot:
         self._momentum_cache      = {}   # 'SYM_HH:MM' -> (slope, cascade, rvol) per-minute cache
         # PDT tracking: accounts under $25k limited to 3 day trades per rolling 5-business-day window
         self._day_trades_log      = []   # list of 'YYYY-MM-DD' strings when a day trade completed
+        # Real-time architecture
+        self._stream_lock         = threading.Lock()  # serialises stream-triggered sells
+        self._premarket_watchlist = []   # [{symbol, gap_pct, ...}] built pre-open, used at OPEN
+        self._premarket_date      = ''   # date string — prevents re-scanning same day
         self._load()
 
     def _load(self):
@@ -557,8 +561,13 @@ class AutoPilot:
         self._daily_pnl_floor_hit = False
         self._gapped_symbols      = set()
         self._gap_date            = datetime.now().strftime('%Y-%m-%d')
-        self._entry('SYSTEM', 'AutoPilot started — $%.2f paper balance, $100/day limit' % starting_balance)
+        self._premarket_watchlist = []
+        self._premarket_date      = ''
+        self._entry('SYSTEM', 'AutoPilot started — $%.2f paper balance' % starting_balance)
         self.running = True
+        # Register stream price callback for event-driven stop-loss
+        if self.engine and hasattr(self.engine, 'cache'):
+            self.engine.cache.register_price_callback(self._on_stream_price)
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
         self._save()
@@ -577,7 +586,7 @@ class AutoPilot:
             except Exception as e:
                 self._entry('ERROR', str(e))
             self._save()
-            time.sleep(300)  # scan every 5 minutes
+            time.sleep(60)  # 1-minute polling; stream callbacks handle sub-minute stops
 
     def _tick(self):
         today = datetime.now().strftime('%Y-%m-%d')
@@ -606,6 +615,21 @@ class AutoPilot:
         elif session == 'OVERNIGHT':
             self._entry('SESSION', 'OVERNIGHT — monitoring positions only, no new buys')
 
+        # Pre-market gapper scan — run once per day at PRE_MARKET to build OPEN watchlist
+        today = datetime.now().strftime('%Y-%m-%d')
+        if session == 'PRE_MARKET' and self._premarket_date != today:
+            if hasattr(self.harvester, 'universe') and self.harvester.universe:
+                try:
+                    gappers = self.harvester.universe.get_premarket_gappers(min_gap_pct=8.0)
+                    if gappers:
+                        self._premarket_watchlist = gappers
+                        self._premarket_date = today
+                        syms = ', '.join(g['symbol'] for g in gappers[:6])
+                        self._entry('PRE-MARKET',
+                            'Gapper scan: {} tickers (top: {})'.format(len(gappers), syms))
+                except Exception:
+                    pass
+
         # EOD forced-close — exit all open positions at start of CLOSE session
         if session == 'CLOSE' and self.config.get('force_eod_close', False):
             state = self.paper.get_state()
@@ -615,10 +639,10 @@ class AutoPilot:
                 if shrs <= 0:
                     continue
                 try:
-                    eod_price = float(yf.Ticker(sym).fast_info.last_price)
+                    eod_price = self._get_live_price(sym)
                     if eod_price <= 0:
                         continue
-                    result = self.paper.sell(sym, shrs)
+                    result = self.paper.sell(sym, shrs, price_override=eod_price)
                     if result.get('ok'):
                         eod_entry  = float(pos['avg_cost'])
                         eod_profit = self._net_profit(shrs, eod_price, eod_entry)
@@ -658,7 +682,7 @@ class AutoPilot:
         for pos in state.get('positions', []):
             symbol = pos['symbol']
             try:
-                price = float(yf.Ticker(symbol).fast_info.last_price)
+                price = self._get_live_price(symbol)
                 entry = float(pos['avg_cost'])
                 shares = int(pos['shares'])
                 if entry <= 0 or shares <= 0 or price <= 0:
@@ -678,7 +702,7 @@ class AutoPilot:
 
                 # ── EARNINGS-EXIT: force exit before earnings report ───────────
                 if self.earnings and self.earnings.should_force_exit(symbol):
-                    result = self.paper.sell(symbol, shares)
+                    result = self.paper.sell(symbol, shares, price_override=price)
                     if result.get('ok'):
                         profit = self._net_profit(shares, price, entry)
                         # Stats mutated ONLY after confirmed sell
@@ -704,7 +728,7 @@ class AutoPilot:
 
                 # ── GAP-EXIT: overnight gap down >10% ──────────────────────────
                 if self._check_overnight_gap(symbol):
-                    result = self.paper.sell(symbol, shares)
+                    result = self.paper.sell(symbol, shares, price_override=price)
                     if result.get('ok'):
                         loss = self._net_profit(shares, price, entry)
                         self.stats['total_profit'] += loss
@@ -726,7 +750,7 @@ class AutoPilot:
                 should_exit, exit_reason = self._should_exit_permanently(
                     symbol, price, net_gain, days_open, harvests_done, session)
                 if should_exit and net_gain > tx_cost_pct:
-                    result = self.paper.sell(symbol, shares)
+                    result = self.paper.sell(symbol, shares, price_override=price)
                     if result.get('ok'):
                         profit = self._net_profit(shares, price, entry)
                         self.stats['total_profit'] += profit
@@ -749,7 +773,7 @@ class AutoPilot:
                 # ── STOP-LOSS: hard cap on single-trade loss before trail fires ────────
                 max_single_loss = float(self.config.get('max_single_loss_pct', 8.0))
                 if net_gain <= -max_single_loss:
-                    result = self.paper.sell(symbol, shares)
+                    result = self.paper.sell(symbol, shares, price_override=price)
                     if result.get('ok'):
                         loss = self._net_profit(shares, price, entry)
                         self.stats['total_profit'] += loss
@@ -769,7 +793,7 @@ class AutoPilot:
                 _, cascade, _ = self._momentum_snapshot(symbol)
                 if cascade and net_gain > tx_cost_pct:
                     evasive_shares = max(1, int(shares * 0.75))
-                    result = self.paper.sell(symbol, evasive_shares)
+                    result = self.paper.sell(symbol, evasive_shares, price_override=price)
                     if result.get('ok'):
                         protected = self._net_profit(evasive_shares, price, entry)
                         self.stats['total_profit'] += protected
@@ -792,7 +816,7 @@ class AutoPilot:
                 if net_gain >= harvest_trig:
                     frac          = self._harvest_fraction(symbol, days_open, harvests_done, session)
                     harvest_shares = max(1, int(shares * frac))
-                    result = self.paper.sell(symbol, harvest_shares)
+                    result = self.paper.sell(symbol, harvest_shares, price_override=price)
                     if result.get('ok'):
                         profit = self._net_profit(harvest_shares, price, entry)
                         self.stats['total_harvests'] += 1
@@ -828,7 +852,7 @@ class AutoPilot:
                     if entry > 0 and (hwm - entry) / entry * 100 >= harvest_trig:
                         trail_pct = min(trail_pct, 8.0)
                     if drop_from_hwm >= trail_pct:
-                        result = self.paper.sell(symbol, shares)
+                        result = self.paper.sell(symbol, shares, price_override=price)
                         if result.get('ok'):
                             loss = self._net_profit(shares, price, entry)
                             self.stats['total_profit'] += loss
@@ -847,7 +871,7 @@ class AutoPilot:
                     # Time-exit: up >2% after 2 hours — harvest 60%, let remainder run
                     elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 7200 and net_gain >= 2.0:
                         time_shares = max(1, int(shares * 0.60))
-                        result = self.paper.sell(symbol, time_shares)
+                        result = self.paper.sell(symbol, time_shares, price_override=price)
                         if result.get('ok'):
                             profit = self._net_profit(time_shares, price, entry)
                             self.stats['total_profit'] += profit
@@ -864,7 +888,7 @@ class AutoPilot:
 
                     # Time-stop: stale position after 3 days with no profit
                     elif days_open >= 3 and net_gain <= 0:
-                        result = self.paper.sell(symbol, shares)
+                        result = self.paper.sell(symbol, shares, price_override=price)
                         if result.get('ok'):
                             loss = self._net_profit(shares, price, entry)
                             self.stats['total_profit'] += loss
@@ -882,7 +906,7 @@ class AutoPilot:
 
                     # Exit: only after at least one harvest when margin compresses
                     elif harvests_done > 0 and net_gain <= exit_trig:
-                        result = self.paper.sell(symbol, shares)
+                        result = self.paper.sell(symbol, shares, price_override=price)
                         if result.get('ok'):
                             profit = self._net_profit(shares, price, entry)
                             self.stats['total_profit'] += profit
@@ -1081,6 +1105,15 @@ class AutoPilot:
                     c['rt_signal'] = ''
                     c['rt_score'] = 0
 
+            # Pre-compute boost lookup tables (avoid re-calling per-candidate)
+            _multi_stream = set()
+            if hasattr(self.harvester, 'universe') and self.harvester.universe:
+                try:
+                    _multi_stream = set(self.harvester.universe.get_multi_stream(min_sources=2))
+                except Exception:
+                    pass
+            _premarket_map = {g['symbol']: g for g in self._premarket_watchlist}
+
             # Boost candidates: halt-resume, SSR, behavioral, macro, insider, congress
             macro_score = self.macro.get_score() if self.macro else 0
             for c in candidates:
@@ -1107,6 +1140,24 @@ class AutoPilot:
                     bonus += congress_bonus
                     if congress_bonus > 0:
                         c['congress_signal'] = 'BUYING'
+                # OFI from realtime velocity cache — buy-side order flow pressure
+                if self.engine and hasattr(self.engine, 'cache'):
+                    vel = self.engine.cache.velocity.get(sym, {})
+                    ofi = vel.get('ofi', 0.0)
+                    if ofi > 0.3:
+                        bonus += int(ofi * 10)   # up to +10 for strong buy-side flow
+                    elif ofi < -0.3:
+                        bonus -= int(abs(ofi) * 10)
+                # Multi-stream universe consensus — ticker confirmed by 2+ independent sources
+                if sym in _multi_stream:
+                    bonus += 15
+                    c['rt_signal'] = c.get('rt_signal') or 'MULTI-STREAM'
+                # Pre-market gapper — identified before open as high-probability setup
+                gap_info = _premarket_map.get(sym)
+                if gap_info:
+                    gap_bonus = min(25, int(gap_info.get('gap_pct', 0) * 1.5))
+                    bonus += gap_bonus
+                    c['rt_signal'] = 'GAP-{:.0f}%'.format(gap_info['gap_pct'])
                 if bonus:
                     c['combined_score'] = round(c.get('combined_score', c['score']) + bonus, 1)
             if any(c.get('combined_score', 0) != c['score'] for c in candidates):
@@ -1195,6 +1246,89 @@ class AutoPilot:
         except Exception as e:
             self._entry('SCAN', 'Scan error: ' + str(e))
 
+    # ── Real-time stream integration ──────────────────────────────────────────
+
+    def _get_live_price(self, symbol: str) -> float:
+        """
+        Price priority: Finnhub stream tick (<60s old) → velocity tracker → yfinance.
+        Eliminates yfinance round-trips for positions when streaming is active.
+        """
+        if self.engine and hasattr(self.engine, 'cache'):
+            ticks = self.engine.cache.price_ticks.get(symbol)
+            if ticks:
+                ts, price, _ = ticks[-1]
+                if time.time() - ts < 60 and price > 0:
+                    return float(price)
+            vel = self.engine.cache.velocity.get(symbol, {})
+            if vel.get('price', 0) > 0:
+                return float(vel['price'])
+        return float(yf.Ticker(symbol).fast_info.last_price)
+
+    def _momentum_from_cache(self, symbol: str):
+        """
+        Read momentum from RealtimeCache instead of fetching yfinance 1-min bars.
+        Returns (slope_pct, cascade_bool, rvol) matching _momentum_snapshot() contract,
+        or None if cache is empty for this symbol.
+        """
+        if not self.engine or not hasattr(self.engine, 'cache'):
+            return None
+        vel = self.engine.cache.velocity.get(symbol, {})
+        if not vel or not vel.get('price', 0):
+            return None
+        pct_1m = vel.get('pct_1m', 0.0)
+        pct_5m = vel.get('pct_5m', 0.0)
+        ofi    = vel.get('ofi', 0.0)
+        vol_r  = vel.get('vol_ratio', 1.0)
+        # Cascade: strong sell-side order flow + both timeframes declining
+        cascade = ofi < -0.4 and pct_1m < 0 and pct_5m < 0
+        return (round(pct_1m, 3), cascade, round(vol_r, 2))
+
+    def _on_stream_price(self, symbol: str, price: float, volume: int):
+        """
+        Fast-path callback invoked by RealtimeCache on every Finnhub/velocity tick.
+        Only checks the stop-loss condition — harvest/exit logic runs in _tick().
+        Uses a non-blocking lock so that a slow position check never stalls the stream.
+        """
+        if not self.running or price <= 0:
+            return
+        positions = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}
+        if symbol not in positions:
+            return
+        pos    = positions[symbol]
+        entry  = float(pos.get('avg_cost', 0))
+        shares = int(pos.get('shares', 0))
+        if entry <= 0 or shares <= 0:
+            return
+        net_gain    = (price - entry) / entry * 100 - float(self.config.get('tx_cost_pct', 3.0))
+        max_loss    = float(self.config.get('max_single_loss_pct', 8.0))
+        if net_gain > -max_loss:
+            return
+        # Acquire without blocking — if another stop is already being processed, skip
+        if not self._stream_lock.acquire(blocking=False):
+            return
+        try:
+            # Re-validate after lock: position may have been closed by concurrent _tick
+            pos2 = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}.get(symbol)
+            if not pos2 or int(pos2.get('shares', 0)) <= 0:
+                return
+            result = self.paper.sell(symbol, shares, price_override=price)
+            if result.get('ok'):
+                loss = self._net_profit(shares, price, entry)
+                self.stats['total_profit'] += loss
+                self._cleanup_position(symbol)
+                self.stats['losses'] += 1
+                self.stats['total_loss_pct'] += abs((price - entry) / entry * 100)
+                self._consecutive_losses += 1
+                note = '{} — STREAM-STOP: net {:.1f}% ≤ -{:.0f}% | {} shares @ ${:.4f} | P&L ${:.2f}'.format(
+                    symbol, net_gain, max_loss, shares, price, loss)
+                self._entry('STOP-LOSS', note)
+                from modules.notify import msg_exit
+                self._notify(msg_exit('STOP-LOSS', symbol,
+                    'stream stop {:.1f}%'.format(net_gain), loss), 'alert')
+                self._save()
+        finally:
+            self._stream_lock.release()
+
     # ── Helper Methods ─────────────────────────────────────────────────────────
 
     def _get_et_now(self):
@@ -1278,6 +1412,11 @@ class AutoPilot:
         cache_key = '{}_{}'.format(symbol, datetime.now().strftime('%H:%M'))
         if cache_key in self._momentum_cache:
             return self._momentum_cache[cache_key]
+        # Prefer real-time cache (no network call) over yfinance
+        from_cache = self._momentum_from_cache(symbol)
+        if from_cache is not None:
+            self._momentum_cache[cache_key] = from_cache
+            return from_cache
         result = (0.0, False, 1.0)
         try:
             hist = yf.Ticker(symbol).history(period='1d', interval='1m')

@@ -26,8 +26,8 @@ class MockPaper:
     def _save(self):
         pass  # no-op — no file I/O in simulation
 
-    def buy(self, symbol: str, shares: int) -> dict:
-        price = PRICES.get(symbol, 0.0)
+    def buy(self, symbol: str, shares: int, price_override=None) -> dict:
+        price = float(price_override) if price_override is not None else PRICES.get(symbol, 0.0)
         cost  = round(shares * price, 6)
         if cost > self._state['balance'] + 0.01:
             return {'error': f'insufficient funds (have ${self._state["balance"]:.2f}, need ${cost:.2f})'}
@@ -42,8 +42,8 @@ class MockPaper:
             pos[symbol] = {'symbol': symbol, 'shares': shares, 'avg_cost': price}
         return {'ok': True}
 
-    def sell(self, symbol: str, shares: int) -> dict:
-        price = PRICES.get(symbol, 0.0)
+    def sell(self, symbol: str, shares: int, price_override=None) -> dict:
+        price = float(price_override) if price_override is not None else PRICES.get(symbol, 0.0)
         pos   = self._state['positions']
         if symbol not in pos or pos[symbol]['shares'] < shares:
             return {'error': f'not enough shares (have {pos.get(symbol,{}).get("shares",0)}, need {shares})'}

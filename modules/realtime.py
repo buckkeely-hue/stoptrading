@@ -17,7 +17,7 @@ import time
 import json
 import requests
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import defaultdict, deque
 import xml.etree.ElementTree as ET
 
@@ -37,7 +37,7 @@ class RealtimeCache:
         self._lock = threading.Lock()
         # price_ticks[symbol] = deque of (timestamp, price, volume) last 60 ticks
         self.price_ticks = defaultdict(lambda: deque(maxlen=60))
-        # velocity[symbol] = {pct_1m, pct_5m, pct_15m, volume_ratio}
+        # velocity[symbol] = {pct_1m, pct_5m, pct_15m, volume_ratio, ofi, price}
         self.velocity = {}
         # insider_alerts[symbol] = list of recent Form 4 events
         self.insider_alerts = defaultdict(list)
@@ -51,11 +51,22 @@ class RealtimeCache:
         self.last_update = {}
         # composite[symbol] = full scored signal dict
         self.composite = {}
+        # price_callbacks: called as fn(symbol, price, volume) on every tick
+        self._price_callbacks = []
+
+    def register_price_callback(self, fn):
+        """Register fn(symbol, price, volume) — called on every price tick from any stream."""
+        self._price_callbacks.append(fn)
 
     def add_tick(self, symbol, price, volume):
         with self._lock:
             self.price_ticks[symbol].append((time.time(), price, volume))
             self.last_update[symbol] = datetime.now()
+        for fn in self._price_callbacks:
+            try:
+                fn(symbol, price, volume)
+            except Exception:
+                pass
 
     def get_snapshot(self, symbol):
         with self._lock:
