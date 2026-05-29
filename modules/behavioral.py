@@ -127,21 +127,21 @@ class BehavioralAgent:
         phase = ((now - ref).total_seconds() / 86400) % cycle
 
         if phase < 1.85:
-            score, name, note = 8,  'New Moon',       'New moon — historically best returns (Yuan et al.)'
+            score, name, note = 4,  'New Moon',       'New moon — historically best returns (Yuan et al.)'
         elif phase < 5.53:
-            score, name, note = 5,  'Waxing Crescent','Waxing crescent — risk appetite building'
+            score, name, note = 3,  'Waxing Crescent','Waxing crescent — risk appetite building'
         elif phase < 9.22:
-            score, name, note = 2,  'First Quarter',  'First quarter — neutral'
+            score, name, note = 1,  'First Quarter',  'First quarter — neutral'
         elif phase < 12.91:
-            score, name, note = -2, 'Waxing Gibbous', 'Approaching full moon — sentiment peaking'
+            score, name, note = -1, 'Waxing Gibbous', 'Approaching full moon — sentiment peaking'
         elif phase < 16.61:
-            score, name, note = -8, 'Full Moon',      'Full moon — historically lowest returns (Yuan et al.)'
+            score, name, note = -4, 'Full Moon',      'Full moon — historically lowest returns (Yuan et al.)'
         elif phase < 20.30:
-            score, name, note = -5, 'Waning Gibbous', 'Waning gibbous — sentiment fading'
+            score, name, note = -3, 'Waning Gibbous', 'Waning gibbous — sentiment fading'
         elif phase < 23.99:
-            score, name, note = -2, 'Last Quarter',   'Last quarter — cautious'
+            score, name, note = -1, 'Last Quarter',   'Last quarter — cautious'
         else:
-            score, name, note = 4,  'Waning Crescent','Approaching new moon — risk appetite returning'
+            score, name, note = 2,  'Waning Crescent','Approaching new moon — risk appetite returning'
 
         with self._lock:
             self._lunar_score = score
@@ -273,7 +273,7 @@ class BehavioralAgent:
             polarity = rd.get('polarity', 0.0)
             bonus    = min(15, int(vel / 4))
             if polarity > 0.1:
-                bonus += 5    # NLP confirms positive sentiment
+                bonus += 8    # NLP confirms positive sentiment
             elif polarity < -0.1:
                 bonus -= 8    # crowd is negative — velocity alone misleads; penalise
             score += bonus
@@ -291,7 +291,7 @@ class BehavioralAgent:
         polarity = rd.get('polarity', 0.0)
         bonus    = min(15, int(rd.get('velocity', 0) / 4))
         if polarity > 0.1:
-            bonus += 5
+            bonus += 8
         elif polarity < -0.1:
             bonus -= 8
         return bonus

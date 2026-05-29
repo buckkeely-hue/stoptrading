@@ -487,7 +487,9 @@ class AutoPilot:
                 with open(AUTOPILOT_FILE) as f:
                     d = json.load(f)
                 self.log = d.get('log', [])
-                self.stats = d.get('stats', self.stats)
+                loaded = d.get('stats', {})
+                for k, v in self.stats.items():
+                    self.stats[k] = loaded.get(k, v)
                 saved_date = d.get('daily_date', '')
                 if saved_date == datetime.now().strftime('%Y-%m-%d'):
                     self.daily_spent          = d.get('daily_spent', 0.0)
@@ -886,7 +888,7 @@ class AutoPilot:
             return
 
         # Hard ET hour gate — belt-and-suspenders in addition to session check
-        now_et = datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
+        now_et = self._get_et_now()
         if now_et.hour < 9 or now_et.hour >= 16:
             return
 
@@ -1109,6 +1111,14 @@ class AutoPilot:
             symbol = best['symbol']
             price  = best['price']
 
+            # Minimum combined score gate — skip low-conviction setups
+            min_score = int(self.config.get('min_buy_score', 20))
+            best_score = best.get('combined_score', best.get('score', 0))
+            if best_score < min_score:
+                self._entry('SCORE-GATE',
+                    '{} score {} below minimum {} — skipping'.format(symbol, best_score, min_score))
+                return
+
             # 1-min entry confirmation: reject if momentum is actively declining or cascade forming
             entry_slope, entry_cascade, _ = self._momentum_snapshot(symbol)
             if entry_cascade:
@@ -1162,6 +1172,10 @@ class AutoPilot:
             self._entry('SCAN', 'Scan error: ' + str(e))
 
     # ── Helper Methods ─────────────────────────────────────────────────────────
+
+    def _get_et_now(self):
+        """Return current ET datetime. Extracted for testability."""
+        return datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
 
     def _get_rvol(self, symbol):
         """Relative volume: today's volume vs 5-day average. Returns ratio."""
@@ -1279,13 +1293,13 @@ class AutoPilot:
             base = 0.65   # momentum fading — harvest more now
 
         # Each additional harvest increases aggressiveness (diminishing edge)
-        base = min(0.80, base + harvests_done * 0.10)
+        base = base + harvests_done * 0.10
 
         # Late-day sessions: lock in more before close
         if session in ('CLOSE', 'AFTERNOON'):
             base = max(base, 0.65)
 
-        return round(base, 2)
+        return round(min(0.80, base), 2)
 
     def _should_exit_permanently(self, symbol: str, price: float,
                                   net_gain: float, days_open: int, harvests_done: int,

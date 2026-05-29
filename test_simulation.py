@@ -62,7 +62,7 @@ class MockHarvester:
     def __init__(self):
         self.candidates: list = []
 
-    def scan_movers(self) -> list:
+    def scan_movers(self, extra_symbols=None) -> list:
         return self.candidates
 
 
@@ -135,21 +135,25 @@ def make_ap(paper: MockPaper, harvester: MockHarvester):
         'per_trade_capital':   50.0,
     }
     ap = AutoPilot(harvester, paper, cfg)
-    ap.running           = True
-    ap.daily_spent       = 0.0
-    ap.log               = []
-    ap._position_hwm     = {}
-    ap._position_opened  = {}
-    ap._position_harvests= {}
+    ap.running            = True
+    ap.daily_spent        = 0.0
+    ap.log                = []
+    ap._position_hwm      = {}
+    ap._position_opened   = {}
+    ap._position_harvests = {}
+    ap._day_trades_log    = []
+    ap._consecutive_losses= 0
     ap.stats = {
         'total_trades': 0, 'total_harvests': 0, 'total_profit': 0.0,
         'started': datetime.now().isoformat(),
         'wins': 0, 'losses': 0, 'total_win_pct': 0.0, 'total_loss_pct': 0.0,
     }
-    # Neutralise all network calls
-    ap._market_regime = lambda: 0.5          # bullish neutral
-    ap._get_vwap      = lambda sym: (None, None)  # skip VWAP filter
-    ap._get_rvol      = lambda sym: 1.8      # healthy relative volume
+    # Neutralise all network calls; simulate 10:30 ET (mid-session, valid buy window)
+    _sim_et = datetime(2025, 1, 2, 10, 30, 0)
+    ap._market_regime = lambda: 0.5
+    ap._get_vwap      = lambda sym: (None, None)
+    ap._get_rvol      = lambda sym: 1.8
+    ap._get_et_now    = lambda: _sim_et
     return ap
 
 
@@ -194,7 +198,7 @@ if __name__ == '__main__':
         h1 = MockHarvester()
         ap1 = make_ap(p1, h1)
 
-        h1.candidates = [{'symbol': 'GOPH', 'price': 1.00, 'change_1h': 3.2,
+        h1.candidates = [{'symbol': 'GOPH', 'price': 1.00, 'change_1h': 3.2, 'change_5d': 5.0,
                           'vol_ratio': 2.5, 'tech_score': 72, 'score': 72,
                           'combined_score': 72, 'rt_signal': '', 'rt_score': 0}]
 
@@ -228,7 +232,7 @@ if __name__ == '__main__':
         h2 = MockHarvester()
         ap2 = make_ap(p2, h2)
 
-        h2.candidates = [{'symbol': 'IDEX', 'price': 1.00, 'change_1h': 5.1,
+        h2.candidates = [{'symbol': 'IDEX', 'price': 1.00, 'change_1h': 5.1, 'change_5d': 7.0,
                           'vol_ratio': 3.8, 'tech_score': 81, 'score': 81,
                           'combined_score': 81, 'rt_signal': '', 'rt_score': 0}]
 
