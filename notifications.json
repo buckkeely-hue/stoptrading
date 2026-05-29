@@ -13,6 +13,34 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-05-28 09:00:14",
+      "message": "\ud83d\udcc8 BUY: CLOV \u00d7 12 @ $3.9700 | $48 deployed | score 40",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-28 09:22:17",
+      "message": "\ud83d\udcc8 BUY: YSG \u00d7 15 @ $3.1400 | $47 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-28 09:55:50",
+      "message": "\ud83d\udcc8 BUY: OGI \u00d7 4 @ $1.1850 | $5 deployed | score 13",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-28 15:05:15",
+      "message": "\ud83d\udcc8 EOD: P&L $+2.21 | 3 trades | 0% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }
