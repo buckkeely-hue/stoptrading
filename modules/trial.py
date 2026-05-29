@@ -217,15 +217,20 @@ class TrialManager:
 
         flaws_this_round = []
 
-        # 1. Market hours check
+        # 1. Market hours check — only flag if an actual BUY happened outside market hours
         hour_et = self._et_hour()
         if hour_et < 9 or hour_et >= 16:
-            flaws_this_round.append({
-                'severity': 'HIGH',
-                'type':     'Market Hours',
-                'detail':   'Current ET hour is {}:xx — NYSE is closed (9:30am–4pm). Penny stock prices are stale, spreads are wide, fills are unreliable. Algorithm should pause trading outside market hours.'.format(hour_et),
-                'fix':      'Add market_hours_only gate to AutoPilot._tick() — skip buy logic if hour < 9 or hour >= 16 ET'
-            })
+            after_hours_buy = any(
+                e.get('action') == 'BUY'
+                for e in ap_log[:20]
+            )
+            if after_hours_buy:
+                flaws_this_round.append({
+                    'severity': 'HIGH',
+                    'type':     'Market Hours',
+                    'detail':   'A BUY executed outside NYSE hours ({}:xx ET). Penny stock prices are stale, spreads are wide, fills are unreliable.'.format(hour_et),
+                    'fix':      'ET hour gate is now enforced in _tick() — buy logic skips if hour < 9 or hour >= 16 ET'
+                })
 
         # 2. Concentration risk
         if positions and balance > 0:

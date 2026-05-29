@@ -503,7 +503,7 @@ class AutoPilot:
         try:
             with open(AUTOPILOT_FILE, 'w') as f:
                 json.dump({
-                    'log':                 self.log[-500:],
+                    'log':                 self.log[-1000:],
                     'stats':               self.stats,
                     'daily_spent':         self.daily_spent,
                     'daily_date':          self.daily_date,
@@ -642,7 +642,9 @@ class AutoPilot:
         tx_cost_pct  = float(self.config.get('tx_cost_pct', 3.0))
         harvest_trig = float(self.config.get('harvest_trigger_pct', 7.0))
         exit_trig    = float(self.config.get('exit_trigger_pct', 2.0))
-        daily_limit  = float(self.config.get('daily_spend_limit', 100.0))
+        balance      = self.paper.get_state().get('balance', 0)
+        daily_pct    = float(self.config.get('daily_spend_pct', 0))
+        daily_limit  = (balance * daily_pct / 100) if daily_pct > 0 else float(self.config.get('daily_spend_limit', 100.0))
 
         # ── Step 1: Monitor existing positions ──────────────────────────────
         # Flush per-minute momentum cache at start of each tick
@@ -749,6 +751,12 @@ class AutoPilot:
                         protected = self._net_profit(evasive_shares, price, entry)
                         self.stats['total_profit'] += protected
                         self._position_harvests[symbol] = harvests_done + 1
+                        if protected >= 0:
+                            self.stats['wins'] += 1
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self._consecutive_losses += 1
                         note = '{} — cascade sell detected | shed {} shares (75%) @ ${:.4f} | ' \
                                'protected ${:.2f} | {} shares remain'.format(
                                    symbol, evasive_shares, price, protected, shares - evasive_shares)
@@ -767,6 +775,12 @@ class AutoPilot:
                         self.stats['total_harvests'] += 1
                         self.stats['total_profit']   += profit
                         self._position_harvests[symbol] = harvests_done + 1
+                        if profit >= 0:
+                            self.stats['wins'] += 1
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self._consecutive_losses += 1
                         note = '{} — sold {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | profit ${:.2f} | ' \
                                'reinvesting (momentum slope {:.2f}%/bar)'.format(
                                    symbol, frac * 100, harvest_shares, price, net_gain, profit,
@@ -871,8 +885,12 @@ class AutoPilot:
         if session not in _BUY_SESSIONS:
             return
 
-        # Wait for the 5-minute opening range to confirm direction before buying
+        # Hard ET hour gate — belt-and-suspenders in addition to session check
         now_et = datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
+        if now_et.hour < 9 or now_et.hour >= 16:
+            return
+
+        # Wait for the 5-minute opening range to confirm direction before buying
         if session == 'OPEN_MOMENTUM' and now_et.hour == 9 and now_et.minute < 35:
             self._entry('SESSION', 'Waiting for 9:35 opening range confirmation — no buys yet')
             return
@@ -1403,9 +1421,11 @@ class AutoPilot:
             'balance':     balance,
             'positions':   state.get('positions', []),
             'daily_spent': round(self.daily_spent, 2),
-            'daily_limit': float(self.config.get('daily_spend_limit', 100.0)),
+            'daily_limit': round((state.get('balance', 0) * float(self.config.get('daily_spend_pct', 0)) / 100)
+                           if float(self.config.get('daily_spend_pct', 0)) > 0
+                           else float(self.config.get('daily_spend_limit', 100.0)), 2),
             'stats':       self.stats,
-            'log':         list(reversed(self.log[-100:])),
+            'log':         list(reversed([e for e in self.log[-200:] if e.get('action') not in ('SESSION', 'SYSTEM')])),
             'guardrails': {
                 'daily_pnl_floor_hit':    self._daily_pnl_floor_hit,
                 'daily_drawdown_pct':     round(self._daily_drawdown_pct(balance), 1),
