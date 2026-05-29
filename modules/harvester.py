@@ -491,7 +491,7 @@ class AutoPilot:
     - All decisions logged with reasoning
     """
 
-    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None):
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None):
         self.harvester  = harvester
         self.paper      = paper_trader
         self.config     = config
@@ -505,7 +505,11 @@ class AutoPilot:
         self.insider    = insider    # InsiderTradeAgent — optional
         self.earnings   = earnings   # EarningsGuard — optional
         self.congress   = congress   # CongressAgent — optional
-        self.orb        = orb        # ORBAgent — optional
+        self.orb          = orb            # ORBAgent — optional
+        self.news         = news           # NewsAgent — optional
+        self.float_rotation = float_rotation  # FloatRotationAgent — optional
+        self.short_squeeze  = short_squeeze   # ShortSqueezeAgent — optional
+        self.sector         = sector          # SectorMomentumAgent — optional
         self.running   = False
         self._thread = None
         self._lock = threading.Lock()
@@ -1084,6 +1088,16 @@ class AutoPilot:
                 self._entry('ORB', 'Opening range breakouts: {} (top: {} +{:.1f}%)'.format(
                     len(orb_breaks), orb_breaks[0]['symbol'], orb_breaks[0]['breakout_pct']))
                 reddit_tickers = list(dict.fromkeys(reddit_tickers + orb_syms))
+        if self.news:
+            hot_news = [t['ticker'] for t in self.news.get_hot_tickers(min_score=8)]
+            if hot_news:
+                self._entry('NEWS', 'News catalyst additions: {}'.format(', '.join(hot_news[:6])))
+                reddit_tickers = list(dict.fromkeys(reddit_tickers + hot_news))
+        if self.short_squeeze:
+            squeeze_cands = [c['ticker'] for c in self.short_squeeze.get_squeeze_candidates(min_score=15)]
+            if squeeze_cands:
+                self._entry('SQUEEZE', 'Short squeeze candidates: {}'.format(', '.join(squeeze_cands[:5])))
+                reddit_tickers = list(dict.fromkeys(reddit_tickers + squeeze_cands))
         if self.insider:
             cluster = [t['ticker'] for t in self.insider.get_cluster_tickers(min_filings=2)]
             if cluster:
@@ -1231,6 +1245,29 @@ class AutoPilot:
                 # Rocket setup: consecutive green bars with volume acceleration
                 if c.get('green_streak', 0) >= 3:
                     bonus += min(c['green_streak'] * 3, 12)   # up to +12 for 4-bar streak
+                # News catalyst score
+                if self.news:
+                    news_pts = self.news.get_news_score(sym)
+                    if news_pts != 0:
+                        bonus += max(-20, min(25, news_pts))
+                        if news_pts >= 15:
+                            c['rt_signal'] = c.get('rt_signal') or 'NEWS-CATALYST'
+                # Float rotation: strong buying relative to available supply
+                if self.float_rotation:
+                    fr_pts = self.float_rotation.get_rotation_score(sym)
+                    if fr_pts != 0:
+                        bonus += fr_pts
+                # Short squeeze setup
+                if self.short_squeeze:
+                    sq_pts = self.short_squeeze.get_squeeze_score(sym)
+                    if sq_pts >= 10:
+                        bonus += min(sq_pts, 20)
+                        c['rt_signal'] = c.get('rt_signal') or 'SQUEEZE'
+                # Sector tailwind/headwind
+                if self.sector:
+                    sec_pts = self.sector.get_sector_score(sym)
+                    if sec_pts != 0:
+                        bonus += sec_pts
                 if bonus:
                     c['combined_score'] = round(c.get('combined_score', c['score']) + bonus, 1)
             if any(c.get('combined_score', 0) != c['score'] for c in candidates):
@@ -1356,7 +1393,7 @@ class AutoPilot:
         cascade = ofi < -0.4 and pct_1m < 0 and pct_5m < 0
         return (round(pct_1m, 3), cascade, round(vol_r, 2))
 
-    def _on_stream_price(self, symbol: str, price: float, volume: int):
+    def _on_stream_price(self, symbol: str, price: float, volume: int):  # noqa: ARG002 volume unused here, used by cache accumulator
         """
         Fast-path callback invoked by RealtimeCache on every Finnhub/velocity tick.
         Only checks the stop-loss condition — harvest/exit logic runs in _tick().
@@ -1454,7 +1491,12 @@ class AutoPilot:
             return 0.0
 
     def _get_vwap(self, symbol):
-        """Intraday VWAP from today's 1-min bars. Returns (vwap, price) or (None, None)."""
+        """Intraday VWAP. Reads from stream tick accumulator first (no network call)."""
+        if self.engine and hasattr(self.engine, 'cache'):
+            stream_vwap = self.engine.cache.get_intraday_vwap(symbol)
+            if stream_vwap > 0:
+                price = self._get_live_price(symbol)
+                return round(stream_vwap, 4), round(price, 4)
         try:
             hist = yf.Ticker(symbol).history(period='1d', interval='1m')
             if hist.empty or hist['Volume'].sum() == 0:

@@ -33,8 +33,12 @@ from modules.macro_signals   import MacroSignalAgent
 from modules.behavioral      import BehavioralAgent
 from modules.form4           import InsiderTradeAgent
 from modules.earnings_guard  import EarningsGuard
-from modules.congress_trades import CongressAgent
-from modules.orb             import ORBAgent
+from modules.congress_trades  import CongressAgent
+from modules.orb              import ORBAgent
+from modules.news_catalyst    import NewsAgent
+from modules.float_rotation   import FloatRotationAgent
+from modules.short_squeeze    import ShortSqueezeAgent
+from modules.sector_momentum  import SectorMomentumAgent
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -108,10 +112,20 @@ congress    = CongressAgent(config)
 congress.start()
 orb         = ORBAgent(universe)
 orb.start()
+news_agent  = NewsAgent(config, universe)
+news_agent.start()
+float_rot   = FloatRotationAgent(universe, harvester._float_cache, engine=engine)
+float_rot.start()
+short_sq    = ShortSqueezeAgent(config, universe, ssr=ssr, engine=engine)
+short_sq.start()
+sector      = SectorMomentumAgent(config)
+sector.start()
 autopilot = AutoPilot(harvester, paper_trader, config, engine=engine, catalyst=catalyst,
                       notifier=notifier, halts=halts, ssr=ssr,
                       macro=macro, behavioral=behavioral,
-                      insider=insider, earnings=earnings, congress=congress, orb=orb)
+                      insider=insider, earnings=earnings, congress=congress,
+                      orb=orb, news=news_agent, float_rotation=float_rot,
+                      short_squeeze=short_sq, sector=sector)
 ledger    = AccountingLedger(config, paper_trader)
 trial     = TrialManager(autopilot, paper_trader, harvester, config)
 scheduler = DailyScheduler(autopilot, paper_trader, load_config)
@@ -136,8 +150,13 @@ def api_health():
                 'behavioral': behavioral.running,
                 'insider':    insider.running,
                 'earnings':   earnings.running,
-                'congress':   congress.running,
-                'ibkr':       ibkr.connected if hasattr(ibkr, 'connected') else False,
+                'congress':      congress.running,
+                'orb':           orb.running,
+                'news':          news_agent.running,
+                'float_rotation':float_rot.running,
+                'short_squeeze': short_sq.running,
+                'sector':        sector.running,
+                'ibkr':          ibkr.connected if hasattr(ibkr, 'connected') else False,
             },
             'universe_size': len(universe.get()),
             'earnings_cached': earnings.get_summary().get('dates_known', 0),

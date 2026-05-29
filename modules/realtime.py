@@ -17,9 +17,15 @@ import time
 import json
 import requests
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from collections import defaultdict, deque
 import xml.etree.ElementTree as ET
+
+try:
+    from zoneinfo import ZoneInfo
+    _ET_TZ = ZoneInfo('America/New_York')
+except Exception:
+    _ET_TZ = None
 
 try:
     import websocket
@@ -53,20 +59,39 @@ class RealtimeCache:
         self.composite = {}
         # price_callbacks: called as fn(symbol, price, volume) on every tick
         self._price_callbacks = []
+        # intraday VWAP accumulator: symbol -> [cum_pv, cum_vol, date_str]
+        self._vwap_accum = defaultdict(lambda: [0.0, 0.0, ''])
 
     def register_price_callback(self, fn):
         """Register fn(symbol, price, volume) — called on every price tick from any stream."""
         self._price_callbacks.append(fn)
 
     def add_tick(self, symbol, price, volume):
+        today_str = datetime.now().strftime('%Y-%m-%d')
         with self._lock:
             self.price_ticks[symbol].append((time.time(), price, volume))
             self.last_update[symbol] = datetime.now()
+            # Accumulate intraday VWAP — reset on new trading day
+            acc = self._vwap_accum[symbol]
+            if acc[2] != today_str:
+                acc[0], acc[1], acc[2] = 0.0, 0.0, today_str
+            if volume > 0 and price > 0:
+                acc[0] += price * volume   # cumulative price×volume
+                acc[1] += volume           # cumulative volume
         for fn in self._price_callbacks:
             try:
                 fn(symbol, price, volume)
             except Exception:
                 pass
+
+    def get_intraday_vwap(self, symbol: str) -> float:
+        """VWAP computed from stream ticks since today's open — no network call."""
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        with self._lock:
+            acc = self._vwap_accum.get(symbol)
+            if not acc or acc[2] != today_str or acc[1] <= 0:
+                return 0.0
+            return round(acc[0] / acc[1], 4)
 
     def get_snapshot(self, symbol):
         with self._lock:
