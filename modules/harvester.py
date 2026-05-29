@@ -538,6 +538,8 @@ class AutoPilot:
         self._momentum_cache      = {}   # 'SYM_HH:MM' -> (slope, cascade, rvol) per-minute cache
         # PDT tracking: accounts under $25k limited to 3 day trades per rolling 5-business-day window
         self._day_trades_log      = []   # list of 'YYYY-MM-DD' strings when a day trade completed
+        self._pdt_last_log        = 0.0  # epoch — suppress duplicate PDT log spam (log at most once/30m)
+        self._session_last_log    = 0.0  # epoch — suppress SESSION/SKIP spam (log at most once/30m)
         # Real-time architecture
         self._stream_lock         = threading.Lock()  # serialises stream-triggered sells
         self._premarket_watchlist = []   # [{symbol, gap_pct, ...}] built pre-open, used at OPEN
@@ -667,10 +669,14 @@ class AutoPilot:
         if session == 'HOLIDAY':
             self._entry('HOLIDAY', 'NYSE market closed (holiday/weekend) — no trading today')
             return   # prices unavailable; skip all monitoring
-        elif session == 'DEAD_ZONE':
-            self._entry('SESSION', 'DEAD_ZONE (12:00-14:00 ET) — monitoring positions, no new buys')
-        elif session == 'OVERNIGHT':
-            self._entry('SESSION', 'OVERNIGHT — monitoring positions only, no new buys')
+        elif session in ('DEAD_ZONE', 'OVERNIGHT'):
+            now_ts = time.time()
+            if now_ts - self._session_last_log >= 1800:
+                msg = ('DEAD_ZONE (12:00-14:00 ET) — monitoring positions, no new buys'
+                       if session == 'DEAD_ZONE' else
+                       'OVERNIGHT — monitoring positions only, no new buys')
+                self._entry('SESSION', msg)
+                self._session_last_log = now_ts
 
         # Pre-market gapper scan — run once per day at PRE_MARKET to build OPEN watchlist
         today = datetime.now().strftime('%Y-%m-%d')
@@ -1021,11 +1027,14 @@ class AutoPilot:
             window    = _pdt_window_dates(now_date)
             recent_dts = sum(1 for ds in self._day_trades_log if ds in window)
             if recent_dts >= 3:
-                self._entry('PDT',
-                    'Day-trade guard: {} same-day round-trips in rolling 5-biz-day window — '
-                    'cool-off applied as risk control (note: FINRA PDT rule abolished June 2026; '
-                    'this guard runs regardless to limit overtrading; account ${:.0f})'.format(
-                        recent_dts, account_value))
+                now_ts = time.time()
+                if now_ts - self._pdt_last_log >= 1800:   # log at most once per 30 minutes
+                    self._entry('PDT',
+                        'Day-trade guard: {} same-day round-trips in rolling 5-biz-day window — '
+                        'cool-off applied as risk control (note: FINRA PDT rule abolished June 2026; '
+                        'this guard runs regardless to limit overtrading; account ${:.0f})'.format(
+                            recent_dts, account_value))
+                    self._pdt_last_log = now_ts
                 return
             elif recent_dts == 2:
                 self._entry('PDT', 'Day-trade guard: {}/3 same-day round-trips used — one remaining'.format(recent_dts))
@@ -1071,7 +1080,10 @@ class AutoPilot:
         pos_cap = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
         buy_amount = min(kelly_size, remaining_today, balance, pos_cap)
         if buy_amount < 5:
-            self._entry('SKIP', 'Insufficient capital for new buy (available: $%.2f)' % buy_amount)
+            now_ts = time.time()
+            if now_ts - self._session_last_log >= 1800:
+                self._entry('SKIP', 'Insufficient capital for new buy (available: $%.2f)' % buy_amount)
+                self._session_last_log = now_ts
             return
 
         # Scan for best candidate

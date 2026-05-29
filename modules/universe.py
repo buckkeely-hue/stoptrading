@@ -46,7 +46,7 @@ _FINVIZ_URL = (
 FALLBACK = [
     'SNDL', 'MVIS', 'OCGN', 'BCRX', 'CTRM', 'SHIP', 'TOPS', 'GORO',
     'TNXP', 'KPLT', 'INDO', 'IMPP', 'REED', 'UONE', 'PETZ', 'SQFT',
-    'MOBQ', 'PAVS', 'PHIO', 'TPCS', 'SIFY', 'LFMD', 'ADTX', 'WKHS',
+    'PAVS', 'PHIO', 'TPCS', 'SIFY', 'LFMD', 'ADTX', 'WKHS',
     'GFAI', 'BFRI', 'HUDI', 'SENS', 'CLOV', 'ATER',
 ]
 

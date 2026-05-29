@@ -134,6 +134,10 @@ scheduler.start()
 if config.get('auto_trade_enabled'):
     auto_trader.start()
 
+if config.get('auto_start_enabled') and not autopilot.running:
+    _bal = float(config.get('starting_balance', 500.0))
+    autopilot.resume()   # resume preserves saved state; start() would reset the account
+
 
 @app.route('/api/health')
 def api_health():
