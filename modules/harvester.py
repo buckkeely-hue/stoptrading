@@ -148,7 +148,7 @@ class StockHarvester:
                     continue
 
                 price = float(hist['Close'].iloc[-1])
-                if price <= 0 or price >= 5:
+                if price < 0.50 or price >= 5:
                     continue
 
                 # Float filter: only micro-caps (≤10M float) produce explosive moves on thin volume
@@ -166,7 +166,7 @@ class StockHarvester:
                 avg_vol = int(hist['Volume'].mean())
                 # Dollar volume filter uses avg hourly vol × 6.5 bars ≈ full-day liquidity
                 # Avoids filtering thin late-day bars that aren't representative
-                if price * avg_vol * 6.5 < 50_000:
+                if price * avg_vol * 6.5 < 100_000:
                     continue
                 vol_ratio = volume / avg_vol if avg_vol > 0 else 1.0
 
@@ -176,15 +176,17 @@ class StockHarvester:
                 slope = np.polyfit(x, recent, 1)[0] if len(recent) >= 3 else 0
                 slope_pct = (slope / price * 100) if price > 0 else 0
 
-                # Volatility (std dev / mean) — higher = more opportunity
-                volatility = float(hist['Close'].tail(20).std() / hist['Close'].tail(20).mean() * 100) if len(hist) >= 5 else 0
+                # Upside volatility: only reward bars that closed higher (directional momentum)
+                tail = hist['Close'].tail(20)
+                up_bars = tail[tail.diff().fillna(0) > 0]
+                upside_vol = float(up_bars.std() / tail.mean() * 100) if len(up_bars) >= 3 else 0
 
                 # Base technical score
                 tech_score = 0
                 tech_score += min(max(slope_pct * 10, 0), 35)
                 tech_score += min(vol_ratio / 5 * 25, 25)
                 tech_score += min(abs(change_1h) / 10 * 20, 20)
-                tech_score += min(volatility / 5 * 20, 20)
+                tech_score += min(upside_vol / 5 * 20, 20)
 
                 results.append({
                     'symbol': symbol,
@@ -194,7 +196,7 @@ class StockHarvester:
                     'volume': volume,
                     'vol_ratio': round(vol_ratio, 2),
                     'slope_pct': round(slope_pct, 4),
-                    'volatility': round(volatility, 2),
+                    'volatility': round(upside_vol, 2),
                     'tech_score': round(min(tech_score, 100), 1),
                     'signal_score': 0,       # filled in after signal pass
                     'signal': 'SCANNING',
@@ -744,6 +746,25 @@ class AutoPilot:
                         self._notify(msg_exit('FINAL-EXIT', symbol, exit_reason, profit))
                     continue
 
+                # ── STOP-LOSS: hard cap on single-trade loss before trail fires ────────
+                max_single_loss = float(self.config.get('max_single_loss_pct', 8.0))
+                if net_gain <= -max_single_loss:
+                    result = self.paper.sell(symbol, shares)
+                    if result.get('ok'):
+                        loss = self._net_profit(shares, price, entry)
+                        self.stats['total_profit'] += loss
+                        self._cleanup_position(symbol)
+                        self.stats['losses'] += 1
+                        self.stats['total_loss_pct'] += abs(gain_pct)
+                        self._consecutive_losses += 1
+                        note = '{} — STOP-LOSS: net {:.1f}% ≤ -{:.0f}% threshold | sold ALL {} shares @ ${:.4f} | P&L ${:.2f}'.format(
+                            symbol, net_gain, max_single_loss, shares, price, loss)
+                        self._entry('STOP-LOSS', note)
+                        from modules.notify import msg_exit
+                        self._notify(msg_exit('STOP-LOSS', symbol,
+                            'loss {:.1f}% exceeds -{:.0f}% limit'.format(net_gain, max_single_loss), loss), 'alert')
+                    continue
+
                 # ── EVASIVE: cascade sell detected — shed 75% to protect gains ──────────
                 _, cascade, _ = self._momentum_snapshot(symbol)
                 if cascade and net_gain > tx_cost_pct:
@@ -783,16 +804,15 @@ class AutoPilot:
                         else:
                             self.stats['losses'] += 1
                             self._consecutive_losses += 1
-                        note = '{} — sold {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | profit ${:.2f} | ' \
-                               'reinvesting (momentum slope {:.2f}%/bar)'.format(
-                                   symbol, frac * 100, harvest_shares, price, net_gain, profit,
-                                   self._momentum_snapshot(symbol)[0])
+                        reinvest_note = 'holding remainder' if frac >= 0.75 else 'reinvesting (momentum slope {:.2f}%/bar)'.format(self._momentum_snapshot(symbol)[0])
+                        note = '{} — sold {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | profit ${:.2f} | {}'.format(
+                                   symbol, frac * 100, harvest_shares, price, net_gain, profit, reinvest_note)
                         self._entry('HARVEST', note)
                         from modules.notify import msg_harvest
                         self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
                                                   harvests_done + 1))
-                        # Reinvest harvest proceeds (skip if we harvested majority)
-                        reinvest = max(0, harvest_shares - 1) if frac >= 0.75 else harvest_shares
+                        # Reinvest only on moderate harvests — aggressive exits (≥75%) mean we want out
+                        reinvest = 0 if frac >= 0.75 else harvest_shares
                         if reinvest >= 1 and self.daily_spent + (reinvest * price) <= daily_limit:
                             buy = self.paper.buy(symbol, reinvest)
                             if buy.get('ok'):
@@ -804,6 +824,9 @@ class AutoPilot:
                 else:
                     # Trailing stop — tightens as position ages: 15% day-0, 10% day-1, 7% day-2+
                     trail_pct = 15.0 if days_open == 0 else (10.0 if days_open == 1 else 7.0)
+                    # Tighten trail once HWM reached the harvest threshold — protect locked gains
+                    if entry > 0 and (hwm - entry) / entry * 100 >= harvest_trig:
+                        trail_pct = min(trail_pct, 8.0)
                     if drop_from_hwm >= trail_pct:
                         result = self.paper.sell(symbol, shares)
                         if result.get('ok'):
@@ -821,18 +844,19 @@ class AutoPilot:
                             self._notify(msg_exit('TRAIL-STOP', symbol,
                                 '{:.1f}% drop from HWM'.format(drop_from_hwm), loss), 'alert')
 
-                    # Time-exit: up >2% after 2 hours — take the profit, don't overstay
+                    # Time-exit: up >2% after 2 hours — harvest 60%, let remainder run
                     elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 7200 and net_gain >= 2.0:
-                        result = self.paper.sell(symbol, shares)
+                        time_shares = max(1, int(shares * 0.60))
+                        result = self.paper.sell(symbol, time_shares)
                         if result.get('ok'):
-                            profit = self._net_profit(shares, price, entry)
+                            profit = self._net_profit(time_shares, price, entry)
                             self.stats['total_profit'] += profit
-                            self._cleanup_position(symbol)
                             self.stats['wins'] += 1
                             self.stats['total_win_pct'] += gain_pct
                             self._consecutive_losses = 0
-                            note = '{} — sold ALL {} shares @ ${:.4f} | 2h time-exit | {:.1f}% gain | net P&L ${:.2f}'.format(
-                                symbol, shares, price, net_gain, profit)
+                            self._position_harvests[symbol] = harvests_done + 1
+                            note = '{} — 2h time-harvest: sold 60% ({} shares) @ ${:.4f} | {:.1f}% gain | P&L ${:.2f} | {} shares remain'.format(
+                                symbol, time_shares, price, net_gain, profit, shares - time_shares)
                             self._entry('TIME-EXIT', note)
                             from modules.notify import msg_exit
                             self._notify(msg_exit('TIME-EXIT', symbol,
@@ -1326,8 +1350,8 @@ class AutoPilot:
             return True, 'Volume collapsed {:.1f}x (was {:.1f}x at entry) — exit {:.1f}% gain'.format(
                 rvol, entry_rvol, net_gain)
 
-        # 4. CLOSE session + multi-day hold with any profit → don't carry overnight again
-        if session == 'CLOSE' and days_open >= 1 and net_gain > 0:
+        # 4. CLOSE session + any held position with net profit → don't carry overnight
+        if session == 'CLOSE' and net_gain > 0:
             return True, 'CLOSE session, day-{} position — taking {:.1f}% gain, no overnight'.format(
                 days_open + 1, net_gain)
 
