@@ -164,6 +164,11 @@ def api_health():
             },
             'universe_size': len(universe.get()),
             'earnings_cached': earnings.get_summary().get('dates_known', 0),
+            'config': {
+                'cash_account_mode':   bool(config.get('cash_account_mode', False)),
+                'harvest_trigger_pct': float(config.get('harvest_trigger_pct', 8.0)),
+                'min_entry_rvol':      float(config.get('min_entry_rvol', 1.2)),
+            },
         })
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500

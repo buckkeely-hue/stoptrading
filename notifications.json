@@ -41,6 +41,48 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-05-29 08:55:57",
+      "message": "\ud83d\udcc8 BUY: CCCC \u00d7 12 @ $4.0350 | $48 deployed | score 34",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-29 09:23:38",
+      "message": "\ud83d\udcc8 BUY: TMCI \u00d7 14 @ $3.3950 | $48 deployed | score 39",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-29 10:10:04",
+      "message": "\u2705 FINAL-EXIT: CCCC | Volume collapsed 0.0x (was 2.0x at entry) \u2014 exit 3.8% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-29 14:00:15",
+      "message": "\ud83d\udcc8 BUY: AMC \u00d7 28 @ $1.7500 | $49 deployed | score 21",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-29 14:25:25",
+      "message": "\ud83d\udcc8 BUY: AUTL \u00d7 9 @ $1.8592 | $17 deployed | score 53",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-05-29 15:05:11",
+      "message": "\ud83d\udcc8 EOD: P&L $+4.06 | 7 trades | 100% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }

@@ -1,7 +1,7 @@
 import json
 import os
 import threading
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import yfinance as yf
 
 TRADES_FILE = os.path.join(os.path.dirname(__file__), '..', 'paper_trades.json')
@@ -25,6 +25,8 @@ class PaperTrader:
                     self._state['positions'] = {}
                 if 'history' not in self._state:
                     self._state['history'] = []
+                if 'unsettled' not in self._state:
+                    self._state['unsettled'] = []
                 return
             except Exception:
                 pass
@@ -32,7 +34,29 @@ class PaperTrader:
             'balance': float(self._config.get('paper_balance', 10000)),
             'positions': {},
             'history': [],
+            'unsettled': [],
         }
+
+    def _cash_mode(self):
+        return bool(self._config.get('cash_account_mode', False))
+
+    def _next_settle_date(self):
+        """T+1: next business day (Mon–Fri) after today."""
+        d = date.today() + timedelta(days=1)
+        while d.weekday() >= 5:
+            d += timedelta(days=1)
+        return d.isoformat()
+
+    def _settle_matured(self):
+        """Move any unsettled proceeds whose settle date has arrived into balance."""
+        today = date.today().isoformat()
+        pending = []
+        for entry in self._state.get('unsettled', []):
+            if entry['settles_on'] <= today:
+                self._state['balance'] += entry['amount']
+            else:
+                pending.append(entry)
+        self._state['unsettled'] = pending
 
     def register_callback(self, fn):
         self._trade_callbacks.append(fn)
@@ -65,6 +89,8 @@ class PaperTrader:
             return {'error': 'Shares must be positive'}
 
         with self._lock:
+            self._settle_matured()
+
             if price_override is not None:
                 price = float(price_override)
             else:
@@ -77,8 +103,10 @@ class PaperTrader:
                 return {'error': f'Invalid price for {symbol}'}
 
             total_cost = price * shares
-            if total_cost > self._state['balance']:
-                return {'error': f'Insufficient balance. Need ${total_cost:.2f}, have ${self._state["balance"]:.2f}'}
+            # In cash account mode balance only contains settled funds; T+1 proceeds are in unsettled
+            available = self._state['balance']
+            if total_cost > available:
+                return {'error': f'Insufficient settled balance. Need ${total_cost:.2f}, have ${available:.2f}'}
 
             self._state['balance'] -= total_cost
             pos = self._state['positions']
@@ -133,7 +161,15 @@ class PaperTrader:
             avg_cost = pos[symbol]['avg_cost']
             proceeds = price * shares
             pnl = (price - avg_cost) * shares
-            self._state['balance'] += proceeds
+            if self._cash_mode():
+                # T+1 settlement: proceeds land next business day, not immediately
+                self._state['unsettled'].append({
+                    'amount':      round(proceeds, 4),
+                    'settles_on':  self._next_settle_date(),
+                    'symbol':      symbol,
+                })
+            else:
+                self._state['balance'] += proceeds
 
             pos[symbol]['shares'] -= shares
             if pos[symbol]['shares'] == 0:
@@ -157,6 +193,7 @@ class PaperTrader:
 
     def get_state(self):
         with self._lock:
+            self._settle_matured()
             positions_detail = []
             for symbol, pos in self._state['positions'].items():
                 try:
@@ -183,8 +220,16 @@ class PaperTrader:
                     'pnl_pct': round(pnl_pct, 2),
                 })
 
+            today = date.today().isoformat()
+            unsettled_entries = [e for e in self._state.get('unsettled', [])
+                                 if e['settles_on'] > today]
+            unsettled_total = round(sum(e['amount'] for e in unsettled_entries), 2)
+
             return {
-                'balance': round(self._state['balance'], 2),
-                'positions': positions_detail,
-                'history': self._state['history'][:50],
+                'balance':         round(self._state['balance'], 2),
+                'unsettled_total': unsettled_total,
+                'unsettled':       unsettled_entries,
+                'cash_mode':       self._cash_mode(),
+                'positions':       positions_detail,
+                'history':         self._state['history'][:50],
             }

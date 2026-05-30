@@ -1023,25 +1023,24 @@ class AutoPilot:
             self._entry('LIMIT', 'Daily spend limit $%.0f reached — no new buys today' % daily_limit)
             return
 
-        # PDT rule gate — FINRA Rule 4210: accounts under $25,000 may execute at most
-        # 3 day trades (same-day round trips) in any rolling 5-business-day window.
-        account_value = self.paper.get_state().get('balance', 0)
-        if account_value < 25000:
-            now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
-            window    = _pdt_window_dates(now_date)
-            recent_dts = sum(1 for ds in self._day_trades_log if ds in window)
-            if recent_dts >= 3:
-                now_ts = time.time()
-                if now_ts - self._pdt_last_log >= 1800:   # log at most once per 30 minutes
-                    self._entry('PDT',
-                        'Day-trade guard: {} same-day round-trips in rolling 5-biz-day window — '
-                        'cool-off applied as risk control (note: FINRA PDT rule abolished June 2026; '
-                        'this guard runs regardless to limit overtrading; account ${:.0f})'.format(
-                            recent_dts, account_value))
-                    self._pdt_last_log = now_ts
-                return
-            elif recent_dts == 2:
-                self._entry('PDT', 'Day-trade guard: {}/3 same-day round-trips used — one remaining'.format(recent_dts))
+        # PDT rule gate — skipped entirely in cash account mode (no PDT restriction on cash accounts)
+        if not self.config.get('cash_account_mode', False):
+            account_value = self.paper.get_state().get('balance', 0)
+            if account_value < 25000:
+                now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
+                window    = _pdt_window_dates(now_date)
+                recent_dts = sum(1 for ds in self._day_trades_log if ds in window)
+                if recent_dts >= 3:
+                    now_ts = time.time()
+                    if now_ts - self._pdt_last_log >= 1800:
+                        self._entry('PDT',
+                            'Day-trade guard: {} same-day round-trips in rolling 5-biz-day window — '
+                            'cool-off applied (cash_account_mode=false; set true to remove restriction; '
+                            'account ${:.0f})'.format(recent_dts, account_value))
+                        self._pdt_last_log = now_ts
+                    return
+                elif recent_dts == 2:
+                    self._entry('PDT', 'Day-trade guard: {}/3 same-day round-trips used — one remaining'.format(recent_dts))
 
         # Market regime gate: no new buys when SPY is down > 1.5%
         spy_chg = self._market_regime()
@@ -1353,7 +1352,9 @@ class AutoPilot:
                         symbol, rvol, min_rvol))
                 return
 
-            cat_score = self.catalyst.get_score(symbol) if self.catalyst else 0
+            cat_score  = self.catalyst.get_score(symbol) if self.catalyst else 0
+            news_score = self.news.get_news_score(symbol) if self.news else 0
+            cat_score  = cat_score + news_score
 
             result = self.paper.buy(symbol, shares)
             if result.get('ok'):
@@ -1363,7 +1364,7 @@ class AutoPilot:
                 self._position_entry_rvol[symbol] = rvol   # save for volume-exhaustion check
                 rt_info     = ' | RT:{} ({:.0f})'.format(
                     best.get('rt_signal', ''), best.get('rt_score', 0)) if self.engine else ''
-                cat_info    = ' | CAT:{:+d}'.format(cat_score) if self.catalyst else ''
+                cat_info    = ' | CAT:{:+d}'.format(cat_score) if (self.catalyst or self.news) else ''
                 spy_info    = ' | SPY:{:+.1f}%'.format(spy_chg) if spy_chg != 0 else ''
                 spread_info = ' | spread~{:.1f}%'.format(est_spread)
                 combined_score = best.get('combined_score', best.get('score', 0))
@@ -1495,13 +1496,14 @@ class AutoPilot:
             if session not in ('OPEN_MOMENTUM', 'STANDARD'):
                 return
 
-            # PDT guard
-            account_value = self.paper.get_state().get('balance', 0)
-            if account_value < 25_000:
-                now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
-                window = _pdt_window_dates(now_date)
-                if sum(1 for ds in self._day_trades_log if ds in window) >= 3:
-                    return
+            # PDT guard — skipped in cash account mode
+            if not self.config.get('cash_account_mode', False):
+                account_value = self.paper.get_state().get('balance', 0)
+                if account_value < 25_000:
+                    now_date = (datetime.now(_ET) if _ET else datetime.now()).date()
+                    window = _pdt_window_dates(now_date)
+                    if sum(1 for ds in self._day_trades_log if ds in window) >= 3:
+                        return
 
             # Capital guard
             balance       = self.paper.get_state().get('balance', 0)
@@ -1729,12 +1731,11 @@ class AutoPilot:
         self._position_harvests.pop(symbol, None)
         self._position_hwm.pop(symbol, None)
         opened = self._position_opened.pop(symbol, None)
-        # If opened and closed on the same calendar day → counts as a PDT day trade
-        if opened:
+        # Track PDT day trades — only relevant when NOT in cash account mode
+        if opened and not self.config.get('cash_account_mode', False):
             today_str = (datetime.now(_ET) if _ET else datetime.now()).strftime('%Y-%m-%d')
             if opened.strftime('%Y-%m-%d') == today_str:
                 self._day_trades_log.append(today_str)
-                # Keep only last 30 days to bound memory
                 self._day_trades_log = self._day_trades_log[-60:]
 
     def _business_days_open(self, opened_dt: datetime) -> int:
@@ -1835,13 +1836,15 @@ class AutoPilot:
                 'max_daily_loss_pct':     float(self.config.get('max_daily_loss_pct', 10.0)),
             },
             'pdt': {
+                'cash_account_mode': bool(self.config.get('cash_account_mode', False)),
                 'day_trades_this_week': sum(
                     1 for ds in self._day_trades_log
                     if ds in _pdt_window_dates(
                         (datetime.now(_ET) if _ET else datetime.now()).date()
                     )
                 ),
-                'limit': 3,
-                'rule':  'FINRA Rule 4210 — max 3 day trades per 5-day window for accounts <$25k',
+                'limit': 'unlimited' if self.config.get('cash_account_mode') else 3,
+                'rule':  'T+1 cash settlement — no PDT restriction' if self.config.get('cash_account_mode')
+                         else 'FINRA Rule 4210 — max 3 day trades per 5-day window for accounts <$25k',
             },
         }
