@@ -164,8 +164,34 @@ try:
 except Exception:
     pass
 
+# Historical 5m bars for prior 5 days — gives scan_movers() the multi-day fallback
+# context it needs for change_5d and average-volume baselines.
+_bars_5m_prev = {}   # sym → DataFrame, 5m bars from DATE_PREV up to (but not including) replay date
+try:
+    m5_raw = _yf_real.download(
+        tickers=' '.join(VALID),
+        start=DATE_PREV, end=DATE_STR,
+        interval='5m', group_by='ticker',
+        auto_adjust=True, progress=False, threads=True, timeout=30,
+    )
+    for sym in VALID:
+        try:
+            if len(VALID) == 1:
+                df = m5_raw.dropna()
+            else:
+                if sym not in m5_raw.columns.get_level_values(0):
+                    continue
+                df = m5_raw[sym].dropna()
+            if not df.empty:
+                _bars_5m_prev[sym] = _tz_strip(df)
+        except Exception:
+            pass
+    print(f'[Data] Historical 5m bars: {len(_bars_5m_prev)} symbols (prior {DATE_PREV}–{DATE_STR})')
+except Exception as e:
+    print(f'[Data] Historical 5m batch failed: {e} — early-session signal quality reduced')
+
 print(f'[Data] Download complete — {len(VALID)} 1m | {len(_bars_1h)} 1h | '
-      f'{len(_bars_1d)} daily\n')
+      f'{len(_bars_1d)} daily | {len(_bars_5m_prev)} 5m-hist\n')
 
 # ── Replay clock ──────────────────────────────────────────────────────────────
 
@@ -217,19 +243,36 @@ class _FakeTicker:
     def history(self, period=None, interval='1d', **kwargs):
         now = _clock.now()
         sym = self.symbol
+        _EMPTY = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
         if interval == '1m':
             df = _filter_to(_bars_1m.get(sym), now)
-            return df if not df.empty else pd.DataFrame(
-                columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+            return df if not df.empty else _EMPTY
         elif interval == '1h':
             df = _filter_to(_bars_1h.get(sym, _bars_1m.get(sym)), now)
-            return df if not df.empty else pd.DataFrame(
-                columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+            return df if not df.empty else _EMPTY
+        elif interval in ('5m', '2m', '15m', '30m'):
+            minutes = int(interval.rstrip('m'))
+            src = _bars_1m.get(sym)
+            today_resampled = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+            if src is not None and not src.empty:
+                filtered = _filter_to(src, now)
+                if not filtered.empty:
+                    today_resampled = filtered.resample(f'{minutes}min').agg(
+                        {'Open': 'first', 'High': 'max', 'Low': 'min',
+                         'Close': 'last', 'Volume': 'sum'}
+                    ).dropna(subset=['Close'])
+            # Prepend historical 5m bars from prior days for multi-day fallback context
+            prev = _bars_5m_prev.get(sym)
+            if prev is not None and not prev.empty:
+                df = pd.concat([prev, today_resampled]).sort_index()
+                df = df[~df.index.duplicated(keep='last')]
+            else:
+                df = today_resampled
+            return df if not df.empty else _EMPTY
         else:  # 1d, 5d, etc.
             eod = datetime.combine(replay_date, datetime.max.time())
             df  = _filter_to(_bars_1d.get(sym), eod)
-            return df if not df.empty else pd.DataFrame(
-                columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+            return df if not df.empty else _EMPTY
 
     @property
     def fast_info(self):
@@ -271,12 +314,30 @@ class _FakeYF:
 
         frames = {}
         for sym in syms:
+            df = None
             if interval == '1h':
                 _h = _bars_1h.get(sym)
                 _src = _h if (_h is not None and not _h.empty) else _bars_1m.get(sym)
                 df = _filter_to(_src, now)
             elif interval == '1m':
                 df = _filter_to(_bars_1m.get(sym), now)
+            elif interval in ('5m', '2m', '15m', '30m'):
+                minutes = int(interval.rstrip('m'))
+                src = _bars_1m.get(sym)
+                today_df = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+                if src is not None and not src.empty:
+                    filtered = _filter_to(src, now)
+                    if not filtered.empty:
+                        today_df = filtered.resample(f'{minutes}min').agg(
+                            {'Open': 'first', 'High': 'max', 'Low': 'min',
+                             'Close': 'last', 'Volume': 'sum'}
+                        ).dropna(subset=['Close'])
+                prev = _bars_5m_prev.get(sym)
+                if prev is not None and not prev.empty:
+                    combined = pd.concat([prev, today_df]).sort_index()
+                    df = combined[~combined.index.duplicated(keep='last')]
+                else:
+                    df = today_df
             else:
                 df = _filter_to(_bars_1d.get(sym), eod)
             if df is not None and not df.empty:
@@ -291,11 +352,67 @@ class _FakeYF:
 
 _fake_yf = _FakeYF()
 
+
+class _FakeMarketData:
+    """Replay-mode drop-in for MarketData — reads from pre-downloaded bars, no network calls."""
+
+    def __init__(self, config=None):
+        pass
+
+    @property
+    def _key(self):
+        return ''   # disables real Polygon REST calls in scan filters
+
+    def Ticker(self, symbol):
+        return _FakeTicker(symbol.upper().strip())
+
+    def download(self, tickers, period=None, interval='1d',
+                 group_by='ticker', auto_adjust=True,
+                 progress=False, threads=True, timeout=20, **kwargs):
+        return _fake_yf.download(tickers, period=period, interval=interval,
+                                 group_by=group_by)
+
+    def last_price(self, symbol):
+        return _FakeTicker(symbol).fast_info.last_price
+
+    # Internal methods called by harvester helpers
+    def _history(self, symbol, period, interval):
+        return _FakeTicker(symbol).history(period=period, interval=interval)
+
+    def _fetch_bars(self, symbol, period, interval):
+        return _FakeTicker(symbol).history(period=period, interval=interval)
+
+    def _fetch_last_price(self, symbol):
+        return _FakeTicker(symbol).fast_info.last_price
+
+    def _avg_vol(self, symbol):
+        try:
+            eod = datetime.combine(replay_date, datetime.max.time())
+            df  = _filter_to(_bars_1d.get(symbol.upper()), eod)
+            if df is not None and not df.empty and 'Volume' in df.columns:
+                return int(df['Volume'].mean())
+        except Exception:
+            pass
+        return 1_000_000
+
+    def _info(self, symbol):
+        return {'floatShares': 0, 'sharesOutstanding': 0,
+                'shortPercentOfFloat': 0, 'shortRatio': 0}
+
+    def _news(self, symbol):
+        return []
+
+
+# Patch MarketData before importing any trading module so every
+# MarketData(config) call inside those modules gets _FakeMarketData.
+import modules.market_data as _md_mod
+_md_mod.MarketData = _FakeMarketData
+
 # ── Patch the harvester module ────────────────────────────────────────────────
 
 import modules.harvester as _hmod
 
-# Replace yfinance
+# Keep yf stub for any remaining direct references (safe no-op now)
 _hmod.yf = _fake_yf
 
 # Replace _get_session to use replay clock instead of real wall clock
@@ -320,6 +437,15 @@ from modules.harvester import StockHarvester, AutoPilot
 
 config = load_config()
 
+# Replay overrides: T+1 settlement and daily limits don't apply in intraday simulation.
+# cash_account_mode=False: sell proceeds return to cash immediately (no T+1 unsettled queue).
+# daily_spend_limit: default to 80% of starting balance for realistic multi-trade coverage.
+config = dict(config)
+config['cash_account_mode'] = False
+config['per_trade_capital']  = 150.0   # $150/trade → ~3 positions on $500/day
+if args.daily_limit is None:
+    config['daily_spend_limit'] = START_BAL  # 100% deployable — no artificial cap
+
 # Fresh paper trader — no disk writes during replay
 paper = PaperTrader(config)
 paper._save = lambda: None   # prevent overwriting real paper_trade.json
@@ -335,6 +461,15 @@ class _ReplayUniverse:
 
 harvester = StockHarvester(paper, config, universe=_ReplayUniverse())
 # Don't start harvester's background monitor (would make real API calls)
+
+# Stub SignalAggregator.score_symbol during replay — historical Reddit/EDGAR data unavailable
+# Return a passing score so only the real gates (momentum, RVOL, spread, VWAP) filter candidates
+from modules.signals import SignalAggregator as _SA
+_SA.score_symbol = lambda self, symbol, price: {
+    'composite_score': 50, 'positive_count': 4, 'consensus': 4,
+    'signal': 'WATCH', 'signal_color': '#60a5fa',
+    'data_sources': 0, 'breakdown': {},
+}
 
 autopilot = AutoPilot(harvester, paper, config)
 autopilot._save  = lambda: None   # prevent writing autopilot.json
@@ -360,6 +495,68 @@ autopilot._consecutive_losses  = 0
 autopilot._daily_pnl_floor_hit = False
 autopilot._gapped_symbols      = set()
 autopilot._gap_date            = DATE_STR
+autopilot._day_trades_log      = []   # clear real PDT history — fresh account for replay
+autopilot._pdt_last_log        = 0.0
+autopilot._cascade_strikes     = {}   # fresh cascade cooloff state
+
+# Patch _get_et_now to return replay clock time, not real wall clock.
+# Without this, the hard hour gate (now_et.hour >= 16) blocks all buys
+# when replay is run after 4 PM ET.
+autopilot._get_et_now = lambda: _clock.now()
+
+# Patch scan_movers' date filter to use replay date instead of datetime.now().date().
+# Without this, today_bars filter looks for May 30 rows in May 29 bar data → falls to
+# hist.tail(78) daily bars, losing intraday 5m signal quality.
+harvester._get_today_date = lambda: replay_date
+
+# Pre-populate pre-market gapper watchlist using real pre-market data for the replay date.
+# In production this runs automatically during the PRE_MARKET session; in replay we start
+# at 9:30 (OPEN) and would miss it.  Fetch once here so gap bonuses apply from tick 1.
+print('[Replay] Fetching pre-market gapper data for {}…'.format(DATE_STR))
+try:
+    _pm_gappers = []
+    for _sym in VALID[:60]:
+        try:
+            t = _yf_real.Ticker(_sym)
+            pm = t.history(start=DATE_STR, end=DATE_NEXT, interval='1m', prepost=True)
+            if pm is None or pm.empty:
+                continue
+            # Filter to pre-market bars (before 9:30 ET)
+            if pm.index.tzinfo:
+                pm.index = pm.index.tz_convert('US/Eastern')
+            pre = pm[pm.index.time < __import__('datetime').time(9, 30)]
+            if pre.empty or int(pre['Volume'].sum()) < 50_000:
+                continue
+            # Prior close from daily bars
+            hist = _bars_1d.get(_sym)
+            if hist is None or len(hist) < 2:
+                continue
+            prev_close = float(hist['Close'].iloc[-2])
+            pm_price   = float(pre['Close'].iloc[-1])
+            pm_vol     = int(pre['Volume'].sum())
+            gap_pct    = (pm_price - prev_close) / prev_close * 100 if prev_close > 0 else 0
+            if gap_pct >= 4.0:   # lower threshold than live (8%) — catches moderately gapped
+                _pm_gappers.append({
+                    'symbol':          _sym,
+                    'gap_pct':         round(gap_pct, 2),
+                    'premarket_price': round(pm_price, 4),
+                    'prev_close':      round(prev_close, 4),
+                    'premarket_vol':   pm_vol,
+                })
+        except Exception:
+            continue
+    _pm_gappers.sort(key=lambda x: x['gap_pct'], reverse=True)
+    if _pm_gappers:
+        autopilot._premarket_watchlist = _pm_gappers
+        autopilot._premarket_date = DATE_STR
+        print('[Replay] Pre-market gappers: {} found (top: {})'.format(
+            len(_pm_gappers),
+            ', '.join('{} +{:.1f}%'.format(g['symbol'], g['gap_pct']) for g in _pm_gappers[:5])))
+    else:
+        print('[Replay] No pre-market gappers found for {}'.format(DATE_STR))
+except Exception as _e:
+    print(f'[Replay] Pre-market fetch failed: {_e}')
+print()
 
 # Inject daily limit override
 if args.daily_limit is not None:
@@ -397,6 +594,170 @@ else:
             print(f'  {_s}: NO bars')
 print()
 
+# ── Competitor Baseline: canonical Holly AI / ORB gap-and-go ─────────────────
+#
+# Strategy used by Trade Ideas (Holly), Warrior Trading bots, TrendSpider gap-and-go:
+#   1. Capture first-5m candle (ORB) at 9:36 ET
+#   2. Buy first breakout above ORB high on any universe symbol
+#   3. Target = ORB high + 2×(ORB high – ORB low)  → 2:1 risk/reward
+#   4. Hard stop at ORB low
+#   5. No harvesting, no momentum scoring, no cascade filter, no multi-source intel
+#   6. Close all open positions at 15:30 ET
+#   Same starting balance, same per-trade sizing, same universe, same price data.
+
+class CompetitorBaseline:
+
+    def __init__(self, balance, per_trade=150.0, max_pos=3):
+        self._balance       = float(balance)
+        self._start_balance = float(balance)
+        self._per_trade     = per_trade
+        self._max_pos       = max_pos
+        self._positions     = {}   # sym → {shares, entry, stop, target}
+        self._orb           = {}   # sym → {high, low}
+        self._orb_captured  = False
+        self._closed        = set()  # symbols already exited today — no re-entry
+        self._daily_spent   = 0.0
+        self.log            = []
+        self.stats          = {'trades': 0, 'wins': 0, 'losses': 0, 'total_profit': 0.0}
+
+    def _capture_orb(self):
+        open_dt  = datetime.combine(replay_date, datetime.strptime('09:30', '%H:%M').time())
+        close_dt = datetime.combine(replay_date, datetime.strptime('09:35', '%H:%M').time())
+        for sym in VALID:
+            bars = _bars_1m.get(sym)
+            if bars is None or bars.empty:
+                _dbg_skip['no_bars'] += 1
+                continue
+            idx = bars.index.tz_localize(None) if bars.index.tzinfo else bars.index
+            first = bars[(idx >= open_dt) & (idx < close_dt)]
+            if len(first) < 1:
+                _dbg_skip['no_first'] += 1
+                continue
+            h = float(first['High'].max())
+            l = float(first['Low'].min())
+            if h <= 0 or l <= 0 or h < 0.10 or h > 8.0:
+                _dbg_skip['bad_price'] += 1
+                continue
+            self._orb[sym] = {'high': h, 'low': l}
+
+    def tick(self, now_et):
+        m = now_et.hour * 60 + now_et.minute
+
+        # Capture ORB levels once at 9:36
+        if m >= 9 * 60 + 36 and not self._orb_captured:
+            self._capture_orb()
+            self._orb_captured = True
+            self.log.append({'time': now_et.strftime('%H:%M'), 'action': 'ORB',
+                             'note': 'ORB levels captured for {} symbols'.format(len(self._orb))})
+
+        # Force-close all positions at 15:30
+        if m >= 15 * 60 + 30:
+            for sym in list(self._positions.keys()):
+                price = _FakeTicker(sym).fast_info.last_price or self._positions[sym]['entry']
+                self._exit(sym, price, 'CLOSE', now_et)
+            return
+
+        # Check stop/target on open positions every tick
+        for sym in list(self._positions.keys()):
+            pos   = self._positions[sym]
+            price = _FakeTicker(sym).fast_info.last_price
+            if price <= 0:
+                continue
+            if price <= pos['stop']:
+                self._exit(sym, price, 'STOP', now_et)
+            elif price >= pos['target']:
+                self._exit(sym, price, 'TARGET', now_et)
+
+        # New entries only before 12:00 ET (Holly AI style — open momentum + standard session)
+        if m >= 12 * 60:
+            return
+        if len(self._positions) >= self._max_pos:
+            return
+        if self._daily_spent >= self._start_balance:
+            return
+
+        # Find best ORB breakout candidate not already held or exited
+        best = None
+        best_score = 0.0
+        for sym in VALID:
+            if sym in self._positions or sym in self._closed:
+                continue
+            orb = self._orb.get(sym)
+            if not orb:
+                continue
+            price = _FakeTicker(sym).fast_info.last_price
+            if price <= 0 or not (0.10 <= price <= 8.0):
+                continue
+            if price <= orb['high'] * 1.005:   # must clear ORB high + 0.5% buffer
+                continue
+            # Score = breakout strength × gap priority
+            gap_bonus = next((g['gap_pct'] for g in _pm_gappers
+                              if g['symbol'] == sym), 0.0)
+            score = (price / orb['high'] - 1) * 100 + gap_bonus * 0.5
+            if score > best_score:
+                best_score = score
+                best = (sym, price, orb)
+
+        if best is None:
+            return
+        sym, price, orb = best
+        shares = max(1, int(self._per_trade / price))
+        cost   = shares * price
+        if cost > self._balance:
+            return
+
+        risk   = max(orb['high'] - orb['low'], 0.01)
+        target = round(orb['high'] + 2.0 * risk, 4)
+        stop   = round(orb['low'], 4)
+
+        self._balance     -= cost
+        self._daily_spent += cost
+        self._positions[sym] = {'shares': shares, 'entry': price,
+                                'stop': stop, 'target': target}
+        self.stats['trades'] += 1
+        self.log.append({'time': now_et.strftime('%H:%M'), 'action': 'BUY',
+                         'symbol': sym, 'shares': shares, 'price': round(price, 4),
+                         'target': target, 'stop': stop,
+                         'note': '{} {} sh @ ${:.4f} | tgt ${:.4f} | stop ${:.4f}'.format(
+                             sym, shares, price, target, stop)})
+
+    def _exit(self, sym, price, reason, now_et):
+        pos = self._positions.pop(sym, None)
+        if pos is None:
+            return
+        self._closed.add(sym)
+        proceeds = pos['shares'] * price
+        pnl      = (price - pos['entry']) * pos['shares']
+        self._balance         += proceeds
+        self.stats['total_profit'] += pnl
+        if pnl >= 0:
+            self.stats['wins'] += 1
+        else:
+            self.stats['losses'] += 1
+        self.log.append({'time': now_et.strftime('%H:%M'), 'action': reason,
+                         'symbol': sym, 'shares': pos['shares'], 'price': round(price, 4),
+                         'pnl': round(pnl, 2),
+                         'note': '{} {} sh @ ${:.4f} | P&L ${:+.2f} [{}]'.format(
+                             sym, pos['shares'], price, pnl, reason)})
+
+    def get_mtm(self):
+        mtm = self._balance
+        for sym, pos in self._positions.items():
+            px   = _FakeTicker(sym).fast_info.last_price or pos['entry']
+            mtm += pos['shares'] * px
+        return mtm
+
+    def get_vault(self):
+        return 0.0   # competitor has no vault/profit-lock feature
+
+
+_competitor = CompetitorBaseline(START_BAL, per_trade=150.0, max_pos=3)
+_comp_log_len = 0
+
+# ── Reset replay clock — all setup above consumed real time; anchor to NOW ───
+# Without this, data downloads + diagnostics eat into the simulated session.
+_clock._real_start = time.monotonic()
+
 # ── Replay loop ───────────────────────────────────────────────────────────────
 
 # Each real tick = 5 market-minutes of simulated time
@@ -433,18 +794,41 @@ while not _clock.done():
         except Exception as e:
             print(f'  [{now_et.strftime("%H:%M")}] ❌ tick error: {e}')
 
-        # Print new log entries
+        # Tick competitor strategy (same cadence)
+        try:
+            _competitor.tick(now_et)
+        except Exception as e:
+            print(f'  [{now_et.strftime("%H:%M")}] ❌ competitor tick error: {e}')
+
+        # Print new log entries — our system
         new_entries = autopilot.log[prev_log_len:]
         prev_log_len = len(autopilot.log)
         for e in new_entries:
             action = e.get('action', '')
             note   = e.get('note', '')
-            # Skip noisy scan/session lines unless they led somewhere
-            if action in ('SCAN', 'SESSION') and not any(
-                    x in note for x in ('found', 'No qual', 'blocked', 'DEAD', 'CLOSE')):
-                continue
+            # Suppress only pure status noise; always show anything decision-related
+            _quiet = ('SCAN', 'SESSION', 'SYSTEM')
+            _decision = ('BUY', 'SELL', 'HARVEST', 'HALT', 'SKIP', 'LIMIT', 'PDT',
+                         'REGIME', 'SCORE-GATE', 'VWAP', 'ENTRY-SKIP', 'SPREAD',
+                         'EARNINGS', 'CATALYST', 'ORB', 'BEHAVIORAL', 'SQUEEZE',
+                         'INSIDER', 'CONGRESS', 'SCAN')
+            if action in _quiet and action not in _decision:
+                if not any(x in note for x in ('found', 'No qual', 'blocked', 'DEAD', 'CLOSE')):
+                    continue
             icon = _ICONS.get(action, '  ')
-            print(f'  [{now_et.strftime("%H:%M")}] {icon} [{action:12s}]  {note[:72]}')
+            print(f'  [{now_et.strftime("%H:%M")}] {icon} [{action:12s}]  {note[:80]}')
+
+        # Print new competitor log entries
+        new_comp = _competitor.log[_comp_log_len:]
+        _comp_log_len = len(_competitor.log)
+        for e in new_comp:
+            action = e.get('action', '')
+            note   = e.get('note', e.get('note', ''))
+            if action == 'ORB':
+                continue   # suppress ORB capture noise
+            _comp_icons = {'BUY': '🟦', 'STOP': '🟥', 'TARGET': '🎯', 'CLOSE': '🔲'}
+            icon = _comp_icons.get(action, '  ')
+            print(f'  [{now_et.strftime("%H:%M")}] {icon} [COMP-{action:8s}]  {note[:80]}')
 
     # Balance snapshot every 30 market-minutes
     current_minute = int(elapsed_market_mins)
@@ -499,44 +883,83 @@ loss  = stats.get('losses', 0)
 total = max(wins + loss, 1)
 pnl   = mtm - START_BAL
 
-print('\n' + '═' * 64)
-print('  REPLAY FINAL REPORT')
-print(f'  {DATE_STR}  {_OPEN.strftime("%H:%M")} – {_CLOSE.strftime("%H:%M")} ET')
-print('═' * 64)
-print(f'  Starting balance :  ${START_BAL:.2f}')
-print(f'  Ending cash      :  ${balance:.2f}')
-print(f'  Mark-to-market   :  ${mtm:.2f}')
-print(f'  Total P&L        :  ${pnl:+.2f}  ({pnl / START_BAL * 100:+.1f}%)')
-print()
-print(f'  Trades executed  :  {stats.get("total_trades", 0)}')
-print(f'  Harvests         :  {stats.get("total_harvests", 0)}')
-print(f'  Wins             :  {wins}')
-print(f'  Losses           :  {loss}')
-print(f'  Win rate         :  {wins / total * 100:.0f}%')
-print(f'  Realized P&L     :  ${stats.get("total_profit", 0):+.2f}')
-print(f'  Daily spent      :  ${autopilot.daily_spent:.2f}')
-print(f'  Consec losses    :  {autopilot._consecutive_losses}')
-print(f'  Floor tripped    :  {autopilot._daily_pnl_floor_hit}')
+# ── Competitor final mark-to-market (force-close any residual positions) ───────
+comp_mtm = _competitor.get_mtm()
+comp_pnl   = comp_mtm - START_BAL
+comp_stats = _competitor.stats
+comp_wins  = comp_stats['wins']
+comp_loss  = comp_stats['losses']
+comp_total = max(comp_wins + comp_loss, 1)
+vault_bal  = autopilot._vault_balance
 
+# ── Side-by-side comparison report ────────────────────────────────────────────
+W = 30   # column width
+
+print('\n' + '═' * 68)
+print('  REPLAY COMPARISON REPORT  —  ' + DATE_STR)
+print(f'  {_OPEN.strftime("%H:%M")} – {_CLOSE.strftime("%H:%M")} ET  |  $500/day  |  $150/trade')
+print('═' * 68)
+print(f'  {"":28s}  {"StopTrading":>14s}  {"Competitor ORB":>14s}')
+print(f'  {"":28s}  {"(this system)":>14s}  {"(Holly AI style)":>14s}')
+print('  ' + '─' * 64)
+print(f'  {"Starting balance":28s}  ${START_BAL:>13.2f}  ${START_BAL:>13.2f}')
+print(f'  {"Ending cash":28s}  ${balance:>13.2f}  ${_competitor._balance:>13.2f}')
+print(f'  {"Mark-to-market":28s}  ${mtm:>13.2f}  ${comp_mtm:>13.2f}')
+print(f'  {"Total P&L":28s}  ${pnl:>+13.2f}  ${comp_pnl:>+13.2f}')
+print(f'  {"P&L %":28s}  {pnl/START_BAL*100:>+12.1f}%  {comp_pnl/START_BAL*100:>+12.1f}%')
+print(f'  {"Vault (locked profit)":28s}  ${vault_bal:>13.2f}  {"N/A":>14s}')
+_our_combined = pnl + vault_bal
+print(f'  {"Combined (P&L + vault)":28s}  ${_our_combined:>+13.2f}  ${comp_pnl:>+13.2f}')
+print('  ' + '─' * 64)
+print(f'  {"Trades":28s}  {stats.get("total_trades",0):>14d}  {comp_stats["trades"]:>14d}')
+print(f'  {"Harvests":28s}  {stats.get("total_harvests",0):>14d}  {"0":>14s}')
+print(f'  {"Wins":28s}  {wins:>14d}  {comp_wins:>14d}')
+print(f'  {"Losses":28s}  {loss:>14d}  {comp_loss:>14d}')
+print(f'  {"Win rate":28s}  {wins/total*100:>13.0f}%  {comp_wins/comp_total*100:>13.0f}%')
+print(f'  {"Realized P&L":28s}  ${stats.get("total_profit",0):>+13.2f}  ${comp_stats["total_profit"]:>+13.2f}')
+print(f'  {"Capital deployed":28s}  ${autopilot.daily_spent:>13.2f}  ${_competitor._daily_spent:>13.2f}')
+print('  ' + '─' * 64)
+_edge = _our_combined - comp_pnl
+_edge_pct = _edge / START_BAL * 100
+_winner = 'StopTrading' if _edge >= 0 else 'Competitor'
+print(f'  {"Edge (combined vs competitor)":28s}  ${_edge:>+13.2f}  ({_edge_pct:+.1f}%)')
+print(f'  {"Winner":28s}  {_winner:>28s}')
+print('═' * 68)
+
+# ── Our system detail ──────────────────────────────────────────────────────────
 if pos_report:
-    print(f'\n  Open positions at {_CLOSE.strftime("%H:%M")} close:')
+    print(f'\n  StopTrading — open positions at {_CLOSE.strftime("%H:%M")}:')
     for sym, shrs, cost, px, gain, upnl in pos_report:
         print(f'    {sym:6s}  {shrs}sh @ ${cost:.4f} → ${px:.4f}'
               f'  {gain:+.1f}%  (${upnl:+.2f} unrealized)')
 
 if history:
-    print(f'\n  Trade history ({len(history)} events):')
-    for h in history[-30:]:
-        action = h.get('action', '?')
-        sym    = h.get('symbol', '?')
-        shrs   = h.get('shares', '')
-        px     = h.get('price', 0)
-        pnl_h  = h.get('pnl', '')
-        t      = h.get('time', '')[:16]
+    print(f'\n  StopTrading — trade history ({len(history)} events):')
+    for h in history[-20:]:
+        action  = h.get('action', '?')
+        sym     = h.get('symbol', '?')
+        shrs    = h.get('shares', '')
+        px      = h.get('price', 0)
+        pnl_h   = h.get('pnl', '')
+        t       = h.get('time', '')[:16]
         pnl_str = f'  pnl=${pnl_h:+.2f}' if isinstance(pnl_h, (int, float)) else ''
         print(f'    {t}  {action:5s}  {sym:6s}  {shrs}sh @ ${float(px):.4f}{pnl_str}')
 
+# ── Competitor detail ──────────────────────────────────────────────────────────
+comp_trades = [e for e in _competitor.log if e.get('action') in ('BUY','STOP','TARGET','CLOSE')]
+if comp_trades:
+    print(f'\n  Competitor ORB — trade history ({len(comp_trades)} events):')
+    for e in comp_trades:
+        action  = e.get('action', '?')
+        sym     = e.get('symbol', '?')
+        shrs    = e.get('shares', '')
+        px      = e.get('price', 0)
+        pnl_e   = e.get('pnl', '')
+        t       = e.get('time', '')
+        pnl_str = f'  pnl=${pnl_e:+.2f}' if isinstance(pnl_e, (int, float)) else ''
+        print(f'    {t}  {action:6s}  {sym:6s}  {shrs}sh @ ${float(px):.4f}{pnl_str}')
+
 print()
-print('═' * 64)
+print('═' * 68)
 print(f'  Universe: {len(VALID)} symbols  |  Speed: {SPEED:.0f}×')
-print('═' * 64 + '\n')
+print('═' * 68 + '\n')

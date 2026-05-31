@@ -163,14 +163,34 @@ class VelocityTracker:
         total_vol = up_vol + dn_vol
         ofi = round((up_vol - dn_vol) / total_vol, 3) if total_vol > 0 else 0.0  # -1 to +1
 
+        # VWAP from 1-min bars + Bollinger deviation bands
+        try:
+            import numpy as _np
+            tp = (hist['High'] + hist['Low'] + hist['Close']) / 3
+            cum_vol = float(hist['Volume'].sum())
+            vwap = float((tp * hist['Volume']).sum() / cum_vol) if cum_vol > 0 else now_price
+            vwap_dev_pct = round((now_price - vwap) / vwap * 100, 2) if vwap > 0 else 0.0
+            close_std = float(_np.std(closes)) if len(closes) >= 5 else 0.0
+            bb_upper = round(vwap + 2 * close_std, 4)
+            bb_lower = round(vwap - 2 * close_std, 4)
+        except Exception:
+            vwap = now_price
+            vwap_dev_pct = 0.0
+            bb_upper = now_price
+            bb_lower = now_price
+
         self.cache.set('velocity', symbol, {
-            'price':    round(now_price, 4),
-            'pct_1m':   round(chg(1), 3),
-            'pct_5m':   round(chg(5), 3),
-            'pct_15m':  round(chg(15), 3),
-            'vol_ratio': round(vol_ratio, 2),
-            'ofi':       round(ofi, 2),  # order flow imbalance
-            'updated':   datetime.now().strftime('%H:%M:%S'),
+            'price':        round(now_price, 4),
+            'pct_1m':       round(chg(1), 3),
+            'pct_5m':       round(chg(5), 3),
+            'pct_15m':      round(chg(15), 3),
+            'vol_ratio':    round(vol_ratio, 2),
+            'ofi':          round(ofi, 2),  # order flow imbalance
+            'vwap':         round(vwap, 4),
+            'vwap_dev_pct': vwap_dev_pct,   # % above(+) or below(-) VWAP
+            'bb_upper':     bb_upper,        # VWAP + 2σ
+            'bb_lower':     bb_lower,        # VWAP - 2σ
+            'updated':      datetime.now().strftime('%H:%M:%S'),
         })
 
         self.cache.add_tick(symbol, now_price, int(volumes[-1]))

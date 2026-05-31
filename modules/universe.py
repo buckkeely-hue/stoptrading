@@ -252,21 +252,28 @@ class DynamicUniverse:
             self.last_refresh = datetime.now().isoformat()
             self.refresh_count += 1
 
-    def get_premarket_gappers(self, min_gap_pct=8.0):
+    def get_premarket_gappers(self, min_gap_pct=8.0, md=None):
         """
         Scan for stocks gapping up >min_gap_pct% in pre-market (4am–9:30am ET).
         Run this at 9:00–9:25am to build a watchlist before open.
         Returns list of {symbol, gap_pct, premarket_price, prev_close, volume}.
+        md: optional MarketData instance; falls back to yfinance directly if None.
         """
         with self._lock:
             candidates = list(self._universe)
         if not candidates:
             candidates = list(FALLBACK)
 
+        # Use injected MarketData if available, otherwise raw yfinance
+        def _ticker(sym):
+            if md is not None:
+                return md.Ticker(sym)
+            return yf.Ticker(sym)
+
         gappers = []
         for sym in candidates:
             try:
-                t = yf.Ticker(sym)
+                t = _ticker(sym)
                 pm = t.history(period='1d', interval='1m', prepost=True)
                 if pm.empty:
                     continue

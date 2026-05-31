@@ -76,7 +76,7 @@ def _safe_int(val, default: int) -> int:
         return default
 
 config = load_config()
-scanner = StockScanner(universe=None)   # wired to universe after it starts below
+scanner = StockScanner(universe=None, config=config)   # wired to universe after it starts below
 watchlist = WatchlistManager()
 paper_trader = PaperTrader(config)
 sentiment = SentimentAnalyzer(config)
@@ -125,7 +125,7 @@ autopilot = AutoPilot(harvester, paper_trader, config, engine=engine, catalyst=c
                       macro=macro, behavioral=behavioral,
                       insider=insider, earnings=earnings, congress=congress,
                       orb=orb, news=news_agent, float_rotation=float_rot,
-                      short_squeeze=short_sq, sector=sector)
+                      short_squeeze=short_sq, sector=sector, ibkr=ibkr)
 ledger    = AccountingLedger(config, paper_trader)
 trial     = TrialManager(autopilot, paper_trader, harvester, config)
 scheduler = DailyScheduler(autopilot, paper_trader, load_config)
@@ -140,6 +140,7 @@ if config.get('auto_start_enabled') and not autopilot.running:
 
 
 @app.route('/api/health')
+@require_auth
 def api_health():
     try:
         return jsonify({
@@ -345,6 +346,25 @@ def api_autopilot_stop():
 @require_auth
 def api_autopilot_resume():
     return jsonify(autopilot.resume())
+
+@app.route('/api/vault')
+@require_auth
+def api_vault_status():
+    return jsonify(autopilot.get_vault_status())
+
+@app.route('/api/vault/transfer', methods=['POST'])
+@require_auth
+def api_vault_transfer():
+    b = request.get_json() or {}
+    amount = _safe_float(b.get('amount'), None)
+    return jsonify(autopilot.vault_transfer_to_trading(amount))
+
+@app.route('/api/vault/withdraw', methods=['POST'])
+@require_auth
+def api_vault_withdraw():
+    b = request.get_json() or {}
+    amount = _safe_float(b.get('amount'), None)
+    return jsonify(autopilot.vault_withdraw(amount))
 
 
 @app.route('/api/accounting')

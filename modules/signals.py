@@ -20,6 +20,14 @@ import os
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
 
+# Module-level VADER/TextBlob setup — loaded once
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as _VaderCls
+    _VADER = _VaderCls()
+    HAS_VADER = True
+except ImportError:
+    HAS_VADER = False
+
 HEADERS = {
     'User-Agent': 'StopTrading Research Tool buckkeely@gmail.com',  # SEC requires this
     'Accept': 'application/json',
@@ -36,25 +44,8 @@ def get_insider_signal(symbol):
         buys = 0
         sells = 0
 
-        # SEC EDGAR company-based Form 4 feed (correct endpoint for symbol lookup)
-        try:
-            edgar_url = (
-                'https://www.sec.gov/cgi-bin/browse-edgar'
-                '?action=getcompany&company=&CIK={}&type=4'
-                '&dateb=&owner=include&count=10&search_text=&output=atom'
-            ).format(symbol)
-            r = requests.get(edgar_url, headers=HEADERS, timeout=8)
-            if r.status_code == 200 and r.content:
-                import xml.etree.ElementTree as ET
-                root = ET.fromstring(r.content)
-                ns = {'atom': 'http://www.w3.org/2005/Atom'}
-                entries = root.findall('atom:entry', ns)
-                # Each entry = one Form 4 filing; presence = insider transaction filed
-                buys += min(len(entries), 5)   # conservative: count filings as buys until we parse XML detail
-        except Exception:
-            pass
-
-        # OpenInsider — more reliable for parsing buy vs sell for penny stocks
+        # OpenInsider — parses buy vs sell direction (primary source)
+        oi_ok = False
         try:
             oi_url = (
                 'https://openinsider.com/screener?s={}&o=&pl=&ph=&ll=&lh=&fd=30'
@@ -67,11 +58,44 @@ def get_insider_signal(symbol):
                 oi_buys  = oi_r.text.count('Purchase')
                 oi_sells = oi_r.text.count('Sale')
                 if oi_buys or oi_sells:
-                    # OpenInsider data overrides EDGAR guess with actual buy/sell split
                     buys  = oi_buys
                     sells = oi_sells
+                    oi_ok = True
         except Exception:
             pass
+
+        # EDGAR fallback — parse transaction code from XML to get actual direction
+        if not oi_ok:
+            try:
+                import xml.etree.ElementTree as ET
+                import re as _re
+                edgar_url = (
+                    'https://www.sec.gov/cgi-bin/browse-edgar'
+                    '?action=getcompany&company=&CIK={}&type=4'
+                    '&dateb=&owner=include&count=10&search_text=&output=atom'
+                ).format(symbol)
+                r = requests.get(edgar_url, headers=HEADERS, timeout=8)
+                if r.status_code == 200 and r.content:
+                    root = ET.fromstring(r.content)
+                    ns = {'atom': 'http://www.w3.org/2005/Atom'}
+                    entries = root.findall('atom:entry', ns)
+                    for entry in entries[:5]:
+                        # Look for transaction description in entry content
+                        content_el = entry.find('atom:content', ns)
+                        content = ET.tostring(content_el, encoding='unicode') if content_el is not None else ''
+                        title_el = entry.find('atom:title', ns)
+                        title = title_el.text.upper() if title_el is not None else ''
+                        if any(w in title for w in ['PURCHASE', 'ACQUISITION', 'BOUGHT']):
+                            buys += 1
+                        elif any(w in title for w in ['SALE', 'SOLD', 'DISPOSITION']):
+                            sells += 1
+                        # P = purchase, S = sale, D = disposition by gift in transaction code
+                        if _re.search(r'transactionCode[^>]*>P<', content):
+                            buys += 1
+                        elif _re.search(r'transactionCode[^>]*>[SD]<', content):
+                            sells += 1
+            except Exception:
+                pass
 
         net = buys - sells
         score = min(max(net * 5, -15), 30)
@@ -368,7 +392,14 @@ class SignalAggregator:
         """
         Aggregate all signals into one composite score (0-100+).
         Weights reflect reliability and edge value of each signal.
+        Results cached for 300 seconds — signal data doesn't change intraday.
         """
+        cache_key = symbol.upper()
+        with self._cache_lock:
+            cached = self._cache.get(cache_key)
+            if cached and (time.time() - cached.get('ts', 0)) < 300:
+                return cached['result']
+
         signals = {}
 
         # Run signal fetches in parallel
@@ -428,13 +459,14 @@ class SignalAggregator:
             label = 'AVOID'
             color = '#ff4757'
 
-        return {
+        result = {
             'symbol': symbol,
             'price': price,
             'composite_score': round(total, 1),
             'signal': label,
             'signal_color': color,
             'consensus': positive_count,      # how many of 7 sources are positive
+            'positive_count': positive_count, # alias used by buy gate
             'data_sources': has_data_count,   # how many sources returned real data
             'breakdown': {
                 'insider':       {'score': insider['score'],       'note': insider.get('note', '')},
@@ -446,6 +478,9 @@ class SignalAggregator:
                 'technical':     {'score': technical['score'],     'note': technical.get('note', '')},
             }
         }
+        with self._cache_lock:
+            self._cache[cache_key] = {'ts': time.time(), 'result': result}
+        return result
 
     def scan_with_signals(self, symbols_with_prices):
         """

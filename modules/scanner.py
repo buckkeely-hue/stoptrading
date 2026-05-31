@@ -1,18 +1,19 @@
-import yfinance as yf
 import pandas as pd
 from modules.universe import FALLBACK
+from modules.market_data import MarketData
 
 
 class StockScanner:
-    def __init__(self, universe=None):
+    def __init__(self, universe=None, config=None):
         self.universe = universe   # DynamicUniverse instance — uses FALLBACK if None
+        self._md      = MarketData(config or {})
 
     def scan(self):
         symbols = list(set(
             self.universe.get() if self.universe else FALLBACK
         ))
         try:
-            data = yf.download(
+            data = self._md.download(
                 tickers=' '.join(symbols),
                 period='25d', interval='1d',
                 group_by='ticker', auto_adjust=True,

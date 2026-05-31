@@ -2,13 +2,13 @@
 BehavioralAgent — non-financial behavioral signals for penny stock timing.
 
 Sources:
-  1. Lunar cycle  — Yuan, Zhong & Zhu (2006) Journal of Finance:
-                    returns ~4% lower in 15 days around full moon vs new moon.
-                    Mechanism: lunar phase shifts investor mood / risk appetite.
+  1. Intraday sentiment velocity — rate of change of Reddit mention volume.
+                    Accelerating crowd = +4, decelerating = -4.
 
   2. Reddit r/pennystocks + r/wallstreetbets
                   — mention velocity (count × log upvotes) per ticker.
                     Accelerating mentions = crowd momentum building.
+                    VADER NLP sentiment analysis (more accurate than TextBlob for financial text).
 
   3. StockTwits trending
                   — real-time social pulse; complements Reddit (different user base).
@@ -22,7 +22,7 @@ Sources:
                   — First/last trading day of month, OpEx weeks, holiday-week thin tape.
 
 Scoring:
-  Lunar:      -8 (full moon) to +8 (new moon)
+  Sentiment velocity: -4 to +4 (crowd momentum change rate)
   Reddit:      0 to +20 per ticker (velocity + sentiment)
   StockTwits:  0 to +10 per ticker (volume of mentions)
   Time-of-day:-8 to +7
@@ -72,6 +72,14 @@ _STOPWORDS = {
 
 REDDIT_SUBS = ['pennystocks', 'wallstreetbets', 'stocks', 'investing', 'smallstreetbets']
 
+# VADER for financial-text sentiment (more accurate than TextBlob for social media)
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as _VaderCls
+    _VADER = _VaderCls()
+    HAS_VADER = True
+except ImportError:
+    HAS_VADER = False
+
 
 class BehavioralAgent:
 
@@ -80,11 +88,9 @@ class BehavioralAgent:
         self._lock   = threading.Lock()
         self.running = False
 
-        # Lunar state
-        self._lunar_score  = 0
-        self._lunar_phase  = 'Unknown'
-        self._lunar_note   = ''
-        self._phase_day    = 0.0
+        # Intraday sentiment velocity (replaces lunar phase)
+        self._sentiment_velocity = 0   # -4 to +4: crowd momentum change rate
+        self._prev_total_velocity = 0.0
 
         # Social state
         self._reddit_mentions  = {}   # ticker -> {count, upvotes, velocity, sentiment}
@@ -96,7 +102,6 @@ class BehavioralAgent:
 
     def start(self):
         self.running = True
-        self._calc_lunar()          # immediate — pure math, no network
         t = threading.Thread(target=self._loop, daemon=True)
         t.start()
 
@@ -106,48 +111,40 @@ class BehavioralAgent:
     def _loop(self):
         while self.running:
             try:
-                self._calc_lunar()
                 self._fetch_reddit()
                 self._fetch_stocktwits()
+                self._calc_sentiment_velocity()
             except Exception:
                 pass
             time.sleep(900)         # refresh every 15 minutes
 
-    # ── Lunar Phase ───────────────────────────────────────────────────────────
+    # ── Intraday Sentiment Velocity ───────────────────────────────────────────
 
-    def _calc_lunar(self):
+    def _calc_sentiment_velocity(self):
         """
-        Astronomical lunar phase via synodic period math.
-        Reference: new moon 2000-01-06 18:14 UTC.
-        Synodic month: 29.530588853 days.
+        Replace lunar phase with intraday social sentiment velocity.
+        Measures rate-of-change of crowd momentum — accelerating crowd = +4, fading = -4.
         """
-        ref   = datetime(2000, 1, 6, 18, 14, 0, tzinfo=timezone.utc)
-        now   = datetime.now(timezone.utc)
-        cycle = 29.530588853
-        phase = ((now - ref).total_seconds() / 86400) % cycle
-
-        if phase < 1.85:
-            score, name, note = 4,  'New Moon',       'New moon — historically best returns (Yuan et al.)'
-        elif phase < 5.53:
-            score, name, note = 3,  'Waxing Crescent','Waxing crescent — risk appetite building'
-        elif phase < 9.22:
-            score, name, note = 1,  'First Quarter',  'First quarter — neutral'
-        elif phase < 12.91:
-            score, name, note = -1, 'Waxing Gibbous', 'Approaching full moon — sentiment peaking'
-        elif phase < 16.61:
-            score, name, note = -4, 'Full Moon',      'Full moon — historically lowest returns (Yuan et al.)'
-        elif phase < 20.30:
-            score, name, note = -3, 'Waning Gibbous', 'Waning gibbous — sentiment fading'
-        elif phase < 23.99:
-            score, name, note = -1, 'Last Quarter',   'Last quarter — cautious'
-        else:
-            score, name, note = 2,  'Waning Crescent','Approaching new moon — risk appetite returning'
-
         with self._lock:
-            self._lunar_score = score
-            self._lunar_phase = name
-            self._lunar_note  = note
-            self._phase_day   = round(phase, 1)
+            total_vel = sum(d.get('velocity', 0) for d in self._reddit_mentions.values())
+        prev = self._prev_total_velocity
+        if prev > 0:
+            pct_change = (total_vel - prev) / prev * 100
+            if pct_change > 20:
+                vel_score = 4
+            elif pct_change > 5:
+                vel_score = 2
+            elif pct_change < -20:
+                vel_score = -4
+            elif pct_change < -5:
+                vel_score = -2
+            else:
+                vel_score = 0
+        else:
+            vel_score = 0
+        self._prev_total_velocity = total_vel
+        with self._lock:
+            self._sentiment_velocity = vel_score
 
     # ── Reddit Scraper ────────────────────────────────────────────────────────
 
@@ -182,8 +179,11 @@ class BehavioralAgent:
                             found.add(t)
                     if found:
                         try:
-                            from textblob import TextBlob
-                            polarity = TextBlob(raw_text).sentiment.polarity
+                            if HAS_VADER:
+                                polarity = _VADER.polarity_scores(raw_text)['compound']
+                            else:
+                                from textblob import TextBlob
+                                polarity = TextBlob(raw_text).sentiment.polarity
                         except Exception:
                             polarity = 0.0
                         for t in found:
@@ -260,13 +260,13 @@ class BehavioralAgent:
     def get_score(self, ticker=None):
         """Composite behavioral score for a ticker (or market-wide if None)."""
         with self._lock:
-            lunar = self._lunar_score
+            sent_vel = self._sentiment_velocity
             rd    = self._reddit_mentions.get((ticker or '').upper(), {})
             st    = self._stocktwits_hot.get((ticker or '').upper(), 0)
 
         tod, _ = self._time_of_day()
 
-        score = lunar + (tod // 2)
+        score = sent_vel + (tod // 2)
 
         if ticker and rd:
             vel      = rd.get('velocity', 0)
@@ -314,10 +314,10 @@ class BehavioralAgent:
         tod_score, tod_note = self._time_of_day()
         with self._lock:
             return {
-                'lunar_phase':       self._lunar_phase,
-                'lunar_score':       self._lunar_score,
-                'lunar_note':        self._lunar_note,
-                'phase_day':         self._phase_day,
+                'sentiment_velocity':       self._sentiment_velocity,
+                'sentiment_velocity_note':  'Social crowd momentum accelerating' if self._sentiment_velocity > 0
+                                            else ('Social crowd momentum fading' if self._sentiment_velocity < 0
+                                            else 'Social sentiment stable'),
                 'time_of_day_score': tod_score,
                 'time_of_day_note':  tod_note,
                 'reddit_trending':   sorted(
@@ -331,5 +331,6 @@ class BehavioralAgent:
                 )[:20],
                 'last_reddit':      self._last_reddit.isoformat() if self._last_reddit else None,
                 'last_stocktwits':  self._last_stocktwits.isoformat() if self._last_stocktwits else None,
-                'total_score':      self._lunar_score + (tod_score // 2),
+                'total_score':      self._sentiment_velocity + (tod_score // 2),
+                'nlp_engine':       'vader' if HAS_VADER else 'textblob',
             }

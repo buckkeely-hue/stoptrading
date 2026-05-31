@@ -2,7 +2,7 @@ import json
 import os
 import threading
 from datetime import datetime, date, timedelta
-import yfinance as yf
+from modules.market_data import MarketData
 
 TRADES_FILE = os.path.join(os.path.dirname(__file__), '..', 'paper_trades.json')
 
@@ -10,6 +10,7 @@ class PaperTrader:
     def __init__(self, config):
         self._lock = threading.Lock()
         self._config = config
+        self._md = MarketData(config)
         self._trade_callbacks = []   # accounting hooks
         self._load()
 
@@ -73,11 +74,9 @@ class PaperTrader:
             json.dump(self._state, f, indent=2)
 
     def _get_price(self, symbol):
-        ticker = yf.Ticker(symbol)
-        info = ticker.fast_info
-        price = float(info.last_price) if info.last_price else 0.0
+        price = self._md.last_price(symbol)
         if price <= 0:
-            hist = ticker.history(period='1d')
+            hist = self._md.Ticker(symbol).history(period='1d')
             if not hist.empty:
                 price = float(hist['Close'].iloc[-1])
         return price
@@ -191,15 +190,34 @@ class PaperTrader:
             self._fire({'type': 'SELL', **result})
             return result
 
+    def vault_deposit(self, amount: float) -> bool:
+        """Move amount from trading balance into the profit vault. Returns False if insufficient balance."""
+        amount = round(float(amount), 4)
+        if amount <= 0:
+            return False
+        with self._lock:
+            if self._state['balance'] < amount:
+                return False
+            self._state['balance'] -= amount
+            self._save()
+            return True
+
+    def vault_return(self, amount: float):
+        """Return amount from vault back into trading balance."""
+        amount = round(float(amount), 4)
+        if amount <= 0:
+            return
+        with self._lock:
+            self._state['balance'] += amount
+            self._save()
+
     def get_state(self):
         with self._lock:
             self._settle_matured()
             positions_detail = []
             for symbol, pos in self._state['positions'].items():
                 try:
-                    ticker = yf.Ticker(symbol)
-                    info = ticker.fast_info
-                    current_price = float(info.last_price) if info.last_price else pos['avg_cost']
+                    current_price = self._md.last_price(symbol) or pos['avg_cost']
                 except Exception:
                     current_price = pos['avg_cost']
 

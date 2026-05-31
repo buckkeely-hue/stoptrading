@@ -17,8 +17,8 @@ Usage:
 
 import threading
 import time
-import yfinance as yf
 from datetime import datetime, timezone, timedelta
+from modules.market_data import MarketData
 
 try:
     from zoneinfo import ZoneInfo
@@ -29,13 +29,14 @@ except Exception:
 
 class ORBAgent:
 
-    def __init__(self, universe):
+    def __init__(self, universe, config=None):
         self.universe = universe   # DynamicUniverse instance or list
         self._lock    = threading.Lock()
         self._orb     = {}   # symbol -> {high, low, open, date}
         self._date    = ''
         self.running  = False
         self._thread  = None
+        self._md      = MarketData(config or {})
 
     def start(self):
         self.running = True
@@ -75,15 +76,32 @@ class ORBAgent:
         captured = {}
         for sym in syms[:80]:
             try:
-                hist = yf.Ticker(sym).history(period='1d', interval='5m')
+                hist = self._md.Ticker(sym).history(period='1d', interval='5m')
                 if hist.empty:
                     continue
-                first = hist.iloc[0]
+                # Validate the first bar is the 9:30 ET candle, not a pre-market bar
+                bar_ts = hist.index[0]
+                try:
+                    bar_et = bar_ts.tz_convert(_ET) if _ET and bar_ts.tzinfo else bar_ts
+                    if bar_et.hour != 9 or bar_et.minute != 30:
+                        # Skip to the first bar at 9:30
+                        market_open = hist[
+                            (hist.index.hour == 9) & (hist.index.minute == 30)
+                            if hasattr(hist.index, 'hour') else []
+                        ]
+                        if market_open.empty:
+                            continue
+                        first = market_open.iloc[0]
+                    else:
+                        first = hist.iloc[0]
+                except Exception:
+                    first = hist.iloc[0]
                 captured[sym] = {
-                    'high':  float(first['High']),
-                    'low':   float(first['Low']),
-                    'open':  float(first['Open']),
-                    'date':  today_str,
+                    'high':   float(first['High']),
+                    'low':    float(first['Low']),
+                    'open':   float(first['Open']),
+                    'volume': int(first['Volume']) if first['Volume'] > 0 else 0,
+                    'date':   today_str,
                 }
                 time.sleep(0.1)   # gentle rate limiting
             except Exception:
@@ -109,17 +127,28 @@ class ORBAgent:
                 price = current_prices.get(sym, 0)
             else:
                 try:
-                    price = float(yf.Ticker(sym).fast_info.last_price)
+                    price = self._md.last_price(sym)
                 except Exception:
                     continue
             if price <= 0:
                 continue
             if price > orb_high * 1.005:
+                # Volume confirmation: current 5m bar must have ≥ 1.5× the ORB candle volume
+                orb_vol = lvl.get('volume', 0)
+                if orb_vol > 0:
+                    try:
+                        recent_bars = self._md.Ticker(sym).history(period='1d', interval='5m')
+                        curr_vol = int(recent_bars['Volume'].iloc[-1]) if not recent_bars.empty else 0
+                        if curr_vol < orb_vol * 1.5:
+                            continue  # insufficient volume — not a confirmed breakout
+                    except Exception:
+                        pass  # fail open — don't block if volume fetch fails
                 breakouts.append({
                     'symbol':       sym,
                     'price':        round(price, 4),
                     'orb_high':     round(orb_high, 4),
                     'orb_low':      round(lvl['low'], 4),
+                    'orb_volume':   orb_vol,
                     'breakout_pct': round((price / orb_high - 1) * 100, 2),
                 })
         return sorted(breakouts, key=lambda x: x['breakout_pct'], reverse=True)

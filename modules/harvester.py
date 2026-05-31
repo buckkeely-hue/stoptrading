@@ -1,5 +1,6 @@
-import yfinance as yf
 import numpy as np
+import requests
+from modules.market_data import MarketData
 import threading
 import time
 import json
@@ -17,7 +18,7 @@ HARVEST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'h
 from modules.universe import FALLBACK as TOP_PENNY_UNIVERSE
 
 # Sessions where new buys are allowed; DEAD_ZONE and OVERNIGHT are skipped
-_BUY_SESSIONS = {'PRE_MARKET', 'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON', 'CLOSE'}
+_BUY_SESSIONS = {'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON', 'CLOSE'}
 
 
 def _pdt_window_dates(today) -> set:
@@ -88,8 +89,13 @@ class StockHarvester:
         self._thread = None
         self._lock = threading.Lock()
         self.signals = SignalAggregator(config)
+        self._md     = MarketData(config)
         self._float_cache = {}   # symbol -> (float_shares, timestamp)
         self._load()
+
+    def _get_today_date(self):
+        """Overrideable by replay harness to inject replay date instead of real wall date."""
+        return datetime.now().date()
 
     # ── Persistence ──────────────────────────────────────────────────────────
 
@@ -115,6 +121,36 @@ class StockHarvester:
 
     # ── Top 50 Mover Scan ─────────────────────────────────────────────────────
 
+    def _poly_snapshot_filter(self, symbols):
+        """
+        Single Polygon REST call to pre-filter universe by price + dollar volume.
+        Reduces 5-min bar fetches from ~80 to ~25 symbols, staying under free-tier rate limits.
+        Returns filtered list (or original list if Polygon key unavailable).
+        """
+        key = self._md._key
+        if not key:
+            return symbols
+        try:
+            url = ('https://api.polygon.io/v2/snapshot/locale/us/markets/stocks'
+                   '?tickers={}&apiKey={}').format(','.join(symbols[:200]), key)
+            r = requests.get(url, headers={'User-Agent': 'StopTrading/1.0'}, timeout=12)
+            if r.status_code != 200:
+                return symbols
+            snaps = r.json().get('tickers', [])
+            filtered = []
+            for s in snaps:
+                sym   = s.get('ticker', '')
+                day   = s.get('day', {})
+                price = float(day.get('c', 0) or
+                              s.get('lastTrade', {}).get('p', 0) or
+                              s.get('prevDay', {}).get('c', 0) or 0)
+                vol   = float(day.get('v', 0))
+                if 0.50 <= price < 10.0 and price * vol >= 100_000:
+                    filtered.append(sym)
+            return filtered if len(filtered) >= 5 else symbols
+        except Exception:
+            return symbols
+
     def scan_movers(self, extra_symbols=None):
         """Fetch top penny stocks from universe, score by movement quality, return ranked list.
 
@@ -125,8 +161,10 @@ class StockHarvester:
         universe = self.universe.get() if self.universe else TOP_PENNY_UNIVERSE
         if extra_symbols:
             universe = list(dict.fromkeys(list(universe) + [s.upper() for s in extra_symbols if s.upper() not in universe]))
+        # Pre-filter with Polygon snapshot: 1 API call instead of 80 — avoids free-tier rate limit
+        universe = self._poly_snapshot_filter(universe)[:40]
         try:
-            data = yf.download(
+            data = self._md.download(
                 tickers=' '.join(universe),
                 period='5d',
                 interval='5m',
@@ -139,7 +177,7 @@ class StockHarvester:
         except Exception:
             return []
 
-        today_date = datetime.now().date()
+        today_date = self._get_today_date()
         results = []
         for symbol in universe:
             try:
@@ -275,7 +313,7 @@ class StockHarvester:
                 return {'error': symbol + ' already being harvested'}
 
             try:
-                ticker = yf.Ticker(symbol)
+                ticker = self._md.Ticker(symbol)
                 price = float(ticker.fast_info.last_price)
                 if price <= 0:
                     return {'error': 'Could not get price for ' + symbol}
@@ -317,7 +355,7 @@ class StockHarvester:
                 if pos.status != 'active':
                     continue
                 try:
-                    ticker = yf.Ticker(symbol)
+                    ticker = self._md.Ticker(symbol)
                     price = float(ticker.fast_info.last_price)
                     if price <= 0:
                         continue
@@ -398,7 +436,7 @@ class StockHarvester:
         if cached and (time.time() - cached[1]) < 14400:
             return cached[0]
         try:
-            info = yf.Ticker(symbol).info
+            info = self._md.Ticker(symbol).info
             fl = int(info.get('floatShares') or info.get('sharesOutstanding') or 0)
             self._float_cache[symbol] = (fl, time.time())
             return fl
@@ -435,7 +473,7 @@ class StockHarvester:
         with self._lock:
             for symbol, pos in self.positions.items():
                 try:
-                    ticker = yf.Ticker(symbol)
+                    ticker = self._md.Ticker(symbol)
                     price = float(ticker.fast_info.last_price)
                 except Exception:
                     price = pos.entry_price
@@ -479,6 +517,7 @@ class StockHarvester:
 # ── AutoPilot ─────────────────────────────────────────────────────────────────
 
 AUTOPILOT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'autopilot.json')
+VAULT_FILE     = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'vault.json')
 
 class AutoPilot:
     """
@@ -491,10 +530,11 @@ class AutoPilot:
     - All decisions logged with reasoning
     """
 
-    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None):
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None, ibkr=None):
         self.harvester  = harvester
         self.paper      = paper_trader
         self.config     = config
+        self._md        = MarketData(config)
         self.engine     = engine     # RealtimeEngine — optional
         self.catalyst   = catalyst   # CatalystEngine — optional
         self.notifier   = notifier   # Notifier — optional, silently skipped if None
@@ -510,6 +550,7 @@ class AutoPilot:
         self.float_rotation = float_rotation  # FloatRotationAgent — optional
         self.short_squeeze  = short_squeeze   # ShortSqueezeAgent — optional
         self.sector         = sector          # SectorMomentumAgent — optional
+        self.ibkr           = ibkr            # IBKRFeed — optional, for real bid-ask spread
         self.running   = False
         self._thread = None
         self._lock = threading.Lock()
@@ -540,11 +581,18 @@ class AutoPilot:
         self._day_trades_log      = []   # list of 'YYYY-MM-DD' strings when a day trade completed
         self._pdt_last_log        = 0.0  # epoch — suppress duplicate PDT log spam (log at most once/30m)
         self._session_last_log    = 0.0  # epoch — suppress SESSION/SKIP spam (log at most once/30m)
+        self._halt_notify_ts      = 0.0  # epoch — suppress consecutive-loss halt spam (once/30m)
+        self._cascade_strikes     = {}   # symbol -> (count, last_epoch) — drop after 5 cascade skips
+        # Profit vault — 50% of each harvest gain is quarantined here, never reinvested
+        self._vault_balance  = 0.0   # total accumulated, not yet withdrawn
+        self._vault_entries  = []    # [{ts, symbol, gross_profit, vault_amount, harvest_num}]
+        self._vault_withdrawn = 0.0  # lifetime total marked as taken out
         # ORB stream fast-buy: track which symbols have already fired today
         self._orb_fired    = set()       # symbols where stream ORB-buy fired this session
         self._orb_buy_lock = threading.Lock()  # prevents concurrent ORB buys
         # Real-time architecture
-        self._stream_lock         = threading.Lock()  # serialises stream-triggered sells
+        self._stream_lock         = threading.Lock()  # serialises stream-triggered sells/harvests
+        self._stats_lock          = threading.Lock()  # guards stats/consecutive-loss from stream race
         self._premarket_watchlist = []   # [{symbol, gap_pct, ...}] built pre-open, used at OPEN
         self._premarket_date      = ''   # date string — prevents re-scanning same day
         self._load()
@@ -568,6 +616,15 @@ class AutoPilot:
                 self._day_trades_log     = d.get('day_trades_log', [])
         except Exception:
             pass
+        try:
+            if os.path.exists(VAULT_FILE):
+                with open(VAULT_FILE) as f:
+                    v = json.load(f)
+                self._vault_balance   = float(v.get('balance', 0.0))
+                self._vault_entries   = v.get('entries', [])
+                self._vault_withdrawn = float(v.get('withdrawn', 0.0))
+        except Exception:
+            pass
 
     def _save(self):
         try:
@@ -585,6 +642,96 @@ class AutoPilot:
                 }, f, indent=2)
         except Exception:
             pass
+        try:
+            with open(VAULT_FILE, 'w') as f:
+                json.dump({
+                    'balance':   round(self._vault_balance, 4),
+                    'withdrawn': round(self._vault_withdrawn, 4),
+                    'entries':   self._vault_entries[-500:],
+                }, f, indent=2)
+        except Exception:
+            pass
+
+    # ── Profit Vault ─────────────────────────────────────────────────────────
+
+    def _vault_deposit(self, symbol: str, gross_profit: float, harvest_num: int):
+        """Move 50% of net gain into vault — deducted from paper cash, never reinvested."""
+        if gross_profit <= 0:
+            return
+        amount = round(gross_profit * 0.50, 4)
+        if getattr(self, '_vault_deduct_now', True):
+            ok = self.paper.vault_deposit(amount)
+            if not ok:
+                return
+        self._vault_balance += amount
+        self._vault_entries.append({
+            'ts':          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'symbol':      symbol,
+            'gross_profit': round(gross_profit, 4),
+            'vault_amount': amount,
+            'harvest_num': harvest_num,
+        })
+        self._entry('VAULT', '{} — harvest #{}: deposited ${:.2f} (50% of ${:.2f} gain) | vault total ${:.2f}'.format(
+            symbol, harvest_num, amount, gross_profit, self._vault_balance))
+
+    def get_vault_status(self) -> dict:
+        """Return vault balance, weekly breakdown, and full entry log."""
+        from datetime import date as _date
+        weekly = {}
+        for e in self._vault_entries:
+            try:
+                d = _date.fromisoformat(e['ts'][:10])
+                # ISO week key: "YYYY-Www"
+                week_key = d.strftime('%Y-W%W')
+                weekly[week_key] = round(weekly.get(week_key, 0.0) + e['vault_amount'], 4)
+            except Exception:
+                pass
+        return {
+            'vault_balance':     round(self._vault_balance, 2),
+            'total_deposited':   round(sum(e['vault_amount'] for e in self._vault_entries), 2),
+            'total_withdrawn':   round(self._vault_withdrawn, 2),
+            'weekly_summary':    weekly,
+            'entries':           self._vault_entries[-100:],
+        }
+
+    def vault_transfer_to_trading(self, amount: float = None) -> dict:
+        """Move vault funds back into the paper trading balance. Defaults to full balance."""
+        amount = round(float(amount or self._vault_balance), 4)
+        if amount <= 0:
+            return {'error': 'No vault balance to transfer'}
+        if amount > self._vault_balance:
+            return {'error': 'Amount exceeds vault balance ${:.2f}'.format(self._vault_balance)}
+        self._vault_balance -= amount
+        self.paper.vault_return(amount)
+        self._vault_entries.append({
+            'ts':          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'symbol':      'TRANSFER',
+            'gross_profit': 0,
+            'vault_amount': -amount,
+            'harvest_num': 0,
+        })
+        self._save()
+        return {'ok': True, 'transferred': amount, 'vault_remaining': round(self._vault_balance, 2)}
+
+    def vault_withdraw(self, amount: float = None) -> dict:
+        """Mark vault funds as withdrawn (taken as profit, not returned to trading)."""
+        amount = round(float(amount or self._vault_balance), 4)
+        if amount <= 0:
+            return {'error': 'No vault balance to withdraw'}
+        if amount > self._vault_balance:
+            return {'error': 'Amount exceeds vault balance ${:.2f}'.format(self._vault_balance)}
+        self._vault_balance   -= amount
+        self._vault_withdrawn += amount
+        self._vault_entries.append({
+            'ts':          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'symbol':      'WITHDRAW',
+            'gross_profit': 0,
+            'vault_amount': -amount,
+            'harvest_num': 0,
+        })
+        self._save()
+        return {'ok': True, 'withdrawn': amount, 'vault_remaining': round(self._vault_balance, 2),
+                'total_withdrawn_lifetime': round(self._vault_withdrawn, 2)}
 
     def resume(self):
         """Resume thread after a service restart without resetting the paper account."""
@@ -660,6 +807,7 @@ class AutoPilot:
             self._gapped_symbols      = set()
             self._gap_date            = today
             self._orb_fired           = set()    # reset ORB fast-buy history each day
+            self._cascade_strikes     = {}       # reset cascade cooloff each day
             bal = self.paper.get_state().get('balance', 0)
             self._daily_start_balance = bal
             self._entry('SYSTEM', 'New trading day — circuit breakers reset, starting balance ${:.2f}'.format(bal))
@@ -687,7 +835,8 @@ class AutoPilot:
         if session == 'PRE_MARKET' and self._premarket_date != today:
             if hasattr(self.harvester, 'universe') and self.harvester.universe:
                 try:
-                    gappers = self.harvester.universe.get_premarket_gappers(min_gap_pct=8.0)
+                    gappers = self.harvester.universe.get_premarket_gappers(
+                        min_gap_pct=8.0, md=self.harvester._md)
                     if gappers:
                         self._premarket_watchlist = gappers
                         self._premarket_date = today
@@ -879,8 +1028,14 @@ class AutoPilot:
                         self._notify(msg_evasive(symbol, evasive_shares, price, protected), 'alert')
                     continue   # re-evaluate the remainder next cycle
 
+                # Momentum-gated first harvest: lower trigger to 2% on strong slope
+                slope_now, _, _ = self._momentum_snapshot(symbol)
+                effective_trig = (min(2.0, harvest_trig)
+                                  if harvests_done == 0 and slope_now > 0.5
+                                  else harvest_trig)
+
                 # ── HARVEST: net gain >= trigger (dynamic fraction) ────────────────────
-                if net_gain >= harvest_trig:
+                if net_gain >= effective_trig:
                     frac          = self._harvest_fraction(symbol, days_open, harvests_done, session)
                     harvest_shares = max(1, int(shares * frac))
                     result = self.paper.sell(symbol, harvest_shares, price_override=price)
@@ -902,6 +1057,9 @@ class AutoPilot:
                         from modules.notify import msg_harvest
                         self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
                                                   harvests_done + 1))
+                        # Vault: 50% of net gain quarantined as profit — deducted from cash, not reinvested
+                        if profit > 0:
+                            self._vault_deposit(symbol, profit, harvests_done + 1)
                         # Reinvest only on moderate harvests — aggressive exits (≥75%) mean we want out
                         # Reinvested capital is recycled proceeds, NOT new deployment — exempt from daily_limit
                         reinvest = 0 if frac >= 0.75 else harvest_shares
@@ -913,11 +1071,8 @@ class AutoPilot:
                                         symbol, reinvest, price))
 
                 else:
-                    # Trailing stop — tightens as position ages: 15% day-0, 10% day-1, 7% day-2+
-                    trail_pct = 15.0 if days_open == 0 else (10.0 if days_open == 1 else 7.0)
-                    # Tighten trail once HWM reached the harvest threshold — protect locked gains
-                    if entry > 0 and (hwm - entry) / entry * 100 >= harvest_trig:
-                        trail_pct = min(trail_pct, 8.0)
+                    # Trailing stop — 5% from HWM on all days (flat, dynamic protection)
+                    trail_pct = 5.0
                     if drop_from_hwm >= trail_pct:
                         result = self.paper.sell(symbol, shares, price_override=price)
                         if result.get('ok'):
@@ -936,7 +1091,7 @@ class AutoPilot:
                                 '{:.1f}% drop from HWM'.format(drop_from_hwm), loss), 'alert')
 
                     # Time-exit: up >2% after 2 hours — harvest 60%, let remainder run
-                    elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 7200 and net_gain >= 2.0:
+                    elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 5400 and net_gain >= 1.5:
                         time_shares = max(1, int(shares * 0.60))
                         result = self.paper.sell(symbol, time_shares, price_override=price)
                         if result.get('ok'):
@@ -1070,11 +1225,14 @@ class AutoPilot:
         # Consecutive loss guard — cool-off after N straight losing trades
         max_streak = int(self.config.get('max_consecutive_losses', 3))
         if self._consecutive_losses >= max_streak:
-            reason = '{} consecutive losses — cooling off this cycle, no new buys'.format(
-                self._consecutive_losses)
-            self._entry('HALT', reason)
-            from modules.notify import msg_halt
-            self._notify(msg_halt(reason), 'alert')
+            now_ts = time.time()
+            if now_ts - self._halt_notify_ts >= 1800:
+                reason = '{} consecutive losses — cooling off, no new buys'.format(
+                    self._consecutive_losses)
+                self._entry('HALT', reason)
+                from modules.notify import msg_halt
+                self._notify(msg_halt(reason), 'alert')
+                self._halt_notify_ts = now_ts
             return
 
         remaining_today = daily_limit - self.daily_spent
@@ -1136,7 +1294,9 @@ class AutoPilot:
                           and m['price'] < 10.0
                           and m['change_1h'] > min_change_1h
                           and m['vol_ratio'] > min_rvol
-                          and m['change_5d'] < 15.0]  # skip exhausted runners already up >15%
+                          # Skip only truly exhausted runners: big multi-day move AND volume fading.
+                          # A fresh catalyst with 15-20% intraday + 5× RVOL is accelerating, not exhausted.
+                          and not (m['change_5d'] > 30.0 and m['vol_ratio'] < 2.0)]
 
             # Earnings guard: never open a position within 2 days of earnings
             if self.earnings:
@@ -1278,6 +1438,18 @@ class AutoPilot:
                     if sq_pts >= 10:
                         bonus += min(sq_pts, 20)
                         c['rt_signal'] = c.get('rt_signal') or 'SQUEEZE'
+                # Options flow: unusual call buying = institutional conviction pre-move
+                if self.engine and hasattr(self.engine, 'cache'):
+                    opts = list(self.engine.cache.options_flow.get(sym, []))
+                    if opts:
+                        call_prem = sum(e.get('premium', 0) for e in opts if e.get('type') == 'CALL')
+                        put_prem  = sum(e.get('premium', 0) for e in opts if e.get('type') == 'PUT')
+                        if call_prem > 50:   # >$50K call premium = meaningful conviction
+                            opts_bonus = min(int(call_prem / 10), 20)
+                            bonus += opts_bonus
+                            c['rt_signal'] = c.get('rt_signal') or 'OPTIONS-FLOW'
+                        elif put_prem > call_prem * 2:
+                            bonus -= 10   # heavy put buying = bearish institutional bet
                 # Sector tailwind/headwind
                 if self.sector:
                     sec_pts = self.sector.get_sector_score(sym)
@@ -1319,12 +1491,31 @@ class AutoPilot:
                     '{} score {} below minimum {} — skipping'.format(symbol, best_score, min_score))
                 return
 
-            # 1-min entry confirmation: reject if momentum is actively declining or cascade forming
+            # 1-min entry confirmation: reject if momentum is actively declining or cascade forming.
+            # After 5 consecutive cascade rejections, cool-off symbol for 30m so the next candidate
+            # gets a chance rather than the cascade trap repeating all session.
             entry_slope, entry_cascade, _ = self._momentum_snapshot(symbol)
+            cascade_count, cascade_ts = self._cascade_strikes.get(symbol, (0, 0.0))
+            _cascade_cooloff = 1800.0  # 30-minute cooloff after 5 cascade rejections
+            if time.time() - cascade_ts < _cascade_cooloff and cascade_count >= 5:
+                candidates = [c for c in candidates if c['symbol'] != symbol]
+                if not candidates:
+                    self._entry('ENTRY-SKIP', '{} in cascade cooloff — no other candidates'.format(symbol))
+                    return
+                best   = candidates[0]
+                symbol = best['symbol']
+                price  = best['price']
+                entry_slope, entry_cascade, _ = self._momentum_snapshot(symbol)
             if entry_cascade:
+                count = cascade_count + 1 if symbol == best['symbol'] else 1
+                self._cascade_strikes[symbol] = (count, time.time())
                 self._entry('ENTRY-SKIP',
-                    '{} cascade pattern on 1m bars at entry — skipping this cycle'.format(symbol))
+                    '{} cascade pattern on 1m bars at entry ({}/{} strikes) — skipping'.format(
+                        symbol, count, 5))
                 return
+            else:
+                if symbol in self._cascade_strikes:
+                    del self._cascade_strikes[symbol]   # clear strikes on clean entry
             if entry_slope < -0.5:
                 self._entry('ENTRY-SKIP',
                     '{} 1m slope {:.2f}%/bar declining at entry — skipping this cycle'.format(
@@ -1339,6 +1530,21 @@ class AutoPilot:
                     '{} estimated spread {:.1f}% > {:.1f}% limit (40% of {:.0f}% harvest target) '
                     '— entry not viable'.format(symbol, est_spread, spread_limit, harvest_trig))
                 return
+
+            # SignalAggregator gate — composite score + consensus (cached 300s, fails open)
+            min_sig_score = int(self.config.get('min_signal_score', 35))
+            min_sig_cons  = int(self.config.get('min_signal_consensus', 3))
+            try:
+                sig = self.harvester.signals.score_symbol(symbol, price)
+                sig_score = sig.get('composite_score', 0)
+                sig_cons  = sig.get('positive_count', sig.get('consensus', 0))
+                if sig_score < min_sig_score or sig_cons < min_sig_cons:
+                    self._entry('SIGNAL-GATE',
+                        '{} signal {:.0f}/consensus {}/{} below gate ({}/{}) — skip'.format(
+                            symbol, sig_score, sig_cons, 7, min_sig_score, min_sig_cons))
+                    return
+            except Exception:
+                pass   # fail open — signal error never blocks a buy
 
             shares = max(1, int(buy_amount / price))
             cost   = shares * price
@@ -1398,7 +1604,7 @@ class AutoPilot:
             vel = self.engine.cache.velocity.get(symbol, {})
             if vel.get('price', 0) > 0:
                 return float(vel['price'])
-        return float(yf.Ticker(symbol).fast_info.last_price)
+        return self._md.last_price(symbol)
 
     def _momentum_from_cache(self, symbol: str):
         """
@@ -1443,7 +1649,7 @@ class AutoPilot:
                         target=self._orb_fast_buy, args=(symbol, price, orb_high),
                         daemon=True).start()
 
-        # ── Fast-path 2: stream stop-loss ──────────────────────────────────────
+        # ── Fast-path 2: stream harvest + stop-loss ────────────────────────────
         positions = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}
         if symbol not in positions:
             return
@@ -1452,26 +1658,68 @@ class AutoPilot:
         shares = int(pos.get('shares', 0))
         if entry <= 0 or shares <= 0:
             return
-        net_gain    = (price - entry) / entry * 100 - float(self.config.get('tx_cost_pct', 3.0))
-        max_loss    = float(self.config.get('max_single_loss_pct', 8.0))
+        tx_cost      = float(self.config.get('tx_cost_pct', 3.0))
+        net_gain     = (price - entry) / entry * 100 - tx_cost
+        harvest_trig = float(self.config.get('harvest_trigger_pct', 6.0))
+        max_loss     = float(self.config.get('max_single_loss_pct', 8.0))
+
+        # 2a: stream harvest — captures gain at the tick price rather than up to 60s later
+        if net_gain >= harvest_trig:
+            if not self._stream_lock.acquire(blocking=False):
+                return
+            try:
+                pos2 = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}.get(symbol)
+                if not pos2 or int(pos2.get('shares', 0)) <= 0:
+                    return
+                shares2       = int(pos2.get('shares', 0))
+                days_open     = (datetime.now() - self._position_opened.get(symbol, datetime.now())).days
+                harvests_done = self._position_harvests.get(symbol, 0)
+                frac          = self._harvest_fraction(symbol, days_open, harvests_done, _get_session())
+                h_shares      = max(1, int(shares2 * frac))
+                result = self.paper.sell(symbol, h_shares, price_override=price)
+                if result.get('ok'):
+                    profit = self._net_profit(h_shares, price, entry)
+                    with self._stats_lock:
+                        self.stats['total_harvests'] += 1
+                        self.stats['total_profit']   += profit
+                        self._position_harvests[symbol] = harvests_done + 1
+                        if profit >= 0:
+                            self.stats['wins'] += 1
+                            self._consecutive_losses = 0
+                        else:
+                            self.stats['losses'] += 1
+                            self._consecutive_losses += 1
+                    note = '{} — STREAM-HARVEST: {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | P&L ${:.2f}'.format(
+                        symbol, frac * 100, h_shares, price, net_gain, profit)
+                    self._entry('HARVEST', note)
+                    from modules.notify import msg_harvest
+                    self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
+                                             self._position_harvests.get(symbol, 1)))
+                    if profit > 0:
+                        self._vault_deposit(symbol, profit, self._position_harvests.get(symbol, 1))
+                    self._save()
+            finally:
+                self._stream_lock.release()
+            return
+
+        # 2b: stream stop-loss
         if net_gain > -max_loss:
             return
-        # Acquire without blocking — if another stop is already being processed, skip
         if not self._stream_lock.acquire(blocking=False):
             return
         try:
-            # Re-validate after lock: position may have been closed by concurrent _tick
             pos2 = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}.get(symbol)
             if not pos2 or int(pos2.get('shares', 0)) <= 0:
                 return
             result = self.paper.sell(symbol, shares, price_override=price)
             if result.get('ok'):
                 loss = self._net_profit(shares, price, entry)
-                self.stats['total_profit'] += loss
                 self._cleanup_position(symbol)
-                self.stats['losses'] += 1
-                self.stats['total_loss_pct'] += abs((price - entry) / entry * 100)
-                self._consecutive_losses += 1
+                with self._stats_lock:
+                    self.stats['total_profit'] += loss
+                    self.stats['losses'] += 1
+                    self.stats['total_loss_pct'] += abs((price - entry) / entry * 100)
+                    self._consecutive_losses += 1
                 note = '{} — STREAM-STOP: net {:.1f}% ≤ -{:.0f}% | {} shares @ ${:.4f} | P&L ${:.2f}'.format(
                     symbol, net_gain, max_loss, shares, price, loss)
                 self._entry('STOP-LOSS', note)
@@ -1558,7 +1806,7 @@ class AutoPilot:
     def _get_rvol(self, symbol):
         """Relative volume: today's volume vs 5-day average. Returns ratio."""
         try:
-            hist = yf.Ticker(symbol).history(period='5d', interval='1d')
+            hist = self._md.Ticker(symbol).history(period='5d', interval='1d')
             if len(hist) < 2:
                 return 1.0
             today_vol = float(hist['Volume'].iloc[-1])
@@ -1589,14 +1837,22 @@ class AutoPilot:
         return round(balance * f, 2)
 
     def _market_regime(self):
-        """Return SPY 1-day change %. Negative = bearish tape."""
+        """Return SPY % change from today's session open to current price (intraday resolution)."""
         try:
-            spy = yf.Ticker('SPY').history(period='2d', interval='1d')
-            if len(spy) < 2:
+            spy = self._md.Ticker('SPY').history(period='1d', interval='5m')
+            if spy.empty or len(spy) < 2:
                 return 0.0
-            prev = float(spy['Close'].iloc[-2])
-            curr = float(spy['Close'].iloc[-1])
-            return round((curr - prev) / prev * 100, 2) if prev > 0 else 0.0
+            now_et    = self._get_et_now()
+            today_str = now_et.strftime('%Y-%m-%d')
+            try:
+                today_bars = spy[spy.index.strftime('%Y-%m-%d') == today_str]
+            except Exception:
+                today_bars = spy
+            if len(today_bars) < 2:
+                today_bars = spy
+            session_open = float(today_bars['Open'].iloc[0])
+            current      = float(today_bars['Close'].iloc[-1])
+            return round((current - session_open) / session_open * 100, 2) if session_open > 0 else 0.0
         except Exception:
             return 0.0
 
@@ -1608,7 +1864,7 @@ class AutoPilot:
                 price = self._get_live_price(symbol)
                 return round(stream_vwap, 4), round(price, 4)
         try:
-            hist = yf.Ticker(symbol).history(period='1d', interval='1m')
+            hist = self._md.Ticker(symbol).history(period='1d', interval='1m')
             if hist.empty or hist['Volume'].sum() == 0:
                 return None, None
             tp = (hist['High'] + hist['Low'] + hist['Close']) / 3
@@ -1644,7 +1900,7 @@ class AutoPilot:
             return from_cache
         result = (0.0, False, 1.0)
         try:
-            hist = yf.Ticker(symbol).history(period='1d', interval='1m')
+            hist = self._md.Ticker(symbol).history(period='1d', interval='1m')
             if len(hist) < 6:
                 self._momentum_cache[cache_key] = result
                 return result
@@ -1676,7 +1932,7 @@ class AutoPilot:
         base = 0.50
 
         if slope > 0.3 and rvol > 2.0 and harvests_done == 0 and days_open == 0:
-            base = 0.25   # strong first-harvest momentum — stay in the trade
+            base = 0.20   # strong first-harvest momentum — stay in the trade
         elif slope < 0.0 or rvol < 1.0:
             base = 0.65   # momentum fading — harvest more now
 
@@ -1771,11 +2027,20 @@ class AutoPilot:
 
     def _estimate_spread_pct(self, symbol):
         """
-        Proxy for bid-ask spread: avg (High-Low)/Close over last 10 one-minute bars.
-        Fails open (returns 0.0) so a yfinance timeout never silently blocks a trade.
+        Bid-ask spread as % of price.
+        Priority: IBKR real-time quote (exact) → H-L/Close proxy from 1-min bars.
+        Fails open (returns 0.0) so a timeout never silently blocks a trade.
         """
+        if self.ibkr and self.ibkr.connected:
+            try:
+                q = self.ibkr.get_quote(symbol)
+                bid, ask = float(q.get('bid', 0)), float(q.get('ask', 0))
+                if bid > 0 and ask > 0:
+                    return round((ask - bid) / ((ask + bid) / 2) * 100, 2)
+            except Exception:
+                pass
         try:
-            hist = yf.Ticker(symbol).history(period='1d', interval='1m').tail(10)
+            hist = self._md.Ticker(symbol).history(period='1d', interval='1m').tail(10)
             if hist.empty or len(hist) < 3:
                 return 0.0
             spread = ((hist['High'] - hist['Low']) / hist['Close'].replace(0, float('nan'))).mean() * 100
@@ -1797,7 +2062,7 @@ class AutoPilot:
             return False
         self._gapped_symbols.add(gap_key)
         try:
-            hist = yf.Ticker(symbol).history(period='2d', interval='1d')
+            hist = self._md.Ticker(symbol).history(period='2d', interval='1d')
             if len(hist) < 2:
                 return False
             prev  = float(hist['Close'].iloc[-2])
