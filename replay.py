@@ -34,6 +34,8 @@ parser.add_argument('--symbols', type=str,   default=None,
                     help='Comma-separated symbol override instead of universe')
 parser.add_argument('--daily-limit', type=float, default=None,
                     help='Daily spend cap in dollars (default: from config)')
+parser.add_argument('--seed-model', action='store_true',
+                    help='Persist predictor training (warm-up mode) instead of ephemeral')
 args = parser.parse_args()
 
 SPEED     = args.speed
@@ -372,7 +374,9 @@ class _FakeMarketData:
         return _fake_yf.download(tickers, period=period, interval=interval,
                                  group_by=group_by)
 
-    def last_price(self, symbol):
+    def last_price(self, symbol, allow_stale=True):
+        # allow_stale accepted for parity with real MarketData; replay bars are always
+        # the simulated-clock price, so there's no stale-vs-fresh distinction here.
         return _FakeTicker(symbol).fast_info.last_price
 
     # Internal methods called by harvester helpers
@@ -473,6 +477,13 @@ _SA.score_symbol = lambda self, symbol, price: {
 
 autopilot = AutoPilot(harvester, paper, config)
 autopilot._save  = lambda: None   # prevent writing autopilot.json
+# Use an ephemeral predictive model during replay — train on the replayed tape but never
+# persist, so a backtest can't pollute the live predictor_model.json. EXCEPT in --seed-model
+# warm-up mode, where we deliberately accumulate labeled outcomes across many past days.
+try:
+    autopilot.predictor._persist = bool(args.seed_model)
+except Exception:
+    pass
 
 # Initialize all state that start() would set up, without launching the thread
 autopilot.running              = True

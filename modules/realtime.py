@@ -178,6 +178,7 @@ class VelocityTracker:
             vwap_dev_pct = 0.0
             bb_upper = now_price
             bb_lower = now_price
+            cum_vol = float(volumes.sum()) if len(volumes) else 0.0
 
         self.cache.set('velocity', symbol, {
             'price':        round(now_price, 4),
@@ -190,6 +191,7 @@ class VelocityTracker:
             'vwap_dev_pct': vwap_dev_pct,   # % above(+) or below(-) VWAP
             'bb_upper':     bb_upper,        # VWAP + 2σ
             'bb_lower':     bb_lower,        # VWAP - 2σ
+            'today_volume': int(cum_vol),    # cumulative session volume (FloatRotationAgent fast-path)
             'updated':      datetime.now().strftime('%H:%M:%S'),
         })
 

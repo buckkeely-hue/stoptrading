@@ -152,18 +152,24 @@ class MarketData:
             return pd.DataFrame()
         return pd.concat(frames, axis=1, keys=list(frames.keys()))
 
-    def last_price(self, symbol):
-        """Real-time last trade price (Polygon) or latest close (yfinance)."""
+    def last_price(self, symbol, allow_stale=True):
+        """Real-time last trade price (Polygon) or latest close (yfinance).
+
+        When allow_stale=False, a price that could only be sourced from the PRIOR day's
+        close (no trade/day data today) returns 0 instead — so stops/exits never transact
+        on yesterday's price. Callers that only mark/display can keep allow_stale=True.
+        """
         key = symbol.upper()
         with self._lock:
             cached = self._price_c.get(key)
             if cached and (time.time() - cached[1]) < 15:
-                return cached[0]
+                price, _, is_stale = cached
+                return 0.0 if (is_stale and not allow_stale) else price
 
-        price = self._fetch_last_price(key)
+        price, is_stale = self._fetch_last_price(key)
         with self._lock:
-            self._price_c[key] = (price, time.time())
-        return price
+            self._price_c[key] = (price, time.time(), is_stale)
+        return 0.0 if (is_stale and not allow_stale) else price
 
     # ── Internal fetchers ─────────────────────────────────────────────────────
 
@@ -204,6 +210,8 @@ class MarketData:
             return pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
 
     def _fetch_last_price(self, symbol):
+        """Returns (price, is_stale). is_stale=True means the only price available was
+        the prior day's close (no live trade/day data) — not safe to transact on."""
         key = self._key
         if key:
             try:
@@ -212,19 +220,22 @@ class MarketData:
                 r = requests.get(url, headers=_POLY_HDRS, timeout=8)
                 if r.status_code == 200:
                     snap = r.json().get('ticker', {})
-                    price = (snap.get('lastTrade', {}).get('p') or
-                             snap.get('day', {}).get('c') or
-                             snap.get('prevDay', {}).get('c') or 0)
-                    if price:
-                        return float(price)
+                    # Today's trade or today's bar close = fresh; prevDay close = stale.
+                    fresh = (snap.get('lastTrade', {}).get('p') or
+                             snap.get('day', {}).get('c') or 0)
+                    if fresh:
+                        return float(fresh), False
+                    prev = snap.get('prevDay', {}).get('c') or 0
+                    if prev:
+                        return float(prev), True
             except Exception:
                 pass
 
         try:
             info = _yf.Ticker(symbol).fast_info
-            return float(info.last_price or 0)
+            return float(info.last_price or 0), False
         except Exception:
-            return 0.0
+            return 0.0, False
 
     def _avg_vol(self, symbol):
         try:

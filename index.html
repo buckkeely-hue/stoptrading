@@ -23,6 +23,7 @@
     <button class="tab-btn" data-tab="accounting">🏦 Accounting</button>
     <button class="tab-btn" data-tab="catalyst">⚡ Catalyst</button>
     <button class="tab-btn" data-tab="settings">⚙ Settings</button>
+    <button class="tab-btn" data-tab="reports">📊 Reports</button>
   </nav>
   <!-- ── User menu ── -->
   <div class="user-menu" id="userMenu">
@@ -292,11 +293,21 @@
               style="width:90px;font-size:15px;font-weight:700;color:#f1f5f9" placeholder="100">
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;padding-bottom:2px">
+        <div style="display:flex;align-items:center;gap:16px;padding-bottom:2px;flex-wrap:wrap">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none">
             <input type="checkbox" id="ap-auto-start" onchange="saveSchedulerConfig()"
               style="width:16px;height:16px;accent-color:#00d4aa;cursor:pointer">
             <span style="font-size:13px;color:#f1f5f9;font-weight:600">Auto-start at market open (9:30 AM ET)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none" title="Close all positions at Friday 4PM — no weekend exposure">
+            <input type="checkbox" id="ap-weekend-close" onchange="saveSchedulerConfig()"
+              style="width:16px;height:16px;accent-color:#f59e0b;cursor:pointer">
+            <span style="font-size:13px;color:#f1f5f9;font-weight:600">Weekend close <span style="color:#f59e0b;font-weight:400">(exit all Friday 4PM)</span></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none" title="Close all positions every day at 4PM — never hold overnight">
+            <input type="checkbox" id="ap-force-eod" onchange="saveSchedulerConfig()"
+              style="width:16px;height:16px;accent-color:#f97316;cursor:pointer">
+            <span style="font-size:13px;color:#f1f5f9;font-weight:600">Force EOD close <span style="color:#f97316;font-weight:400">(exit all nightly)</span></span>
           </label>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px">
@@ -481,6 +492,36 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ── Predictive Model Panel ── -->
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title">🧠 Predictive Model <span id="pm-update-time" style="font-size:11px;color:#a0aec0;font-weight:400;margin-left:8px"></span></div>
+        <button class="btn btn-secondary" onclick="refreshPredictor()" style="font-size:12px;padding:4px 10px">Refresh</button>
+      </div>
+      <div style="font-size:12px;color:#a0aec0;margin-bottom:12px">
+        Online logistic model — learns a calibrated P(win) from each closed trade. Trust blends toward the model as it accumulates data; until then the heuristic dominates.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Trades learned</div>
+          <div style="font-size:22px;font-weight:700;color:#f1f5f9" id="pm-n">—</div></div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Base win rate</div>
+          <div style="font-size:22px;font-weight:700;color:#00d4aa" id="pm-winrate">—</div></div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Model trust (α)</div>
+          <div style="font-size:22px;font-weight:700;color:#60a5fa" id="pm-alpha">—</div></div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">W / L</div>
+          <div style="font-size:18px;font-weight:700;color:#f1f5f9" id="pm-wl">—</div></div>
+      </div>
+      <div style="font-size:12px;color:#a0aec0;margin-bottom:6px">Most predictive signals <span style="color:#64748b">(green = raises P(win), red = lowers it)</span>:</div>
+      <div id="pm-features" style="display:flex;flex-direction:column;gap:4px">
+        <div class="empty-state" style="padding:8px">Model warming up…</div>
+      </div>
+      <div id="pm-coldstart" style="display:none;font-size:11px;color:#f59e0b;margin-top:10px"></div>
     </div>
   </div>
 
@@ -919,6 +960,213 @@
     </div>
   </div>
 
+  <!-- ── REPORTS ── -->
+  <div id="tab-reports" class="tab-panel">
+
+    <!-- Period selector + title -->
+    <div class="section-header" style="margin-bottom:14px">
+      <div>
+        <div class="section-title">Performance Reports</div>
+        <div class="section-sub" id="rpt-last-updated">Loading…</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="rpt-period-group">
+          <button class="rpt-period-btn" data-period="1d" onclick="rptSetPeriod('1d',this)">1D</button>
+          <button class="rpt-period-btn active" data-period="1w" onclick="rptSetPeriod('1w',this)">1W</button>
+          <button class="rpt-period-btn" data-period="1m" onclick="rptSetPeriod('1m',this)">1M</button>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadReports()">↺ Refresh</button>
+      </div>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="rpt-kpi-row" id="rpt-kpis">
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Period P&amp;L</div><div class="rpt-kpi-val" id="rpt-kpi-pnl">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Trades</div><div class="rpt-kpi-val" id="rpt-kpi-trades">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Win Rate</div><div class="rpt-kpi-val" id="rpt-kpi-wr">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Avg Win</div><div class="rpt-kpi-val green" id="rpt-kpi-avgwin">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Avg Loss</div><div class="rpt-kpi-val red" id="rpt-kpi-avgloss">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Best Trade</div><div class="rpt-kpi-val green" id="rpt-kpi-best">—</div></div>
+      <div class="rpt-kpi"><div class="rpt-kpi-label">Worst Trade</div><div class="rpt-kpi-val red" id="rpt-kpi-worst">—</div></div>
+    </div>
+
+    <!-- P&L History chart -->
+    <div class="card rpt-chart-card" style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="card-title" style="margin:0">Cumulative P&amp;L</div>
+        <span id="rpt-pnl-summary" class="rpt-chart-summary"></span>
+      </div>
+      <canvas id="rpt-pnl-canvas" class="rpt-canvas"></canvas>
+      <div id="rpt-pnl-empty" class="rpt-empty" style="display:none">No closed trades in this period yet</div>
+    </div>
+
+    <!-- Middle row: candidates + live chart -->
+    <div class="rpt-mid-row">
+
+      <!-- Candidates panel -->
+      <div class="card rpt-half-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title" style="margin:0">Prospective Buys</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <label style="font-size:11px;color:var(--muted)">Min score</label>
+            <input type="number" id="rpt-min-score" value="40" min="0" max="100" step="5"
+              style="width:58px;font-size:13px;padding:4px 8px" onchange="renderCandidates(_rptCandidates)">
+            <button class="btn btn-outline btn-xs" onclick="rptLoadCandidates()">Scan</button>
+          </div>
+        </div>
+        <div id="rpt-candidates-loading" style="display:none;color:var(--muted);font-size:12px;padding:8px 0">
+          <span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Scanning movers…
+        </div>
+        <div class="table-wrap" style="max-height:340px;overflow-y:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Price</th>
+                <th>Chg%</th>
+                <th>RVOL</th>
+                <th>Slope</th>
+                <th>Score</th>
+                <th>Signal</th>
+              </tr>
+            </thead>
+            <tbody id="rpt-candidates-tbody">
+              <tr><td colspan="7" class="empty-state">Click Scan to load candidates</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)" id="rpt-candidates-ts"></div>
+      </div>
+
+      <!-- Live chart panel -->
+      <div class="card rpt-half-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title" style="margin:0">Live Chart</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="rpt-chart-symbol" placeholder="SNDL" maxlength="6"
+              style="width:70px;font-size:13px;padding:4px 8px;text-transform:uppercase"
+              onkeydown="if(event.key==='Enter')rptLoadChart()">
+            <div class="rpt-period-group" style="transform:scale(0.88);transform-origin:left">
+              <button class="rpt-period-btn active" data-cperiod="1d" onclick="rptSetChartPeriod('1d',this)">1D</button>
+              <button class="rpt-period-btn" data-cperiod="1w" onclick="rptSetChartPeriod('1w',this)">1W</button>
+              <button class="rpt-period-btn" data-cperiod="1m" onclick="rptSetChartPeriod('1m',this)">1M</button>
+            </div>
+            <button class="btn btn-primary btn-xs" onclick="rptLoadChart()">Go</button>
+          </div>
+        </div>
+        <div id="rpt-chart-info" style="display:flex;gap:16px;margin-bottom:8px;font-size:12px">
+          <span id="rpt-chart-price" style="font-weight:700;color:var(--text)">—</span>
+          <span id="rpt-chart-signal" style="font-weight:700"></span>
+          <span id="rpt-chart-entry" style="color:var(--muted)"></span>
+        </div>
+        <canvas id="rpt-stock-canvas" class="rpt-canvas" style="height:220px"></canvas>
+        <div id="rpt-chart-empty" class="rpt-empty" style="display:none">Enter a symbol and click Go</div>
+        <div id="rpt-chart-sr" style="margin-top:8px;display:flex;gap:12px;font-size:11px"></div>
+      </div>
+    </div>
+
+    <!-- Current positions table -->
+    <div class="card" style="margin-top:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin:0">Current Holdings</div>
+        <span style="font-size:12px;color:var(--muted)" id="rpt-pos-count"></span>
+      </div>
+      <div id="rpt-positions-empty" class="rpt-empty" style="display:none">No open positions</div>
+      <div id="rpt-pos-cards" class="rpt-pos-grid"></div>
+    </div>
+
+    <!-- Closed trades history -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-title" style="margin-bottom:12px">Trade Log — Period</div>
+      <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Symbol</th>
+              <th>Shares</th>
+              <th>Price</th>
+              <th>P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody id="rpt-trades-tbody">
+            <tr><td colspan="5" class="empty-state">No trades in this period</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notification Settings card -->
+    <div class="card" style="margin-top:18px" id="rpt-notify-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div class="card-title" style="margin:0">Intraday Notifications</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Holdings + buy candidates digest sent at your chosen interval during market hours</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="font-size:12px;color:var(--muted)">Enabled</span>
+          <input type="checkbox" id="rnt-enabled" onchange="rntSave()"
+            style="width:18px;height:18px;accent-color:#10e8b8;cursor:pointer">
+        </label>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px" id="rnt-fields">
+
+        <!-- Channel -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Channel</div>
+          <select id="rnt-channel" onchange="rntSave()" style="width:100%;background:var(--bg);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:6px;padding:7px 10px;font-size:13px">
+            <option value="ntfy">ntfy.sh Push</option>
+            <option value="twilio">SMS (Twilio)</option>
+            <option value="email">Email (SMTP)</option>
+          </select>
+          <div id="rnt-channel-dest" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+        </div>
+
+        <!-- Interval -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Frequency</div>
+          <select id="rnt-interval" onchange="rntSave()" style="width:100%;background:var(--bg);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:6px;padding:7px 10px;font-size:13px">
+            <option value="15">Every 15 min</option>
+            <option value="30">Every 30 min</option>
+            <option value="45">Every 45 min</option>
+            <option value="60">Every 60 min</option>
+            <option value="90">Every 90 min</option>
+            <option value="120">Every 2 hours</option>
+          </select>
+        </div>
+
+        <!-- What to include -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Include In Report</div>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:7px">
+            <input type="checkbox" id="rnt-holdings" onchange="rntSave()"
+              style="width:14px;height:14px;accent-color:#10e8b8;cursor:pointer">
+            <span style="font-size:13px;color:var(--text-primary)">Holdings P&amp;L changes</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer">
+            <input type="checkbox" id="rnt-candidates" onchange="rntSave()"
+              style="width:14px;height:14px;accent-color:#10e8b8;cursor:pointer">
+            <span style="font-size:13px;color:var(--text-primary)">Buy candidates &amp; signals</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Status row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-subtle);padding-top:12px">
+        <div style="font-size:12px;color:var(--muted)" id="rnt-status">Not yet configured</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="rntLoadConfig()">↺ Refresh</button>
+          <button class="btn btn-primary btn-sm" onclick="rntTest()">Send Test</button>
+        </div>
+      </div>
+
+      <!-- Test preview -->
+      <div id="rnt-preview" style="display:none;margin-top:10px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:6px;padding:10px;font-size:12px;font-family:monospace;white-space:pre-wrap;color:var(--text-secondary)"></div>
+    </div>
+
+  </div>
+
 </main>
 
 <div class="toast-container" id="toast-container"></div>
@@ -937,6 +1185,7 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     if (tab === 'paper') loadPaper();
     if (tab === 'autotrade') loadAutoTrade();
     if (tab === 'settings') loadSettings();
+    if (tab === 'reports') loadReports();
   });
 });
 
@@ -1307,14 +1556,22 @@ function toggleAutoPilot() {
 }
 
 function saveSchedulerConfig() {
-  var enabled = document.getElementById('ap-auto-start').checked;
-  var bal     = parseFloat(document.getElementById('ap-start-balance').value) || 500;
-  var limit   = parseFloat(document.getElementById('ap-daily-limit').value) || 100;
+  var enabled     = document.getElementById('ap-auto-start').checked;
+  var weekendClose = document.getElementById('ap-weekend-close').checked;
+  var forceEod    = document.getElementById('ap-force-eod').checked;
+  var bal         = parseFloat(document.getElementById('ap-start-balance').value) || 500;
+  var limit       = parseFloat(document.getElementById('ap-daily-limit').value) || 100;
   fetch('/api/scheduler/config', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({auto_start_enabled: enabled, daily_balance: bal, daily_spend_limit: limit})
+    body: JSON.stringify({auto_start_enabled: enabled, daily_balance: bal, daily_spend_limit: limit,
+                          weekend_close: weekendClose, force_eod_close: forceEod})
   }).then(function(r){return r.json();})
-    .then(function(){ toast(enabled ? 'Auto-start ON — will launch at 9:30 AM ET' : 'Auto-start OFF', 'success'); });
+    .then(function(){
+      var msg = enabled ? 'Auto-start ON' : 'Auto-start OFF';
+      if (forceEod)     msg += ' · Force EOD close ON';
+      else if (weekendClose) msg += ' · Weekend close ON';
+      toast(msg, 'success');
+    });
 }
 
 function saveNotifyConfig() {
@@ -1489,7 +1746,9 @@ function refreshAutoPilot() {
         .then(function(r){return r.json();})
         .then(function(s){
           document.getElementById('ap-et-time').textContent = s.et_time;
-          document.getElementById('ap-auto-start').checked = s.auto_start_enabled;
+          document.getElementById('ap-auto-start').checked    = s.auto_start_enabled;
+          document.getElementById('ap-weekend-close').checked = s.weekend_close !== false;
+          document.getElementById('ap-force-eod').checked     = !!s.force_eod_close;
           if (s.daily_balance) document.getElementById('ap-start-balance').value = s.daily_balance;
           if (s.daily_limit)   document.getElementById('ap-daily-limit').value   = s.daily_limit;
           var bar = document.getElementById('ap-sched-bar');
@@ -1592,6 +1851,47 @@ function _reportCard(label, value, color) {
 setInterval(refreshAutoPilot, 15000);
 refreshAutoPilot();
 refreshNotifyStatus();
+
+function refreshPredictor() {
+  fetch('/api/predictor/stats')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var n = d.n_trained || 0;
+      document.getElementById('pm-n').textContent = n;
+      document.getElementById('pm-winrate').textContent = n ? Math.round((d.base_win_rate||0)*100) + '%' : '—';
+      document.getElementById('pm-alpha').textContent = (Math.round((d.trust_alpha||0)*100)) + '%';
+      document.getElementById('pm-wl').textContent = (d.wins||0) + ' / ' + (d.losses||0);
+      document.getElementById('pm-update-time').textContent = 'updated ' + new Date().toLocaleTimeString();
+
+      var feats = d.top_features || [];
+      var box = document.getElementById('pm-features');
+      if (!feats.length) {
+        box.innerHTML = '<div class="empty-state" style="padding:8px">No learned weights yet — using heuristic prior</div>';
+      } else {
+        var maxw = Math.max.apply(null, feats.map(function(f){return Math.abs(f.weight)||0.0001;}));
+        box.innerHTML = feats.map(function(f){
+          var pos = f.weight >= 0;
+          var pct = Math.min(100, Math.abs(f.weight)/maxw*100);
+          var col = pos ? '#00d4aa' : '#ff4757';
+          return '<div style="display:flex;align-items:center;gap:10px;font-size:12px">' +
+            '<div style="width:120px;color:#cbd5e1">' + f.name + '</div>' +
+            '<div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">' +
+              '<div style="height:100%;width:' + pct + '%;background:' + col + ';margin-left:' + (pos?'0':'auto') + '"></div></div>' +
+            '<div style="width:54px;text-align:right;color:' + col + ';font-weight:700">' + (pos?'+':'') + f.weight.toFixed(2) + '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      var cs = document.getElementById('pm-coldstart');
+      var alpha = d.trust_alpha || 0;
+      if (n < 120) {
+        cs.style.display = 'block';
+        cs.textContent = '⚠ Still learning (n=' + n + ', trust ' + Math.round(alpha*100) + '%). Weights are a tentative prior until more closed trades accumulate; the validated heuristic still drives ' + Math.round((1-alpha)*100) + '% of each decision.';
+      } else { cs.style.display = 'none'; }
+    }).catch(function(e){});
+}
+setInterval(refreshPredictor, 20000);
+refreshPredictor();
 
 // ── REALTIME SCORES ────────────────────────────────────────────────────────
 
@@ -2823,6 +3123,589 @@ function doLogout() {
   fetch('/api/logout', {method:'POST', credentials:'same-origin'})
     .then(function() { window.location.href = '/login'; });
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// REPORTS TAB
+// ═══════════════════════════════════════════════════════════════════
+
+var _rptPeriod      = '1w';
+var _rptChartPeriod = '1d';
+var _rptCandidates  = [];
+var _rptAutoInterval = null;
+
+function loadReports() {
+  rptLoadPnl();
+  rptLoadPositions();
+  clearInterval(_rptAutoInterval);
+  _rptAutoInterval = setInterval(function() {
+    if (document.getElementById('tab-reports').classList.contains('active')) {
+      rptLoadPnl();
+      rptLoadPositions();
+    } else {
+      clearInterval(_rptAutoInterval);
+    }
+  }, 60000);
+}
+
+function rptSetPeriod(p, btn) {
+  _rptPeriod = p;
+  document.querySelectorAll('.rpt-period-btn[data-period]').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-period') === p);
+  });
+  rptLoadPnl();
+}
+
+function rptSetChartPeriod(p, btn) {
+  _rptChartPeriod = p;
+  document.querySelectorAll('.rpt-period-btn[data-cperiod]').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-cperiod') === p);
+  });
+  rptLoadChart();
+}
+
+// ── P&L History ─────────────────────────────────────────────────────────────
+
+function rptLoadPnl() {
+  document.getElementById('rpt-last-updated').textContent = 'Loading ' + _rptPeriod.toUpperCase() + ' data…';
+  fetch('/api/reports/pnl?period=' + _rptPeriod)
+    .then(function(r) {
+      if (r.status === 302 || r.redirected || r.status === 401) {
+        document.getElementById('rpt-last-updated').textContent = 'Session expired — please refresh the page';
+        return null;
+      }
+      if (!r.ok) {
+        document.getElementById('rpt-last-updated').textContent = 'Error ' + r.status + ' — try refreshing';
+        return null;
+      }
+      return r.json();
+    })
+    .then(function(d) {
+      if (!d) return;
+      var s = d.summary || {};
+      var pnl = s.total_pnl || 0;
+      var el = document.getElementById('rpt-kpi-pnl');
+      el.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+      el.className = 'rpt-kpi-val ' + (pnl >= 0 ? 'green' : 'red');
+      document.getElementById('rpt-kpi-trades').textContent = s.total_trades || 0;
+      document.getElementById('rpt-kpi-wr').textContent = (s.win_rate || 0) + '%';
+      document.getElementById('rpt-kpi-avgwin').textContent  = '+$' + (s.avg_win || 0).toFixed(2);
+      document.getElementById('rpt-kpi-avgloss').textContent = '$' + (s.avg_loss || 0).toFixed(2);
+      document.getElementById('rpt-kpi-best').textContent  = '+$' + (s.best_trade || 0).toFixed(2);
+      document.getElementById('rpt-kpi-worst').textContent = '$' + (s.worst_trade || 0).toFixed(2);
+
+      document.getElementById('rpt-last-updated').textContent =
+        _rptPeriod.toUpperCase() + ' · Updated ' + new Date().toLocaleTimeString();
+
+      var hasSeries = d.series && d.series.length > 0;
+      document.getElementById('rpt-pnl-empty').style.display = hasSeries ? 'none' : 'block';
+      document.getElementById('rpt-pnl-empty').textContent   = hasSeries ? '' :
+        'No closed trades in the last ' + {'1d':'24 hours','1w':'7 days','1m':'30 days'}[_rptPeriod];
+      document.getElementById('rpt-pnl-canvas').style.display = hasSeries ? 'block' : 'none';
+      if (hasSeries) {
+        rptDrawPnlChart(d.series);
+        var summary = document.getElementById('rpt-pnl-summary');
+        summary.textContent = s.wins + 'W / ' + s.losses + 'L';
+        summary.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      }
+
+      // Trade log
+      var trades = d.trades || [];
+      var tbody = document.getElementById('rpt-trades-tbody');
+      if (!trades.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No trades in this period</td></tr>';
+      } else {
+        tbody.innerHTML = trades.map(function(t) {
+          var cls = t.pnl > 0 ? 'green' : (t.pnl < 0 ? 'red' : 'muted');
+          return '<tr>' +
+            '<td class="mono muted" style="font-size:11px">' + t.time + '</td>' +
+            '<td style="font-weight:700">' + t.symbol + '</td>' +
+            '<td class="mono">' + t.shares + '</td>' +
+            '<td class="mono">$' + parseFloat(t.price).toFixed(4) + '</td>' +
+            '<td class="mono ' + cls + '">' + (t.pnl >= 0 ? '+' : '') + '$' + t.pnl.toFixed(2) + '</td>' +
+            '</tr>';
+        }).join('');
+      }
+    })
+    .catch(function() {});
+}
+
+function rptDrawPnlChart(series) {
+  var canvas = document.getElementById('rpt-pnl-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || 700;
+  var H = 160;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var pad = { top: 16, right: 16, bottom: 28, left: 52 };
+  var cw = W - pad.left - pad.right;
+  var ch = H - pad.top - pad.bottom;
+
+  var vals = series.map(function(s) { return s.cumulative; });
+  var minV = Math.min(0, Math.min.apply(null, vals));
+  var maxV = Math.max(0, Math.max.apply(null, vals));
+  var range = maxV - minV || 1;
+
+  function xPos(i) { return pad.left + (i / Math.max(series.length - 1, 1)) * cw; }
+  function yPos(v) { return pad.top + (1 - (v - minV) / range) * ch; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Zero line
+  var zeroY = yPos(0);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Y-axis ticks
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'right';
+  [-1, -0.5, 0, 0.5, 1].forEach(function(frac) {
+    var v = minV + (frac + 1) / 2 * range;
+    var y = yPos(v);
+    if (y < pad.top || y > pad.top + ch) return;
+    ctx.fillText((v >= 0 ? '+' : '') + '$' + v.toFixed(2), pad.left - 4, y + 3);
+  });
+
+  // Area fill
+  var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  var lastVal = vals[vals.length - 1] || 0;
+  if (lastVal >= 0) {
+    grad.addColorStop(0, 'rgba(16,232,184,0.25)');
+    grad.addColorStop(1, 'rgba(16,232,184,0.02)');
+  } else {
+    grad.addColorStop(0, 'rgba(255,90,104,0.02)');
+    grad.addColorStop(1, 'rgba(255,90,104,0.25)');
+  }
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(0));
+  series.forEach(function(s, i) { ctx.lineTo(xPos(i), yPos(s.cumulative)); });
+  ctx.lineTo(xPos(series.length - 1), yPos(0));
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  series.forEach(function(s, i) {
+    if (i === 0) ctx.moveTo(xPos(i), yPos(s.cumulative));
+    else ctx.lineTo(xPos(i), yPos(s.cumulative));
+  });
+  ctx.strokeStyle = lastVal >= 0 ? '#10e8b8' : '#ff5a68';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots at each point
+  ctx.fillStyle = lastVal >= 0 ? '#10e8b8' : '#ff5a68';
+  series.forEach(function(s, i) {
+    ctx.beginPath();
+    ctx.arc(xPos(i), yPos(s.cumulative), 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // X-axis labels (show up to 8, evenly spaced)
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  var step = Math.max(1, Math.floor(series.length / 8));
+  series.forEach(function(s, i) {
+    if (i % step === 0 || i === series.length - 1) {
+      ctx.fillText(s.label, xPos(i), H - pad.bottom + 14);
+    }
+  });
+}
+
+// ── Candidates ───────────────────────────────────────────────────────────────
+
+function rptLoadCandidates() {
+  document.getElementById('rpt-candidates-loading').style.display = 'block';
+  document.getElementById('rpt-candidates-tbody').innerHTML =
+    '<tr><td colspan="7" class="empty-state">Scanning…</td></tr>';
+  fetch('/api/harvest/scan')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _rptCandidates = data;
+      document.getElementById('rpt-candidates-loading').style.display = 'none';
+      document.getElementById('rpt-candidates-ts').textContent =
+        'Scanned ' + data.length + ' symbols at ' + new Date().toLocaleTimeString();
+      renderCandidates(data);
+    })
+    .catch(function() {
+      document.getElementById('rpt-candidates-loading').style.display = 'none';
+    });
+}
+
+function renderCandidates(data) {
+  var minScore = parseInt(document.getElementById('rpt-min-score').value) || 0;
+  var filtered = (data || []).filter(function(c) { return c.score >= minScore; });
+  var tbody = document.getElementById('rpt-candidates-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No candidates above score ' + minScore + '</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.slice(0, 20).map(function(c) {
+    var chgCls = c.change_1h >= 0 ? 'green' : 'red';
+    var slopeColor = c.slope_pct > 0 ? 'var(--green)' : 'var(--red)';
+    var sig = c.rt_signal || (c.in_harvest ? 'HELD' : '');
+    var sigStyle = sig === 'HELD' ? 'color:#fbbf24' : (sig ? 'color:#60a5fa' : 'color:var(--muted)');
+    return '<tr style="cursor:pointer" onclick="rptChartSymbol(\'' + c.symbol + '\')">' +
+      '<td style="font-weight:800;color:var(--accent)">' + c.symbol + '</td>' +
+      '<td class="mono">$' + parseFloat(c.price).toFixed(3) + '</td>' +
+      '<td class="mono ' + chgCls + '">' + (c.change_1h >= 0 ? '+' : '') + c.change_1h.toFixed(1) + '%</td>' +
+      '<td class="mono">' + (c.vol_ratio || 0).toFixed(1) + 'x</td>' +
+      '<td class="mono" style="color:' + slopeColor + '">' + (c.slope_pct >= 0 ? '+' : '') + (c.slope_pct * 100).toFixed(2) + '</td>' +
+      '<td>' + rptScoreBar(c.score) + '</td>' +
+      '<td style="font-size:11px;font-weight:700;' + sigStyle + '">' + (sig || '—') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function rptScoreBar(score) {
+  var pct = Math.min(score, 100);
+  var color = pct >= 70 ? 'var(--green)' : (pct >= 40 ? 'var(--yellow)' : 'var(--red)');
+  return '<div style="display:flex;align-items:center;gap:6px">' +
+    '<div style="flex:1;height:4px;background:var(--border);border-radius:2px;min-width:40px">' +
+    '<div style="width:' + pct + '%;height:4px;border-radius:2px;background:' + color + '"></div></div>' +
+    '<span style="font-size:11px;font-weight:700;color:' + color + ';min-width:26px;text-align:right">' + Math.round(score) + '</span>' +
+    '</div>';
+}
+
+function rptChartSymbol(sym) {
+  document.getElementById('rpt-chart-symbol').value = sym;
+  rptLoadChart();
+}
+
+// ── Live Chart ───────────────────────────────────────────────────────────────
+
+function rptLoadChart() {
+  var sym = (document.getElementById('rpt-chart-symbol').value || '').trim().toUpperCase();
+  if (!sym) return;
+  var canvas = document.getElementById('rpt-stock-canvas');
+  var empty  = document.getElementById('rpt-chart-empty');
+  canvas.style.display = 'block';
+  empty.style.display  = 'none';
+  document.getElementById('rpt-chart-price').textContent  = 'Loading…';
+  document.getElementById('rpt-chart-signal').textContent = '';
+  document.getElementById('rpt-chart-entry').textContent  = '';
+  fetch('/api/reports/chart?symbol=' + sym + '&period=' + _rptChartPeriod)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { empty.textContent = d.error; empty.style.display='block'; canvas.style.display='none'; return; }
+      var price = d.current_price || 0;
+      document.getElementById('rpt-chart-price').textContent = '$' + price.toFixed(4);
+      if (d.entry_price) {
+        var epct = ((price - d.entry_price) / d.entry_price * 100).toFixed(2);
+        var eSign = epct >= 0 ? '+' : '';
+        document.getElementById('rpt-chart-entry').textContent =
+          'Entry $' + d.entry_price.toFixed(4) + ' · ' + eSign + epct + '%';
+        document.getElementById('rpt-chart-entry').style.color = epct >= 0 ? 'var(--green)' : 'var(--red)';
+      }
+      // Fetch trend signal in parallel
+      fetch('/api/trend?symbol=' + sym)
+        .then(function(r2) { return r2.json(); })
+        .then(function(t) {
+          var sigEl = document.getElementById('rpt-chart-signal');
+          sigEl.textContent = t.signal || '';
+          sigEl.style.color = {BUY:'#10e8b8', SELL:'#ff5a68', HOLD:'#fbbf24', WATCH:'#60a5fa'}[t.signal] || 'var(--muted)';
+          var sr = document.getElementById('rpt-chart-sr');
+          sr.innerHTML = t.support ?
+            '<span style="color:var(--green);font-size:11px">▲ Support $' + t.support + '</span>' +
+            '<span style="color:var(--red);font-size:11px">▼ Resist $' + t.resistance + '</span>' +
+            '<span style="color:var(--muted);font-size:11px">' + (t.reason || '') + '</span>'
+            : '';
+        }).catch(function() {});
+      rptDrawStockChart(d.bars, d.entry_price);
+    })
+    .catch(function(e) { empty.textContent = 'Failed to load chart'; empty.style.display='block'; canvas.style.display='none'; });
+}
+
+function rptDrawStockChart(bars, entryPrice) {
+  if (!bars || !bars.length) return;
+  var canvas = document.getElementById('rpt-stock-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || 480;
+  var H = 220;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var pad = { top: 12, right: 12, bottom: 28, left: 56 };
+  var cw = W - pad.left - pad.right;
+  var ch = H - pad.top - pad.bottom;
+
+  var closes = bars.map(function(b) { return b.c; });
+  var vwaps   = bars[0] && bars[0].vwap ? bars.map(function(b) { return b.vwap; }) : null;
+  var allPrices = closes.concat(bars.map(function(b){return b.h;}), bars.map(function(b){return b.l;}));
+  if (entryPrice) allPrices.push(entryPrice);
+  var minP = Math.min.apply(null, allPrices);
+  var maxP = Math.max.apply(null, allPrices);
+  var range = maxP - minP || minP * 0.01 || 1;
+  minP -= range * 0.05;
+  maxP += range * 0.05;
+  range = maxP - minP;
+
+  function xPos(i) { return pad.left + (i / Math.max(bars.length - 1, 1)) * cw; }
+  function yPos(v) { return pad.top + (1 - (v - minP) / range) * ch; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Y grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (var gi = 0; gi <= 4; gi++) {
+    var gy = pad.top + (gi / 4) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + cw, gy); ctx.stroke();
+    var gv = maxP - (gi / 4) * range;
+    ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText('$' + gv.toFixed(3), pad.left - 3, gy + 3);
+  }
+
+  // Entry price line
+  if (entryPrice) {
+    var ey = yPos(entryPrice);
+    ctx.strokeStyle = 'rgba(251,191,36,0.6)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(pad.left, ey); ctx.lineTo(pad.left + cw, ey); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fbbf24'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    ctx.fillText('Entry $' + entryPrice.toFixed(3), pad.left + 2, ey - 3);
+  }
+
+  // VWAP line
+  if (vwaps) {
+    ctx.beginPath();
+    vwaps.forEach(function(v, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(v)) : ctx.lineTo(xPos(i), yPos(v)); });
+    ctx.strokeStyle = 'rgba(96,165,250,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Price area fill
+  var isUp = closes[closes.length-1] >= closes[0];
+  var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  if (isUp) { grad.addColorStop(0,'rgba(16,232,184,0.2)'); grad.addColorStop(1,'rgba(16,232,184,0.02)'); }
+  else       { grad.addColorStop(0,'rgba(255,90,104,0.02)'); grad.addColorStop(1,'rgba(255,90,104,0.2)'); }
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(closes[0]));
+  closes.forEach(function(c, i) { ctx.lineTo(xPos(i), yPos(c)); });
+  ctx.lineTo(xPos(closes.length-1), H - pad.bottom);
+  ctx.lineTo(pad.left, H - pad.bottom);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Price line
+  ctx.beginPath();
+  closes.forEach(function(c, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(c)) : ctx.lineTo(xPos(i), yPos(c)); });
+  ctx.strokeStyle = isUp ? '#10e8b8' : '#ff5a68';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Last price dot
+  var lastX = xPos(closes.length - 1);
+  var lastY = yPos(closes[closes.length - 1]);
+  ctx.fillStyle = isUp ? '#10e8b8' : '#ff5a68';
+  ctx.beginPath(); ctx.arc(lastX, lastY, 3.5, 0, Math.PI*2); ctx.fill();
+
+  // X labels
+  ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  var step = Math.max(1, Math.floor(bars.length / 6));
+  bars.forEach(function(b, i) {
+    if (i % step === 0 || i === bars.length - 1) {
+      var label = b.t.slice(11, 16) || b.t.slice(5, 10);
+      ctx.fillText(label, xPos(i), H - pad.bottom + 14);
+    }
+  });
+
+  // VWAP legend
+  if (vwaps) {
+    ctx.fillStyle = 'rgba(96,165,250,0.8)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('— VWAP', pad.left + 4, pad.top + 12);
+  }
+}
+
+// ── Positions ────────────────────────────────────────────────────────────────
+
+function rptLoadPositions() {
+  fetch('/api/report')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var positions = d.positions || [];
+      var container = document.getElementById('rpt-pos-cards');
+      var empty     = document.getElementById('rpt-positions-empty');
+      var count     = document.getElementById('rpt-pos-count');
+      count.textContent = positions.length ? positions.length + ' open position' + (positions.length > 1 ? 's' : '') : '';
+      if (!positions.length) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      container.innerHTML = positions.map(function(p) {
+        var gain = p.gain_pct || 0;
+        var gainCls = gain >= 0 ? 'green' : 'red';
+        var gainSign = gain >= 0 ? '+' : '';
+        var pnl = p.unrealized_pnl || 0;
+        var pnlCls = pnl >= 0 ? 'green' : 'red';
+        var barPct = Math.min(Math.abs(gain) / 10 * 100, 100);
+        var barColor = gain >= 0 ? 'var(--green)' : 'var(--red)';
+        var hwm = p.hwm || p.current_price;
+        var hwmDrop = hwm > 0 ? ((hwm - p.current_price) / hwm * 100) : 0;
+        var daysOpen = p.days_open !== null ? p.days_open + 'd' : '—';
+        return '<div class="rpt-pos-card" onclick="rptChartSymbol(\'' + p.symbol + '\')">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+            '<div>' +
+              '<div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.5px">' + p.symbol + '</div>' +
+              '<div style="font-size:11px;color:var(--muted);margin-top:1px">' + p.shares + ' shares · ' + daysOpen + ' open</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<div style="font-size:16px;font-weight:800" class="' + gainCls + '">' + gainSign + gain.toFixed(2) + '%</div>' +
+              '<div style="font-size:12px;font-weight:700" class="' + pnlCls + '">' + (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:10px">' +
+            '<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">' +
+              '<div style="width:' + barPct + '%;height:4px;background:' + barColor + ';transition:width 0.5s;border-radius:2px"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">' +
+            rptMiniStat('Entry', '$' + parseFloat(p.avg_cost).toFixed(4), '') +
+            rptMiniStat('Current', '$' + (p.current_price || 0).toFixed(4), gainCls) +
+            rptMiniStat('HWM', '$' + hwm.toFixed(4) + ' (' + hwmDrop.toFixed(1) + '%↓)', hwmDrop > 4 ? 'red' : 'muted') +
+          '</div>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(function() {});
+}
+
+function rptMiniStat(label, val, cls) {
+  return '<div style="background:var(--bg);border-radius:5px;padding:6px 8px">' +
+    '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">' + label + '</div>' +
+    '<div style="font-size:12px;font-weight:700;font-family:monospace;margin-top:2px" class="' + cls + '">' + val + '</div>' +
+    '</div>';
+}
+
+// ── Strategy Analysis ────────────────────────────────────────────────────────
+// Auto-load candidates when Reports tab opens
+(function() {
+  var origLoad = window.loadReports;
+  window.loadReports = function() {
+    origLoad && origLoad();
+    if (!_rptCandidates.length) rptLoadCandidates();
+    rntLoadConfig();
+  };
+})();
+
+// ── Report Notifications ─────────────────────────────────────────────────────
+
+var _rntCfg = {};
+
+function rntLoadConfig() {
+  fetch('/api/report-notify/config')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      _rntCfg = d;
+      document.getElementById('rnt-enabled').checked   = !!d.enabled;
+      document.getElementById('rnt-interval').value    = String(d.interval_min || 30);
+      document.getElementById('rnt-holdings').checked  = d.holdings !== false;
+      document.getElementById('rnt-candidates').checked = d.candidates !== false;
+
+      // Populate channel dropdown — only show configured channels
+      var sel = document.getElementById('rnt-channel');
+      Array.from(sel.options).forEach(function(o) {
+        var ok = (o.value === 'ntfy'   && d.has_ntfy)   ||
+                 (o.value === 'twilio' && d.has_twilio) ||
+                 (o.value === 'email'  && d.has_email);
+        o.disabled = !ok;
+        o.text = o.text.replace(' (not configured)', '') + (ok ? '' : ' (not configured)');
+      });
+      sel.value = d.channel || 'ntfy';
+
+      _rntUpdateDest(d);
+      _rntUpdateStatus(d);
+    })
+    .catch(function() {});
+}
+
+function _rntUpdateDest(d) {
+  var dest = document.getElementById('rnt-channel-dest');
+  var ch = document.getElementById('rnt-channel').value;
+  if (ch === 'twilio') dest.textContent = d.notify_phone ? 'To: ' + d.notify_phone : 'Phone not set in Notifications config';
+  else if (ch === 'email') dest.textContent = d.notify_email ? 'To: ' + d.notify_email : 'Email not set in Notifications config';
+  else dest.textContent = d.has_ntfy ? 'ntfy topic configured' : 'ntfy topic not set';
+}
+
+function _rntUpdateStatus(d) {
+  var el = document.getElementById('rnt-status');
+  if (!d.enabled) {
+    el.textContent = 'Notifications disabled';
+    el.style.color = 'var(--muted)';
+    return;
+  }
+  var interval = d.interval_min || 30;
+  var ch = {'ntfy':'ntfy.sh', 'twilio':'SMS', 'email':'Email'}[d.channel] || d.channel;
+  el.textContent = ch + ' every ' + interval + ' min during market hours (9:30–4:00 ET)'
+    + (d.last_sent ? ' · Last sent: ' + d.last_sent : ' · Not yet sent today');
+  el.style.color = '#10e8b8';
+}
+
+function rntSave() {
+  var payload = {
+    rpt_notify_enabled:      document.getElementById('rnt-enabled').checked,
+    rpt_notify_channel:      document.getElementById('rnt-channel').value,
+    rpt_notify_interval_min: parseInt(document.getElementById('rnt-interval').value),
+    rpt_notify_holdings:     document.getElementById('rnt-holdings').checked,
+    rpt_notify_candidates:   document.getElementById('rnt-candidates').checked,
+  };
+  fetch('/api/report-notify/config', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        _rntUpdateDest(_rntCfg);
+        _rntUpdateStatus(Object.assign(_rntCfg, payload, {enabled: payload.rpt_notify_enabled,
+          channel: payload.rpt_notify_channel, interval_min: payload.rpt_notify_interval_min}));
+        toast('Notification settings saved', 'success');
+      }
+    })
+    .catch(function() {});
+  // Update dest on channel change
+  document.getElementById('rnt-channel').addEventListener('change', function() {
+    _rntUpdateDest(_rntCfg);
+  });
+}
+
+function rntTest() {
+  var btn = document.querySelector('#rpt-notify-card .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  fetch('/api/report-notify/test', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Send Test'; }
+      if (d.error) { toast('Test failed: ' + d.error, 'error'); return; }
+      toast('Test sent via ' + (document.getElementById('rnt-channel').value), 'success');
+      var prev = document.getElementById('rnt-preview');
+      prev.textContent = d.preview;
+      prev.style.display = 'block';
+    })
+    .catch(function() {
+      if (btn) { btn.disabled = false; btn.textContent = 'Send Test'; }
+      toast('Test failed', 'error');
+    });
+}
+
 </script>
 </body>
 </html>

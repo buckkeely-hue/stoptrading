@@ -234,15 +234,28 @@ class CatalystEngine:
                         continue
                     self._seen_ids.append(efts_id)
 
-                    entity  = src.get('entity_name', '') or src.get('display_names', [''])[0]
-                    tickers = src.get('file_date', '')
-                    # Extract ticker from entity name or form data
-                    ticker  = ''
-                    m = re.search(r'\b([A-Z]{1,5})\b', src.get('period_of_report', ''))
-                    if not m:
-                        m = re.search(r'\(([A-Z]{1,5})\)', entity)
-                    if m:
-                        ticker = m.group(1)
+                    names   = src.get('display_names', []) or ['']
+                    entity  = src.get('entity_name', '') or names[0]
+                    # Resolve ticker via CIK — EFTS provides the CIK in _source.cik /
+                    # display_names ("NAME (CIK 0001234567)"). The old code parsed a date
+                    # field (period_of_report) for a ticker, so EFTS hits never resolved.
+                    ticker = ''
+                    cik_field = src.get('cik')
+                    cik_str = ''
+                    if isinstance(cik_field, list) and cik_field:
+                        cik_str = str(cik_field[0])
+                    elif cik_field:
+                        cik_str = str(cik_field)
+                    if not cik_str:
+                        mcik = re.search(r'CIK[ ]?0*(\d+)', ' '.join(names))
+                        if mcik:
+                            cik_str = mcik.group(1)
+                    if cik_str:
+                        ticker = self._cik_to_ticker.get(cik_str.zfill(10), '')
+                    if not ticker:
+                        m = re.search(r'\(([A-Z]{1,5})\)', entity)   # (TICKER) in the name
+                        if m:
+                            ticker = m.group(1)
                     if not ticker:
                         continue
 

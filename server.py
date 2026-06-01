@@ -46,6 +46,10 @@ app = Flask(__name__, static_folder=None)   # all static files served via explic
 app.secret_key = get_secret_key()
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
+# Mark the session cookie Secure (HTTPS-only) when served behind TLS. Config-driven and
+# default off so direct-over-HTTP/LAN access isn't locked out; set "cookie_secure": true
+# once everything reaches the app via https (e.g. the trade.buckkeely.com proxy).
+app.config['SESSION_COOKIE_SECURE'] = bool(load_config().get('cookie_secure', False))
 app.config['PERMANENT_SESSION_LIFETIME'] = 28800   # 8 hours
 
 
@@ -137,6 +141,151 @@ if config.get('auto_trade_enabled'):
 if config.get('auto_start_enabled') and not autopilot.running:
     _bal = float(config.get('starting_balance', 500.0))
     autopilot.resume()   # resume preserves saved state; start() would reset the account
+
+
+# ── Periodic Report Notifier ──────────────────────────────────────────────────
+
+class _ReportNotifier:
+    """Fires intraday position+candidate digests at a user-configured interval."""
+
+    def __init__(self):
+        self._last_sent    = None
+        self._last_prices  = {}   # sym → price at last send, for delta display
+        self._thread = threading.Thread(target=self._run, daemon=True, name='rpt-notify')
+        self._thread.start()
+
+    def _run(self):
+        while True:
+            time.sleep(60)
+            try:
+                self._tick()
+            except Exception:
+                pass
+
+    def _tick(self):
+        cfg = load_config()
+        if not cfg.get('rpt_notify_enabled', False):
+            return
+        try:
+            from zoneinfo import ZoneInfo
+            _et = ZoneInfo('America/New_York')
+        except Exception:
+            _et = None
+        from datetime import datetime as _dt
+        now = _dt.now(_et) if _et else _dt.utcnow()
+        if now.weekday() >= 5:          # weekend
+            return
+        h, m = now.hour, now.minute
+        if h < 9 or (h == 9 and m < 30) or h >= 16:
+            return
+        interval = int(cfg.get('rpt_notify_interval_min', 30))
+        if self._last_sent:
+            elapsed = (now - self._last_sent).total_seconds() / 60
+            if elapsed < interval - 0.5:
+                return
+        msg = self._build(cfg, now)
+        channel = cfg.get('rpt_notify_channel', 'ntfy')
+        notifier.send_channel(msg, channel)
+        self._last_sent = now
+
+    def _build(self, cfg, now):
+        from datetime import datetime as _dt
+        lines = ['StopTrading Report — ' + now.strftime('%-I:%M %p ET')]
+        if cfg.get('rpt_notify_holdings', True):
+            state = paper_trader.get_state()
+            positions = state.get('positions', [])
+            if positions:
+                lines.append('\nHOLDINGS:')
+                for p in positions:
+                    sym = p['symbol'] if isinstance(p, dict) else p
+                    if isinstance(p, dict):
+                        entry  = float(p.get('avg_cost', 0))
+                        shares = int(p.get('shares', 0))
+                        price  = float(p.get('current_price', 0))   # get_state() already priced this live
+                    else:
+                        entry, shares, price = 0, 0, 0
+                    if price > 0 and entry > 0:
+                        pct   = (price - entry) / entry * 100
+                        prev  = self._last_prices.get(sym, entry)
+                        delta = (price - prev) / prev * 100 if prev > 0 else 0
+                        arrow = 'UP' if pct >= 0 else 'DN'
+                        chg   = ('+' if delta >= 0 else '') + '{:.1f}% since last'.format(delta)
+                        lines.append('  [{}] {} {}sh @ ${:.4f} -> ${:.4f} ({:+.1f}%) | {}'.format(
+                            arrow, sym, shares, entry, price, pct, chg))
+                        self._last_prices[sym] = price
+            else:
+                lines.append('\nHOLDINGS: no open positions')
+        if cfg.get('rpt_notify_candidates', True):
+            try:
+                movers = harvester.scan_movers()
+                top = sorted(movers, key=lambda x: x.get('score', 0), reverse=True)[:4]
+                if top:
+                    lines.append('\nTOP CANDIDATES:')
+                    for c in top:
+                        sig = c.get('rt_signal') or c.get('signal') or ''
+                        lines.append('  {} ${:.3f} score:{:.0f} vol:{:.1f}x {}'.format(
+                            c['symbol'], c.get('price', 0), c.get('score', 0),
+                            c.get('vol_ratio', 0), sig))
+            except Exception:
+                pass
+        return '\n'.join(lines)
+
+    def send_now(self, cfg):
+        """Trigger an immediate send (test button)."""
+        from datetime import datetime as _dt
+        msg = self._build(cfg, _dt.now())
+        notifier.send_channel(msg, cfg.get('rpt_notify_channel', 'ntfy'))
+        return msg
+
+_rpt_notifier = _ReportNotifier()
+
+
+@app.route('/api/report-notify/config')
+@require_auth
+def api_rpt_notify_config_get():
+    cfg = load_config()
+    return jsonify({
+        'enabled':      cfg.get('rpt_notify_enabled', False),
+        'channel':      cfg.get('rpt_notify_channel', 'ntfy'),
+        'interval_min': cfg.get('rpt_notify_interval_min', 30),
+        'holdings':     cfg.get('rpt_notify_holdings', True),
+        'candidates':   cfg.get('rpt_notify_candidates', True),
+        'last_sent':    _rpt_notifier._last_sent.strftime('%I:%M %p ET') if _rpt_notifier._last_sent else None,
+        'has_twilio':   bool(cfg.get('twilio_account_sid') and cfg.get('notify_phone')),
+        'has_ntfy':     bool(cfg.get('ntfy_topic')),
+        'has_email':    bool(cfg.get('smtp_host') and cfg.get('notify_email')),
+        'notify_phone': cfg.get('notify_phone', ''),
+        'notify_email': cfg.get('notify_email', ''),
+    })
+
+@app.route('/api/report-notify/config', methods=['POST'])
+@require_auth
+def api_rpt_notify_config_post():
+    global config
+    b = request.get_json() or {}
+    existing = load_config()
+    for key, cast in [('rpt_notify_enabled', bool), ('rpt_notify_holdings', bool),
+                      ('rpt_notify_candidates', bool)]:
+        if key in b:
+            existing[key] = cast(b[key])
+    if 'rpt_notify_channel' in b and b['rpt_notify_channel'] in ('twilio', 'ntfy', 'email'):
+        existing['rpt_notify_channel'] = b['rpt_notify_channel']
+    if 'rpt_notify_interval_min' in b:
+        existing['rpt_notify_interval_min'] = int(b['rpt_notify_interval_min'])
+    config = save_config(existing)
+    return jsonify({'ok': True})
+
+@app.route('/api/report-notify/test', methods=['POST'])
+@require_auth
+def api_rpt_notify_test():
+    cfg = load_config()
+    if not cfg.get('rpt_notify_channel'):
+        return jsonify({'error': 'No channel configured'}), 400
+    try:
+        msg = _rpt_notifier.send_now(cfg)
+        return jsonify({'ok': True, 'preview': msg[:300]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/health')
@@ -254,25 +403,35 @@ def api_reset_request():
 
 @app.route('/api/reset-password/confirm', methods=['POST'])
 def api_reset_confirm():
+    ip = request.remote_addr or 'unknown'
+    if check_rate_limit(ip):
+        return jsonify({'ok': False, 'error': 'Too many attempts — try again in 15 minutes'}), 429
     data  = request.get_json(force=True) or {}
     token = str(data.get('token', '')).strip()
     pw    = data.get('password', '')
     if len(pw) < 8:
         return jsonify({'ok': False, 'error': 'Password must be at least 8 characters'}), 400
     if consume_reset_token(token, pw):
+        clear_rate_limit(ip)
         return jsonify({'ok': True})
+    record_failed_attempt(ip)   # throttle brute-force of the 6-digit OTP
     return jsonify({'ok': False, 'error': 'Invalid or expired code'}), 401
 
 
 @app.route('/api/reset-password/emergency', methods=['POST'])
 def api_emergency_reset():
+    ip = request.remote_addr or 'unknown'
+    if check_rate_limit(ip):
+        return jsonify({'ok': False, 'error': 'Too many attempts — try again in 15 minutes'}), 429
     data = request.get_json(force=True) or {}
     code = str(data.get('recovery_code', '')).strip()
     pw   = data.get('password', '')
     if len(pw) < 8:
         return jsonify({'ok': False, 'error': 'Password must be at least 8 characters'}), 400
     if emergency_reset(code, pw):
+        clear_rate_limit(ip)
         return jsonify({'ok': True})
+    record_failed_attempt(ip)   # throttle brute-force of the recovery code
     return jsonify({'ok': False, 'error': 'Invalid recovery code'}), 401
 
 
@@ -329,6 +488,15 @@ def api_harvest_start():
 @require_auth
 def api_autopilot_status():
     return jsonify(autopilot.get_status())
+
+
+@app.route('/api/predictor/stats')
+@require_auth
+def api_predictor_stats():
+    try:
+        return jsonify(autopilot.predictor.stats())
+    except Exception as e:
+        return jsonify({'error': str(e), 'n_trained': 0}), 200
 
 @app.route('/api/autopilot/start', methods=['POST'])
 @require_auth
@@ -412,6 +580,10 @@ def api_scheduler_config():
         existing['daily_balance'] = _safe_float(b.get('daily_balance'), existing.get('daily_balance', 500.0))
     if 'daily_spend_limit' in b:
         existing['daily_spend_limit'] = _safe_float(b.get('daily_spend_limit'), existing.get('daily_spend_limit', 500.0))
+    if 'weekend_close' in b:
+        existing['weekend_close'] = bool(b['weekend_close'])
+    if 'force_eod_close' in b:
+        existing['force_eod_close'] = bool(b['force_eod_close'])
     config = save_config(existing)
     return jsonify({'ok': True})
 
@@ -653,6 +825,125 @@ def api_realtime_symbol():
         return jsonify({'error': 'Invalid symbol'}), 400
     engine.add_symbol(symbol)
     return jsonify(engine.score(symbol))
+
+
+@app.route('/api/reports/pnl')
+@require_auth
+def api_reports_pnl():
+    from datetime import datetime, timedelta
+    period = request.args.get('period', '1d').lower()
+    if period not in ('1d', '1w', '1m'):
+        return jsonify({'error': 'period must be 1d, 1w, or 1m'}), 400
+    now = datetime.now()
+    if period == '1d':
+        cutoff = now - timedelta(hours=24)
+        def _bucket(dt): return dt.strftime('%H:') + str(dt.minute // 30 * 30).zfill(2)
+    elif period == '1w':
+        cutoff = now - timedelta(days=7)
+        def _bucket(dt): return dt.strftime('%m/%d')
+    else:
+        cutoff = now - timedelta(days=30)
+        def _bucket(dt): return dt.strftime('%m/%d')
+    report = ledger.get_report()
+    entries = list(reversed(report.get('entries', [])))   # chronological order
+    buckets = {}
+    all_trades = []
+    for entry in entries:
+        if entry.get('action') != 'SELL':
+            continue
+        try:
+            dt = datetime.strptime(entry['time'], '%Y-%m-%d %H:%M:%S')
+        except Exception:
+            continue
+        if dt < cutoff:
+            continue
+        pnl = float(entry.get('pnl', 0))
+        key = _bucket(dt)
+        buckets[key] = round(buckets.get(key, 0.0) + pnl, 4)
+        all_trades.append({
+            'time':   entry['time'],
+            'symbol': entry.get('symbol', ''),
+            'pnl':    round(pnl, 2),
+            'shares': entry.get('shares', 0),
+            'price':  entry.get('price', 0),
+        })
+    sorted_keys = sorted(buckets.keys())
+    cum = 0.0
+    series = []
+    for k in sorted_keys:
+        cum = round(cum + buckets[k], 4)
+        series.append({'label': k, 'pnl': round(buckets[k], 2), 'cumulative': cum})
+    wins   = [t for t in all_trades if t['pnl'] > 0]
+    losses = [t for t in all_trades if t['pnl'] <= 0]
+    return jsonify({
+        'period':  period,
+        'series':  series,
+        'trades':  list(reversed(all_trades))[:100],
+        'summary': {
+            'total_pnl':    round(sum(t['pnl'] for t in all_trades), 2),
+            'total_trades': len(all_trades),
+            'wins':         len(wins),
+            'losses':       len(losses),
+            'win_rate':     round(len(wins) / max(len(all_trades), 1) * 100, 1),
+            'best_trade':   round(max((t['pnl'] for t in all_trades), default=0), 2),
+            'worst_trade':  round(min((t['pnl'] for t in all_trades), default=0), 2),
+            'avg_win':      round(sum(t['pnl'] for t in wins)   / max(len(wins),   1), 2),
+            'avg_loss':     round(sum(t['pnl'] for t in losses) / max(len(losses), 1), 2),
+        }
+    })
+
+
+@app.route('/api/reports/chart')
+@require_auth
+def api_reports_chart():
+    import yfinance as yf
+    symbol = request.args.get('symbol', '').strip().upper()
+    period = request.args.get('period', '1d').lower()
+    if not _valid_symbol(symbol):
+        return jsonify({'error': 'Invalid symbol'}), 400
+    if period not in ('1d', '1w', '1m'):
+        return jsonify({'error': 'period must be 1d, 1w, or 1m'}), 400
+    try:
+        yf_params = {
+            '1d': ('2d',  '5m',  78),
+            '1w': ('5d',  '1h', 130),
+            '1m': ('1mo', '1d',  22),
+        }[period]
+        hist = yf.Ticker(symbol).history(period=yf_params[0], interval=yf_params[1])
+        if hist.empty:
+            return jsonify({'error': 'No data for ' + symbol}), 404
+        hist = hist.tail(yf_params[2])
+        bars = []
+        cum_pv = cum_v = 0.0
+        for ts, row in hist.iterrows():
+            b = {
+                't': str(ts)[:16],
+                'o': round(float(row['Open']),   4),
+                'h': round(float(row['High']),   4),
+                'l': round(float(row['Low']),    4),
+                'c': round(float(row['Close']),  4),
+                'v': int(row['Volume']),
+            }
+            if period == '1d':
+                tp = (b['h'] + b['l'] + b['c']) / 3
+                cum_pv += tp * b['v']
+                cum_v  += b['v']
+                b['vwap'] = round(cum_pv / cum_v, 4) if cum_v > 0 else b['c']
+            bars.append(b)
+        entry_price = None
+        for p in paper_trader.get_state().get('positions', []):
+            if p['symbol'] == symbol:
+                entry_price = float(p['avg_cost'])
+                break
+        return jsonify({
+            'symbol':       symbol,
+            'period':       period,
+            'bars':         bars,
+            'current_price': bars[-1]['c'] if bars else 0,
+            'entry_price':  entry_price,
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/harvest/signal')

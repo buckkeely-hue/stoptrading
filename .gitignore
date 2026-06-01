@@ -10,6 +10,8 @@ paper_trades.json
 accounting.json
 scheduler.json
 trial.json
+predictor_model.json
+predictor_data.jsonl
 
 # Logs and runtime
 server.log

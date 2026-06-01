@@ -1,7 +1,11 @@
 import json
 import os
+import threading
+
+from modules.io_safe import atomic_write_json
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.json')
+_SAVE_LOCK = threading.Lock()
 
 DEFAULTS = {
     'alpaca_paper_key': '',
@@ -44,8 +48,9 @@ def load_config():
     return dict(DEFAULTS)
 
 def save_config(updates):
-    config = load_config()
-    config.update(updates)
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Serialize the read-modify-write so concurrent POST handlers can't lose updates.
+    with _SAVE_LOCK:
+        config = load_config()
+        config.update(updates)
+        atomic_write_json(CONFIG_FILE, config)
     return config

@@ -208,9 +208,12 @@ class MacroSignalAgent:
 
     def _fetch_unrest(self):
         """Scan Reuters/AP RSS for macro-unrest keywords."""
+        # CNBC top-news RSS — the old Reuters feeds.reuters.com endpoint was discontinued,
+        # so the unrest component always scored 0. CNBC's RSS is live, free, and the same
+        # ./item XML shape the parser below expects.
         feeds = [
-            'https://feeds.reuters.com/reuters/businessNews',
-            'https://rss.app/feeds/v1.1/nytimes-business.json',  # fallback ignored on error
+            'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+            'https://feeds.a.dj.com/rss/RSSWorldNews.xml',   # WSJ world news fallback
         ]
         score = 0
         items = []

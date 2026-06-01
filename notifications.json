@@ -83,6 +83,13 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-05-31 19:25:37",
+      "message": "StopTrading Report \u2014 7:25 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  STG $5.193 score:18 vol:0.1x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }

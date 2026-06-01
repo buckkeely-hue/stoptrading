@@ -7,11 +7,18 @@ import json
 import os
 from datetime import datetime, timezone, timedelta
 from modules.signals import SignalAggregator
+from modules.io_safe import atomic_write_json
+from modules.predictor import Predictor
 try:
     from zoneinfo import ZoneInfo
     _ET = ZoneInfo('America/New_York')
 except ImportError:
     _ET = None   # fallback: UTC-4 approximation used below
+
+
+def _now_et():
+    """Current time in US/Eastern (falls back to naive local if zoneinfo missing)."""
+    return datetime.now(_ET) if _ET else datetime.now()
 
 HARVEST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'harvests.json')
 
@@ -556,7 +563,19 @@ class AutoPilot:
         self._lock = threading.Lock()
         self.log = []
         self.daily_spent = 0.0
-        self.daily_date = datetime.now().strftime('%Y-%m-%d')
+        # Capital basis freed by sells today. The daily spend gate uses NET deployed
+        # (spent − returned) so closing a position recycles its budget within the day
+        # instead of permanently consuming it. Fed centrally by _on_paper_sell below.
+        self.daily_returned = 0.0
+        self.daily_date = _now_et().strftime('%Y-%m-%d')
+        # Predictive model — calibrated P(win) for entries + reversal score for exits.
+        self.predictor = Predictor(config)
+        self._predict_realized = {}   # symbol -> cumulative realized P&L this position (for labels)
+        # Central hook so EVERY exit path (harvest, stop, EOD, stream) recycles budget.
+        try:
+            self.paper.register_callback(self._on_paper_sell)
+        except Exception:
+            pass
         self.stats = {
             'total_trades': 0,
             'total_harvests': 0,
@@ -607,8 +626,9 @@ class AutoPilot:
                 for k, v in self.stats.items():
                     self.stats[k] = loaded.get(k, v)
                 saved_date = d.get('daily_date', '')
-                if saved_date == datetime.now().strftime('%Y-%m-%d'):
+                if saved_date == _now_et().strftime('%Y-%m-%d'):
                     self.daily_spent          = d.get('daily_spent', 0.0)
+                    self.daily_returned       = d.get('daily_returned', 0.0)
                     self.daily_date           = saved_date
                     self._daily_start_balance = d.get('daily_start_balance', 0.0)
                     self._daily_pnl_floor_hit = d.get('daily_pnl_floor_hit', False)
@@ -628,27 +648,26 @@ class AutoPilot:
 
     def _save(self):
         try:
-            with open(AUTOPILOT_FILE, 'w') as f:
-                json.dump({
-                    'log':                 self.log[-1000:],
-                    'stats':               self.stats,
-                    'daily_spent':         self.daily_spent,
-                    'daily_date':          self.daily_date,
-                    'running':             self.running,
-                    'consecutive_losses':  self._consecutive_losses,
-                    'daily_start_balance': self._daily_start_balance,
-                    'daily_pnl_floor_hit': self._daily_pnl_floor_hit,
-                    'day_trades_log':      self._day_trades_log,
-                }, f, indent=2)
+            atomic_write_json(AUTOPILOT_FILE, {
+                'log':                 self.log[-1000:],
+                'stats':               self.stats,
+                'daily_spent':         self.daily_spent,
+                'daily_returned':      self.daily_returned,
+                'daily_date':          self.daily_date,
+                'running':             self.running,
+                'consecutive_losses':  self._consecutive_losses,
+                'daily_start_balance': self._daily_start_balance,
+                'daily_pnl_floor_hit': self._daily_pnl_floor_hit,
+                'day_trades_log':      self._day_trades_log,
+            })
         except Exception:
             pass
         try:
-            with open(VAULT_FILE, 'w') as f:
-                json.dump({
-                    'balance':   round(self._vault_balance, 4),
-                    'withdrawn': round(self._vault_withdrawn, 4),
-                    'entries':   self._vault_entries[-500:],
-                }, f, indent=2)
+            atomic_write_json(VAULT_FILE, {
+                'balance':   round(self._vault_balance, 4),
+                'withdrawn': round(self._vault_withdrawn, 4),
+                'entries':   self._vault_entries[-500:],
+            })
         except Exception:
             pass
 
@@ -738,10 +757,73 @@ class AutoPilot:
         if self.running:
             return {'error': 'AutoPilot already running'}
         self.running = True
+        # Register stream price callback — MUST happen here too, not just in start(),
+        # otherwise an auto-resumed bot has no event-driven sub-minute stop-loss.
+        self._register_stream_callback()
         self._entry('SYSTEM', 'AutoPilot resumed after service restart — continuing from saved state')
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
         return {'ok': True}
+
+    def _register_stream_callback(self):
+        """Idempotently register the stream price callback for event-driven exits."""
+        if getattr(self, '_stream_cb_registered', False):
+            return
+        if self.engine and hasattr(self.engine, 'cache'):
+            self.engine.cache.register_price_callback(self._on_stream_price)
+            self._stream_cb_registered = True
+
+    def _alert_stale_price(self, symbol, shares, entry):
+        """Throttled warning (once / 5 min per symbol) when a HELD position has no live
+        price — the stop-loss is effectively blind until a price returns."""
+        alerts = getattr(self, '_stale_price_alerts', None)
+        if alerts is None:
+            alerts = self._stale_price_alerts = {}
+        now = datetime.now()
+        last = alerts.get(symbol)
+        if last and (now - last).total_seconds() < 300:
+            return
+        alerts[symbol] = now
+        note = '{} — NO LIVE PRICE for held position ({} sh @ ${:.4f}); stop-loss is BLIND until feed returns'.format(
+            symbol, shares, entry)
+        self._entry('STALE-PRICE', note)
+        try:
+            self._notify('⚠️ ' + note, 'alert')
+        except Exception:
+            pass
+
+    def _on_paper_sell(self, event):
+        """Central hook on every paper SELL — recycle the freed capital basis back into
+        today's spend budget so a closed position frees room for new entries. Bounded so
+        net deployed never goes below zero (selling a prior-day position can't inflate
+        today's budget past what was actually spent today)."""
+        try:
+            if event.get('type') != 'SELL':
+                return
+            sym  = event.get('symbol')
+            freed = float(event.get('shares', 0)) * float(event.get('avg_cost', 0))
+            # Lock-free on purpose: this fires synchronously inside paper.sell(), which can
+            # be called while self._lock is held — acquiring it here would deadlock. A soft
+            # budget counter doesn't need strict locking; the GIL keeps the write safe.
+            if freed > 0:
+                self.daily_returned = min(self.daily_spent, getattr(self, 'daily_returned', 0.0) + freed)
+            # Accumulate realized P&L for this position; when it fully closes, label the
+            # entry prediction (won = net profitable) so the model learns from the outcome.
+            if sym is not None:
+                self._predict_realized[sym] = self._predict_realized.get(sym, 0.0) + float(event.get('pnl', 0.0))
+                still_open = sym in self.paper._state.get('positions', {})
+                if not still_open:
+                    won = self._predict_realized.pop(sym, 0.0) > 0
+                    try:
+                        self.predictor.record_outcome(sym, won)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def _net_deployed_today(self):
+        """Capital deployed from today's budget, net of positions already closed today."""
+        return max(0.0, self.daily_spent - getattr(self, 'daily_returned', 0.0))
 
     def start(self, starting_balance=500.0):
         if self.running:
@@ -753,7 +835,8 @@ class AutoPilot:
             self.paper._state['history'] = []
             self.paper._save()
         self.daily_spent = 0.0
-        self.daily_date = datetime.now().strftime('%Y-%m-%d')
+        self.daily_returned = 0.0
+        self.daily_date = _now_et().strftime('%Y-%m-%d')
         self.stats['started'] = datetime.now().isoformat()
         self.stats['total_trades'] = 0
         self.stats['total_harvests'] = 0
@@ -769,14 +852,13 @@ class AutoPilot:
         self._consecutive_losses  = 0
         self._daily_pnl_floor_hit = False
         self._gapped_symbols      = set()
-        self._gap_date            = datetime.now().strftime('%Y-%m-%d')
+        self._gap_date            = _now_et().strftime('%Y-%m-%d')
         self._premarket_watchlist = []
         self._premarket_date      = ''
         self._entry('SYSTEM', 'AutoPilot started — $%.2f paper balance' % starting_balance)
         self.running = True
         # Register stream price callback for event-driven stop-loss
-        if self.engine and hasattr(self.engine, 'cache'):
-            self.engine.cache.register_price_callback(self._on_stream_price)
+        self._register_stream_callback()
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
         self._save()
@@ -798,10 +880,11 @@ class AutoPilot:
             time.sleep(60)  # 1-minute polling; stream callbacks handle sub-minute stops
 
     def _tick(self):
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = _now_et().strftime('%Y-%m-%d')
         if today != self.daily_date:
             self.daily_date           = today
             self.daily_spent          = 0.0
+            self.daily_returned       = 0.0
             self._daily_pnl_floor_hit = False
             self._consecutive_losses  = 0
             self._gapped_symbols      = set()
@@ -831,7 +914,7 @@ class AutoPilot:
                 self._session_last_log = now_ts
 
         # Pre-market gapper scan — run once per day at PRE_MARKET to build OPEN watchlist
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = _now_et().strftime('%Y-%m-%d')
         if session == 'PRE_MARKET' and self._premarket_date != today:
             if hasattr(self.harvester, 'universe') and self.harvester.universe:
                 try:
@@ -847,7 +930,13 @@ class AutoPilot:
                     pass
 
         # EOD forced-close — exit all open positions at start of CLOSE session
-        if session == 'CLOSE' and self.config.get('force_eod_close', False):
+        # Triggers on: force_eod_close (every night) OR weekend_close (Friday only)
+        _is_friday = (datetime.now(_ET) if _ET else datetime.now()).weekday() == 4
+        _do_eod_close = (
+            self.config.get('force_eod_close', False) or
+            (self.config.get('weekend_close', True) and _is_friday)
+        )
+        if session == 'CLOSE' and _do_eod_close:
             state = self.paper.get_state()
             for pos in state.get('positions', []):
                 sym    = pos['symbol']
@@ -873,11 +962,12 @@ class AutoPilot:
                             self.stats['losses'] += 1
                             self.stats['total_loss_pct'] += abs(eod_pct)
                             self._consecutive_losses += 1
+                        _close_reason = 'weekend close — no overnight hold' if (_is_friday and not self.config.get('force_eod_close', False)) else 'forced end-of-day close'
                         self._entry('EOD-CLOSE',
-                            '{} — forced end-of-day close | {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
-                                sym, shrs, eod_price, eod_profit))
+                            '{} — {} | {} shares @ ${:.4f} | net P&L ${:.2f}'.format(
+                                sym, _close_reason, shrs, eod_price, eod_profit))
                         from modules.notify import msg_exit
-                        self._notify(msg_exit('EOD-CLOSE', sym, 'forced end-of-day close', eod_profit))
+                        self._notify(msg_exit('EOD-CLOSE', sym, _close_reason, eod_profit))
                 except Exception as e:
                     self._entry('ERROR', '{} EOD-CLOSE failed: {}'.format(sym, str(e)))
             return   # skip remaining tick after EOD close
@@ -901,7 +991,13 @@ class AutoPilot:
                 price = self._get_live_price(symbol)
                 entry = float(pos['avg_cost'])
                 shares = int(pos['shares'])
-                if entry <= 0 or shares <= 0 or price <= 0:
+                if entry <= 0 or shares <= 0:
+                    continue
+                if price <= 0:
+                    # No live price (halt / dead feed). We can't safely transact on a
+                    # bad price, but silently skipping leaves the stop-loss BLIND — so
+                    # raise a throttled alert so a human can intervene, then retry next tick.
+                    self._alert_stale_price(symbol, shares, entry)
                     continue
 
                 gain_pct = (price - entry) / entry * 100
@@ -961,6 +1057,34 @@ class AutoPilot:
                         self._entry('ERROR', '{} GAP-EXIT sell failed: {}'.format(
                             symbol, result.get('error', 'unknown')))
                     continue
+
+                # ── PREDICTIVE-EXIT: bank the gain when live order flow says reversal ──────
+                # Conservative: only fires when already in profit, so it protects winners
+                # (takes profit early on exhaustion) rather than forcing losses.
+                if self.config.get('predictor_exit', True) and net_gain > tx_cost_pct:
+                    _vel = self.engine.cache.velocity.get(symbol, {}) if (self.engine and hasattr(self.engine, 'cache')) else {}
+                    _mins = (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() / 60.0
+                    _rev = self.predictor.reversal_score(_vel, net_gain, _mins)
+                    if _rev >= float(self.config.get('predictor_exit_thresh', 0.55)):
+                        result = self.paper.sell(symbol, shares, price_override=price)
+                        if result.get('ok'):
+                            profit = self._net_profit(shares, price, entry)
+                            self.stats['total_profit'] += profit
+                            self._cleanup_position(symbol)
+                            if profit >= 0:
+                                self.stats['wins'] += 1
+                                self.stats['total_win_pct'] += gain_pct
+                                self._consecutive_losses = 0
+                            else:
+                                self.stats['losses'] += 1
+                                self.stats['total_loss_pct'] += abs(gain_pct)
+                                self._consecutive_losses += 1
+                            note = '{} — PREDICT-EXIT: reversal score {:.2f} | sold {} @ ${:.4f} | net {:.1f}% | P&L ${:.2f}'.format(
+                                symbol, _rev, shares, price, net_gain, profit)
+                            self._entry('PREDICT-EXIT', note)
+                            from modules.notify import msg_exit
+                            self._notify(msg_exit('PREDICT-EXIT', symbol, 'order-flow reversal', profit))
+                        continue
 
                 # ── FINAL-EXIT oracle: full exit when multiple signals say rally is over ──
                 should_exit, exit_reason = self._should_exit_permanently(
@@ -1174,8 +1298,8 @@ class AutoPilot:
             self._entry('LIMIT', 'Max 5 positions held — no new buys until one is sold')
             return
 
-        if self.daily_spent >= daily_limit:
-            self._entry('LIMIT', 'Daily spend limit $%.0f reached — no new buys today' % daily_limit)
+        if self._net_deployed_today() >= daily_limit:
+            self._entry('LIMIT', 'Daily spend limit $%.0f reached (net deployed) — no new buys' % daily_limit)
             return
 
         # PDT rule gate — skipped entirely in cash account mode (no PDT restriction on cash accounts)
@@ -1235,7 +1359,7 @@ class AutoPilot:
                 self._halt_notify_ts = now_ts
             return
 
-        remaining_today = daily_limit - self.daily_spent
+        remaining_today = daily_limit - self._net_deployed_today()
         kelly_size = self._kelly_size(balance)
         # Hard cap: never deploy more than position_size_pct% of balance in one trade
         pos_cap = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
@@ -1455,6 +1579,10 @@ class AutoPilot:
                     sec_pts = self.sector.get_sector_score(sym)
                     if sec_pts != 0:
                         bonus += sec_pts
+                # Cap total agent-bonus stacking so no single narrative pile-up
+                # (insider + news + gap + ORB + squeeze …) can swamp the price/volume
+                # base score and buy a thin name on story alone.
+                bonus = max(-40, min(50, bonus))
                 if bonus:
                     c['combined_score'] = round(c.get('combined_score', c['score']) + bonus, 1)
             if any(c.get('combined_score', 0) != c['score'] for c in candidates):
@@ -1531,20 +1659,17 @@ class AutoPilot:
                     '— entry not viable'.format(symbol, est_spread, spread_limit, harvest_trig))
                 return
 
-            # SignalAggregator gate — composite score + consensus (cached 300s, fails open)
+            # Live conviction gate — use the already-computed combined_score (scan momentum +
+            # realtime velocity + capped agent bonuses). The old SignalAggregator.score_symbol
+            # gate was removed here: it ran on stale daily/yfinance data (300s cache), gated on
+            # fundamentals irrelevant to a day-trade, and silently failed open — so it either
+            # blocked good fast movers or did nothing. The live composite is the honest signal.
             min_sig_score = int(self.config.get('min_signal_score', 35))
-            min_sig_cons  = int(self.config.get('min_signal_consensus', 3))
-            try:
-                sig = self.harvester.signals.score_symbol(symbol, price)
-                sig_score = sig.get('composite_score', 0)
-                sig_cons  = sig.get('positive_count', sig.get('consensus', 0))
-                if sig_score < min_sig_score or sig_cons < min_sig_cons:
-                    self._entry('SIGNAL-GATE',
-                        '{} signal {:.0f}/consensus {}/{} below gate ({}/{}) — skip'.format(
-                            symbol, sig_score, sig_cons, 7, min_sig_score, min_sig_cons))
-                    return
-            except Exception:
-                pass   # fail open — signal error never blocks a buy
+            live_score = best.get('combined_score', best.get('score', 0))
+            if live_score < min_sig_score:
+                self._entry('SIGNAL-GATE',
+                    '{} live composite {:.0f} below {} — skip'.format(symbol, live_score, min_sig_score))
+                return
 
             shares = max(1, int(buy_amount / price))
             cost   = shares * price
@@ -1557,6 +1682,29 @@ class AutoPilot:
                     '{} rvol {:.1f}x below {:.1f}x minimum — waiting for volume confirmation'.format(
                         symbol, rvol, min_rvol))
                 return
+
+            # ── Predictive model: calibrated P(win) → optional gate + conviction sizing ──
+            velocity = {}
+            if self.engine and hasattr(self.engine, 'cache'):
+                velocity = self.engine.cache.velocity.get(symbol, {})
+            pred  = self.predictor.predict(best, velocity, rvol)
+            p_win = pred['p_win']
+            if self.config.get('predictor_gate', False):
+                min_p = float(self.config.get('predictor_min_p', 0.45))
+                if p_win < min_p:
+                    self._entry('PREDICT-GATE',
+                        '{} P(win) {:.0%} below {:.0%} — skip (model n={})'.format(
+                            symbol, p_win, min_p, pred['n_trained']))
+                    return
+            if self.config.get('predictor_sizing', True):
+                # Scale by conviction, then re-clamp to the same caps the base size respected
+                # so high confidence can't breach the daily/balance/per-trade limits.
+                adj   = buy_amount * self.predictor.size_multiplier(p_win)
+                adj   = min(adj, remaining_today, balance, pos_cap * 1.25)
+                shares = max(1, int(adj / price))
+                cost   = shares * price
+            self.predictor.remember(symbol, pred['features'])
+            self._predict_realized[symbol] = 0.0
 
             cat_score  = self.catalyst.get_score(symbol) if self.catalyst else 0
             news_score = self.news.get_news_score(symbol) if self.news else 0
@@ -1574,11 +1722,14 @@ class AutoPilot:
                 spy_info    = ' | SPY:{:+.1f}%'.format(spy_chg) if spy_chg != 0 else ''
                 spread_info = ' | spread~{:.1f}%'.format(est_spread)
                 combined_score = best.get('combined_score', best.get('score', 0))
+                pred_info = ' | P(win):{:.0%}{}'.format(
+                    p_win, '' if pred['alpha'] >= 0.999 else '~') + (
+                    ' [learning n={}]'.format(pred['n_trained']) if pred['n_trained'] < 100 else '')
                 self._entry('BUY',
                     '{} — {} shares @ ${:.4f} | cost ${:.2f} | kelly ${:.0f} | '
-                    'score {:.0f}{}{}{}{} | 1h:{:+.1f}% rvol:{:.1f}x'.format(
+                    'score {:.0f}{}{}{}{}{} | 1h:{:+.1f}% rvol:{:.1f}x'.format(
                         symbol, shares, price, cost, kelly_size,
-                        combined_score, rt_info, cat_info, spy_info, spread_info,
+                        combined_score, pred_info, rt_info, cat_info, spy_info, spread_info,
                         best.get('change_1h', 0), rvol))
                 from modules.notify import msg_buy
                 self._notify(msg_buy(symbol, shares, price, cost, combined_score))
@@ -1635,6 +1786,28 @@ class AutoPilot:
         """
         if not self.running or price <= 0:
             return
+
+        # ── Outlier guard ──────────────────────────────────────────────────────
+        # Reject obviously-bad single ticks (odd-lot prints, crosses, fat-fingers) so a
+        # corrupt price can never trigger a forced stop/sell at a fake level. A move >25%
+        # from the last good price is accepted only if the very next tick confirms it
+        # (two consecutive ticks within 5% of each other); a lone spike is dropped.
+        lg = getattr(self, '_last_good_stream_px', None)
+        if lg is None:
+            lg = self._last_good_stream_px = {}
+        pend = getattr(self, '_stream_pending_px', None)
+        if pend is None:
+            pend = self._stream_pending_px = {}
+        prev = lg.get(symbol)
+        if prev and prev > 0 and abs(price - prev) / prev > 0.25:
+            confirm = pend.get(symbol)
+            if confirm and abs(price - confirm) / price <= 0.05:
+                pass  # two consecutive ticks agree on the new level → real move, accept
+            else:
+                pend[symbol] = price   # remember this suspect tick; wait for confirmation
+                return
+        pend.pop(symbol, None)
+        lg[symbol] = price
 
         # ── Fast-path 1: ORB breakout buy ──────────────────────────────────────
         # Bypasses the 60s scan loop — entry fires within 1 stream tick of breakout
@@ -1756,7 +1929,7 @@ class AutoPilot:
             # Capital guard
             balance       = self.paper.get_state().get('balance', 0)
             daily_limit   = float(self.config.get('daily_spend_limit', 100.0))
-            remaining     = daily_limit - self.daily_spent
+            remaining     = daily_limit - self._net_deployed_today()
             kelly         = self._kelly_size(balance)
             pos_cap       = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
             buy_amount    = min(kelly, remaining, balance, pos_cap)
@@ -1804,14 +1977,28 @@ class AutoPilot:
         return datetime.now(_ET) if _ET else datetime.now(timezone.utc) + timedelta(hours=-4)
 
     def _get_rvol(self, symbol):
-        """Relative volume: today's volume vs 5-day average. Returns ratio."""
+        """Relative volume: today's (time-normalized) volume vs 5-day average.
+
+        Today's daily bar is only a PARTIAL session early in the day, so comparing it raw
+        to full-day averages understates RVOL at the open — exactly when morning-momentum
+        entries fire. We project today's volume to a full session by the elapsed RTH
+        fraction before taking the ratio.
+        """
         try:
             hist = self._md.Ticker(symbol).history(period='5d', interval='1d')
             if len(hist) < 2:
                 return 1.0
             today_vol = float(hist['Volume'].iloc[-1])
             avg_vol   = float(hist['Volume'].iloc[:-1].mean())
-            return round(today_vol / avg_vol, 2) if avg_vol > 0 else 1.0
+            if avg_vol <= 0:
+                return 1.0
+            now     = self._get_et_now()
+            mins    = now.hour * 60 + now.minute
+            elapsed = max(0, min(390, mins - 570))   # 570 = 9:30 ET, 390 = full RTH minutes
+            frac    = elapsed / 390.0
+            if 0 < frac < 1.0:
+                today_vol = today_vol / max(frac, 0.05)   # projected full-day volume
+            return round(today_vol / avg_vol, 2)
         except Exception:
             return 1.0
 
@@ -2053,7 +2240,7 @@ class AutoPilot:
         True if today's daily bar is >10% below yesterday's close (gap-down risk).
         Runs once per symbol per calendar day — subsequent calls return False.
         """
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = _now_et().strftime('%Y-%m-%d')
         if today != self._gap_date:
             self._gapped_symbols = set()
             self._gap_date = today
@@ -2086,7 +2273,7 @@ class AutoPilot:
             'running':     self.running,
             'balance':     balance,
             'positions':   state.get('positions', []),
-            'daily_spent': round(self.daily_spent, 2),
+            'daily_spent': round(self._net_deployed_today(), 2),
             'daily_limit': round((state.get('balance', 0) * float(self.config.get('daily_spend_pct', 0)) / 100)
                            if float(self.config.get('daily_spend_pct', 0)) > 0
                            else float(self.config.get('daily_spend_limit', 100.0)), 2),

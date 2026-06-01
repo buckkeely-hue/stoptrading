@@ -3,6 +3,7 @@ import os
 import threading
 from datetime import datetime, date, timedelta
 from modules.market_data import MarketData
+from modules.io_safe import atomic_write_json
 
 TRADES_FILE = os.path.join(os.path.dirname(__file__), '..', 'paper_trades.json')
 
@@ -70,11 +71,11 @@ class PaperTrader:
                 pass
 
     def _save(self):
-        with open(TRADES_FILE, 'w') as f:
-            json.dump(self._state, f, indent=2)
+        atomic_write_json(TRADES_FILE, self._state)
 
     def _get_price(self, symbol):
-        price = self._md.last_price(symbol)
+        # allow_stale=False: never transact a buy/sell on yesterday's close.
+        price = self._md.last_price(symbol, allow_stale=False)
         if price <= 0:
             hist = self._md.Ticker(symbol).history(period='1d')
             if not hist.empty:
@@ -158,8 +159,13 @@ class PaperTrader:
                 return {'error': f'Invalid price for {symbol}'}
 
             avg_cost = pos[symbol]['avg_cost']
-            proceeds = price * shares
-            pnl = (price - avg_cost) * shares
+            # Model the full round-trip transaction cost (spread+fees) on the exit so the
+            # paper balance and recorded P&L reflect what a real fill would net. Charged
+            # once per round-trip; avg_cost stays the clean entry so gain% math is unaffected.
+            gross_proceeds = price * shares
+            tx_cost  = gross_proceeds * float(self._config.get('tx_cost_pct', 1.5)) / 100.0
+            proceeds = gross_proceeds - tx_cost
+            pnl = proceeds - avg_cost * shares
             if self._cash_mode():
                 # T+1 settlement: proceeds land next business day, not immediately
                 self._state['unsettled'].append({

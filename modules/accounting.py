@@ -17,6 +17,7 @@ import json
 import os
 import threading
 from datetime import datetime
+from modules.io_safe import atomic_write_json
 
 LEDGER_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'accounting.json')
 
@@ -69,8 +70,7 @@ class AccountingLedger:
         try:
             data = dict(self._state)
             data['entries'] = self._state['entries'][-1000:]
-            with open(LEDGER_FILE, 'w') as f:
-                json.dump(data, f, indent=2)
+            atomic_write_json(LEDGER_FILE, data)
         except Exception:
             pass
 

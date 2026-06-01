@@ -30,6 +30,7 @@ class EarningsGuard:
         self._lock      = threading.Lock()
         self.running    = False
         self._dates     = {}    # ticker -> next earnings date (date object)
+        self._checked   = set() # tickers whose earnings lookup has actually completed
         self._last_refresh = None
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ class EarningsGuard:
                 self._dates[ticker] = dt
             else:
                 self._dates.setdefault(ticker, None)
+            self._checked.add(ticker)   # lookup completed (date found or confirmed none)
 
     def _yf_date(self, ticker):
         try:
@@ -139,7 +141,20 @@ class EarningsGuard:
         return delta if delta >= 0 else None
 
     def should_block_buy(self, ticker):
-        """True if earnings within BLOCK_DAYS — do not open new position."""
+        """True if earnings within BLOCK_DAYS — do not open new position.
+
+        Fail-closed on UNCONFIRMED tickers: if we haven't actually completed an earnings
+        lookup yet, block the buy (and kick off a lookup) rather than risk buying into an
+        unflagged earnings print. Once the lookup confirms 'no upcoming earnings', buys
+        are allowed normally — so this only blocks the brief pre-confirmation window.
+        """
+        ticker = ticker.upper()
+        with self._lock:
+            checked = ticker in self._checked
+        if not checked:
+            # First time we've seen this name — confirm earnings before allowing entry.
+            threading.Thread(target=self._fetch_date, args=(ticker,), daemon=True).start()
+            return True
         days = self.days_to_earnings(ticker)
         if days is None:
             return False

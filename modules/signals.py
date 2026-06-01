@@ -487,23 +487,20 @@ class SignalAggregator:
         Score a list of (symbol, price) tuples using all signals.
         Returns sorted list by composite score.
         """
+        # Bounded pool: a large universe must not spawn one thread per symbol (each of
+        # which fans out to ~7 more) — that floods external APIs and risks rate-limit bans.
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         results = []
-        threads = []
-        lock = threading.Lock()
-
-        def score_one(symbol, price):
-            result = self.score_symbol(symbol, price)
-            with lock:
-                results.append(result)
-
-        for symbol, price in symbols_with_prices:
-            t = threading.Thread(target=score_one, args=(symbol, price))
-            t.daemon = True
-            threads.append(t)
-            t.start()
-
-        for t in threads:
-            t.join(timeout=20)
+        items = list(symbols_with_prices)
+        if not items:
+            return results
+        with ThreadPoolExecutor(max_workers=12) as ex:
+            futures = {ex.submit(self.score_symbol, sym, px): sym for sym, px in items}
+            for fut in as_completed(futures, timeout=60):
+                try:
+                    results.append(fut.result())
+                except Exception:
+                    pass
 
         results.sort(key=lambda x: x['composite_score'], reverse=True)
         return results
