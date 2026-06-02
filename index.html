@@ -494,6 +494,16 @@
       </div>
     </div>
 
+    <!-- ── Market-Data Feed Mode ── -->
+    <div id="feed-banner" class="card" style="margin-top:16px;border:2px solid #64748b;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:13px;font-weight:700;color:#a0aec0">📡 MARKET DATA</span>
+        <span id="feed-mode" style="font-size:16px;font-weight:800;margin-left:10px">…</span>
+        <span id="feed-active" style="font-size:11px;color:#64748b;margin-left:8px"></span>
+      </div>
+      <div id="feed-note" style="font-size:11px;color:#a0aec0;max-width:55%;text-align:right"></div>
+    </div>
+
     <!-- ── Predictive Model Panel ── -->
     <div class="card" style="margin-top:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -522,6 +532,27 @@
         <div class="empty-state" style="padding:8px">Model warming up…</div>
       </div>
       <div id="pm-coldstart" style="display:none;font-size:11px;color:#f59e0b;margin-top:10px"></div>
+    </div>
+
+    <!-- ── Daily Paper-Trading Matrix ── -->
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-title">📒 Daily Matrix <span id="jr-update" style="font-size:11px;color:#a0aec0;font-weight:400;margin-left:8px"></span></div>
+        <button class="btn btn-secondary" onclick="refreshJournal()" style="font-size:12px;padding:4px 10px">Refresh</button>
+      </div>
+      <div style="font-size:12px;color:#a0aec0;margin-bottom:10px">
+        One row per trading day — funnel (where candidates die), P&amp;L, model calibration, flags. Written nightly after close; scan a column to spot a flaw or a trend.
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="font-size:12px;white-space:nowrap">
+          <thead><tr>
+            <th>Date</th><th>Trd</th><th>Realized</th><th>Win%</th><th>Deploy$</th><th>Bal</th>
+            <th title="scan cycles">Scan</th><th title="no qualifying candidates">NoQual</th><th title="per-trade gate rejects">Gates</th><th>Buys</th>
+            <th title="predictor samples">Mdl&nbsp;n</th><th>AUC</th><th title="settled-day sandbox: current code vs competitor benchmark">What-if&nbsp;(ST/COMP)</th><th>Flags</th>
+          </tr></thead>
+          <tbody id="jr-body"><tr><td colspan="13" class="empty-state">No journal rows yet — first row writes after today's close.</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1892,6 +1923,52 @@ function refreshPredictor() {
 }
 setInterval(refreshPredictor, 20000);
 refreshPredictor();
+
+function refreshJournal() {
+  fetch('/api/journal').then(function(r){return r.json();}).then(function(rows){
+    var body = document.getElementById('jr-body');
+    document.getElementById('jr-update').textContent = 'updated ' + new Date().toLocaleTimeString();
+    if (!rows || !rows.length) { return; }
+    body.innerHTML = rows.slice().reverse().map(function(r){
+      var p = r.pnl||{}, f = r.funnel||{}, m = r.model||{}, fl = r.flags||{};
+      var gates = (f.rvol_gate||0)+(f.signal_gate||0)+(f.score_gate||0)+(f.vwap||0)+(f.spread||0);
+      var flags = Object.keys(fl).filter(function(k){return fl[k];}).map(function(k){return k+':'+fl[k];}).join(',') || '—';
+      var rcol = (p.realized_pnl||0) >= 0 ? '#00d4aa' : '#ff4757';
+      var auc = (typeof m.auc==='number') ? m.auc.toFixed(2) : '—';
+      var w = r.whatif, wicell;
+      if (w) {
+        var ec = (w.edge||0) >= 0 ? '#00d4aa' : '#ff4757';
+        wicell = '$'+(w.st_mtm||0).toFixed(0)+' / $'+(w.comp_mtm||0).toFixed(0)+' <span style="color:'+ec+';font-weight:700">('+((w.edge||0)>=0?'+':'')+(w.edge||0).toFixed(0)+')</span>';
+      } else { wicell = '<span style="color:#64748b">pending</span>'; }
+      return '<tr>'+
+        '<td>'+r.date+'</td><td>'+(r.trades||0)+'</td>'+
+        '<td style="color:'+rcol+';font-weight:700">'+((p.realized_pnl||0)>=0?'+':'')+(p.realized_pnl||0).toFixed(2)+'</td>'+
+        '<td>'+(p.win_rate||0)+'%</td><td>$'+(p.deployed||0).toFixed(0)+'</td><td>$'+(r.end_balance||0).toFixed(0)+'</td>'+
+        '<td>'+(f.scan_cycles||0)+'</td><td'+((f.no_qualifying||0)>50?' style="color:#f59e0b"':'')+'>'+(f.no_qualifying||0)+'</td>'+
+        '<td>'+gates+'</td><td>'+(f.buys||0)+'</td>'+
+        '<td>'+(m.n_trained||0)+'</td><td>'+auc+'</td>'+
+        '<td>'+wicell+'</td>'+
+        '<td style="color:'+(flags==='—'?'#64748b':'#ff4757')+'">'+flags+'</td></tr>';
+    }).join('');
+  }).catch(function(e){});
+}
+setInterval(refreshJournal, 60000);
+refreshJournal();
+
+function refreshFeed() {
+  fetch('/api/feed/status').then(function(r){return r.json();}).then(function(d){
+    var col = d.mode==='REAL_TIME' ? '#00d4aa' : (d.mode==='DELAYED' ? '#f59e0b' : '#ff4757');
+    var banner = document.getElementById('feed-banner');
+    banner.style.borderColor = col;
+    var me = document.getElementById('feed-mode');
+    me.textContent = d.mode==='REAL_TIME' ? '● REAL-TIME' : (d.mode==='DELAYED' ? '⚠ DELAYED' : '✕ DOWN');
+    me.style.color = col;
+    document.getElementById('feed-active').textContent = d.active ? ('via '+d.active+(d.feeds?' · '+Object.keys(d.feeds).map(function(k){return k+':'+d.feeds[k];}).join(' '):'')) : '';
+    document.getElementById('feed-note').textContent = d.note || '';
+  }).catch(function(e){});
+}
+setInterval(refreshFeed, 30000);
+refreshFeed();
 
 // ── REALTIME SCORES ────────────────────────────────────────────────────────
 

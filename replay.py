@@ -36,6 +36,10 @@ parser.add_argument('--daily-limit', type=float, default=None,
                     help='Daily spend cap in dollars (default: from config)')
 parser.add_argument('--seed-model', action='store_true',
                     help='Persist predictor training (warm-up mode) instead of ephemeral')
+parser.add_argument('--min-rvol', type=float, default=None,
+                    help='Override the candidate vol_ratio gate (sweep/measurement)')
+parser.add_argument('--min-change', type=float, default=None,
+                    help='Override the candidate change_1h%% gate (sweep/measurement)')
 args = parser.parse_args()
 
 SPEED     = args.speed
@@ -447,6 +451,11 @@ config = load_config()
 config = dict(config)
 config['cash_account_mode'] = False
 config['per_trade_capital']  = 150.0   # $150/trade → ~3 positions on $500/day
+# Gate overrides for sweeps/measurement (apply to both session types)
+if args.min_rvol is not None:
+    config['min_rvol_regular'] = args.min_rvol; config['min_rvol_momentum'] = args.min_rvol
+if args.min_change is not None:
+    config['min_change_1h_regular'] = args.min_change; config['min_change_1h_momentum'] = args.min_change
 if args.daily_limit is None:
     config['daily_spend_limit'] = START_BAL  # 100% deployable — no artificial cap
 
@@ -482,6 +491,9 @@ autopilot._save  = lambda: None   # prevent writing autopilot.json
 # warm-up mode, where we deliberately accumulate labeled outcomes across many past days.
 try:
     autopilot.predictor._persist = bool(args.seed_model)
+    if args.seed_model:
+        autopilot.predictor._src = 'replay'      # delay-immune training data
+        autopilot.decision_log._src = 'replay'
 except Exception:
     pass
 
@@ -615,6 +627,8 @@ print()
 #   5. No harvesting, no momentum scoring, no cascade filter, no multi-source intel
 #   6. Close all open positions at 15:30 ET
 #   Same starting balance, same per-trade sizing, same universe, same price data.
+
+_dbg_skip = {'no_bars': 0, 'no_first': 0, 'bad_price': 0}   # ORB-capture skip counters
 
 class CompetitorBaseline:
 

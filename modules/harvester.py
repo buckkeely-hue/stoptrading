@@ -9,6 +9,7 @@ from datetime import datetime, timezone, timedelta
 from modules.signals import SignalAggregator
 from modules.io_safe import atomic_write_json
 from modules.predictor import Predictor
+from modules.decision_log import DecisionRecorder
 try:
     from zoneinfo import ZoneInfo
     _ET = ZoneInfo('America/New_York')
@@ -165,7 +166,10 @@ class StockHarvester:
         the hourly bar to close. change_1h field is now change-from-today's-open for
         API compatibility.
         """
-        universe = self.universe.get() if self.universe else TOP_PENNY_UNIVERSE
+        universe = list(self.universe.get()) if self.universe else list(TOP_PENNY_UNIVERSE)
+        # Always union the curated penny fallback so dynamic-screener drift (into illiquid or
+        # out-of-band names) can never starve the scan to zero candidates.
+        universe = list(dict.fromkeys(universe + list(TOP_PENNY_UNIVERSE)))
         if extra_symbols:
             universe = list(dict.fromkeys(list(universe) + [s.upper() for s in extra_symbols if s.upper() not in universe]))
         # Pre-filter with Polygon snapshot: 1 API call instead of 80 — avoids free-tier rate limit
@@ -233,7 +237,19 @@ class StockHarvester:
                 # Higher threshold for stocks above $5 (they require real conviction)
                 if price >= 5.0 and price * total_today_vol < 500_000:
                     continue
-                vol_ratio = volume / avg_vol_5m if avg_vol_5m > 0 else 1.0
+                # Relative volume — today's CUMULATIVE pace vs the prior-day average at the
+                # same point in the session. Stable intraday, unlike last-bar/avg-bar which
+                # is ~0 on the current forming bar and in afternoon lulls (that bug made the
+                # vol_ratio>2× gate unpassable after the open). >1 = above its normal pace.
+                try:
+                    by_day = hist.groupby(hist.index.date)['Volume'].sum()
+                    prior = by_day[by_day.index != today_date]
+                    avg_daily_vol = float(prior.mean()) if len(prior) else float(by_day.mean())
+                    elapsed_frac = max(0.05, min(1.0, len(today_bars) / 78.0))   # 78 5-min bars / RTH day
+                    expected_by_now = avg_daily_vol * elapsed_frac
+                    vol_ratio = (total_today_vol / expected_by_now) if expected_by_now > 0 else 1.0
+                except Exception:
+                    vol_ratio = volume / avg_vol_5m if avg_vol_5m > 0 else 1.0
 
                 # Momentum slope via linear regression on last 12 five-minute bars
                 recent = today_bars['Close'].tail(12).values
@@ -537,7 +553,7 @@ class AutoPilot:
     - All decisions logged with reasoning
     """
 
-    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None, ibkr=None):
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None, ibkr=None, social=None, feed=None):
         self.harvester  = harvester
         self.paper      = paper_trader
         self.config     = config
@@ -558,6 +574,8 @@ class AutoPilot:
         self.short_squeeze  = short_squeeze   # ShortSqueezeAgent — optional
         self.sector         = sector          # SectorMomentumAgent — optional
         self.ibkr           = ibkr            # IBKRFeed — optional, for real bid-ask spread
+        self.social         = social          # SocialFlowAgent — optional crowd-flow signal
+        self.feed           = feed            # FeedManager — real-time/delayed/down contract
         self.running   = False
         self._thread = None
         self._lock = threading.Lock()
@@ -570,6 +588,9 @@ class AutoPilot:
         self.daily_date = _now_et().strftime('%Y-%m-%d')
         # Predictive model — calibrated P(win) for entries + reversal score for exits.
         self.predictor = Predictor(config)
+        # Decision Record — captures the full per-cycle decision context (counterfactual
+        # candidates + per-agent attribution + regime) for future learning paradigms.
+        self.decision_log = DecisionRecorder(self)
         self._predict_realized = {}   # symbol -> cumulative realized P&L this position (for labels)
         # Central hook so EVERY exit path (harvest, stop, EOD, stream) recycles budget.
         try:
@@ -800,24 +821,29 @@ class AutoPilot:
         try:
             if event.get('type') != 'SELL':
                 return
-            sym  = event.get('symbol')
             freed = float(event.get('shares', 0)) * float(event.get('avg_cost', 0))
             # Lock-free on purpose: this fires synchronously inside paper.sell(), which can
             # be called while self._lock is held — acquiring it here would deadlock. A soft
             # budget counter doesn't need strict locking; the GIL keeps the write safe.
             if freed > 0:
                 self.daily_returned = min(self.daily_spent, getattr(self, 'daily_returned', 0.0) + freed)
-            # Accumulate realized P&L for this position; when it fully closes, label the
-            # entry prediction (won = net profitable) so the model learns from the outcome.
-            if sym is not None:
-                self._predict_realized[sym] = self._predict_realized.get(sym, 0.0) + float(event.get('pnl', 0.0))
-                still_open = sym in self.paper._state.get('positions', {})
-                if not still_open:
-                    won = self._predict_realized.pop(sym, 0.0) > 0
-                    try:
-                        self.predictor.record_outcome(sym, won)
-                    except Exception:
-                        pass
+            # NOTE: entry labeling is handled by the triple-barrier watch (update_barriers),
+            # NOT here — labels track the price path, not the bot's exit timing.
+            # Open an EXIT-outcome watch: was leaving here good (price fell after) or early
+            # (price kept rising)? Feeds the nightly exit-threshold tuner.
+            try:
+                sym = event.get('symbol')
+                px  = float(event.get('price', 0.0)); avg = float(event.get('avg_cost', 0.0))
+                if sym and px > 0 and avg > 0:
+                    gain_pct = (px - avg) / avg * 100.0
+                    vel = self.engine.cache.velocity.get(sym, {}) if (self.engine and hasattr(self.engine, 'cache')) else {}
+                    opened = self._position_opened.get(sym)
+                    mins = ((datetime.now() - opened).total_seconds() / 60.0) if opened else 0.0
+                    rs = self.predictor.reversal_score(vel, gain_pct, mins)
+                    self.predictor.open_exit_watch(sym, rs, gain_pct, mins, 'exit', px,
+                                                   self._get_et_now().timestamp())
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -984,6 +1010,16 @@ class AutoPilot:
         # Flush per-minute momentum cache at start of each tick
         self._momentum_cache = {}
 
+        # Advance triple-barrier watches every tick (resolves matured setups → trains the
+        # model on the price PATH, independent of whether the bot still holds the name).
+        try:
+            _bts = self._get_et_now().timestamp()
+            self.predictor.update_barriers(self._get_live_price, _bts)
+            self.predictor.update_exit_watches(self._get_live_price, _bts)
+            self.decision_log.update(self._get_live_price, _bts)
+        except Exception:
+            pass
+
         state = self.paper.get_state()
         for pos in state.get('positions', []):
             symbol = pos['symbol']
@@ -1065,6 +1101,12 @@ class AutoPilot:
                     _vel = self.engine.cache.velocity.get(symbol, {}) if (self.engine and hasattr(self.engine, 'cache')) else {}
                     _mins = (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() / 60.0
                     _rev = self.predictor.reversal_score(_vel, net_gain, _mins)
+                    # Crowd-exhaustion boost: loud buzz rolling over often marks the top.
+                    if self.social and self.config.get('social_flow_enabled', True):
+                        try:
+                            _rev = min(1.0, _rev + 0.6 * self.social.get_exhaustion(symbol))
+                        except Exception:
+                            pass
                     if _rev >= float(self.config.get('predictor_exit_thresh', 0.55)):
                         result = self.paper.sell(symbol, shares, price_override=price)
                         if result.get('ok'):
@@ -1410,8 +1452,15 @@ class AutoPilot:
         try:
             movers = self.harvester.scan_movers(extra_symbols=reddit_tickers)
             is_momentum_session = session == 'OPEN_MOMENTUM'
-            min_change_1h = 2.0 if is_momentum_session else 3.0
-            min_rvol      = 3.0 if is_momentum_session else 2.0
+            # Config-driven so the gate can be swept/tuned without code edits (defaults match
+            # prior hardcoded values, so live behavior is unchanged). vol_ratio is the new
+            # cumulative-pace RVOL (see scan_movers).
+            if is_momentum_session:
+                min_change_1h = float(self.config.get('min_change_1h_momentum', 2.0))
+                min_rvol      = float(self.config.get('min_rvol_momentum', 2.0))
+            else:
+                min_change_1h = float(self.config.get('min_change_1h_regular', 3.0))
+                min_rvol      = float(self.config.get('min_rvol_regular', 1.5))
             candidates = [m for m in movers
                           if m['symbol'] not in positions
                           and m['price'] > 0
@@ -1611,6 +1660,24 @@ class AutoPilot:
             symbol = best['symbol']
             price  = best['price']
 
+            # Decision Record — capture this cycle's full context (all movers, who passed the
+            # filter, per-agent attribution, regime, the top pick) for counterfactual learning.
+            if self.config.get('decision_log_enabled', True):
+                try:
+                    _et = self._get_et_now()
+                    regime = {'spy_chg': round(float(spy_chg), 2), 'session': session,
+                              'hod': _et.hour * 60 + _et.minute, 'dow': _et.weekday()}
+                    self.decision_log.record(movers, {c['symbol'] for c in candidates},
+                                             symbol, regime, _et.timestamp())
+                except Exception:
+                    pass
+
+            # Feed-mode guard — refuse timing-sensitive entries on a degraded (delayed) feed.
+            # Default OFF so the paper phase keeps collecting data; turn ON before live money.
+            if self.config.get('block_trades_on_delayed', False) and self.feed and not self.feed.is_real_time():
+                self._entry('DELAYED-FEED', 'Entry blocked — market-data feed is {} (not real-time)'.format(self.feed.mode()))
+                return
+
             # Minimum combined score gate — skip low-conviction setups
             min_score = int(self.config.get('min_buy_score', 20))
             best_score = best.get('combined_score', best.get('score', 0))
@@ -1683,6 +1750,19 @@ class AutoPilot:
                         symbol, rvol, min_rvol))
                 return
 
+            # ── Social-flow: crowd signal for the chosen candidate (1 fetch, cached) ──────
+            social_score = 0
+            if self.social and self.config.get('social_flow_enabled', True):
+                try:
+                    sf = self.social.get_features(symbol)
+                    best['social_velocity']   = sf['social_velocity']
+                    best['social_bull']       = sf['social_bull']
+                    best['social_exhaustion'] = sf['social_exhaustion']
+                    social_score = self.social.get_social_score(symbol)   # bot-discounted, capped
+                    best['combined_score'] = best.get('combined_score', best.get('score', 0)) + social_score
+                except Exception:
+                    pass
+
             # ── Predictive model: calibrated P(win) → optional gate + conviction sizing ──
             velocity = {}
             if self.engine and hasattr(self.engine, 'cache'):
@@ -1697,14 +1777,19 @@ class AutoPilot:
                             symbol, p_win, min_p, pred['n_trained']))
                     return
             if self.config.get('predictor_sizing', True):
-                # Scale by conviction, then re-clamp to the same caps the base size respected
-                # so high confidence can't breach the daily/balance/per-trade limits.
-                adj   = buy_amount * self.predictor.size_multiplier(p_win)
+                # EV-aware conviction sizing (P(win) × expected edge), then re-clamp to the
+                # same caps the base size respected so it can't breach daily/balance/per-trade.
+                adj   = buy_amount * self.predictor.size_multiplier(p_win, pred.get('expected_edge'))
                 adj   = min(adj, remaining_today, balance, pos_cap * 1.25)
                 shares = max(1, int(adj / price))
                 cost   = shares * price
-            self.predictor.remember(symbol, pred['features'])
-            self._predict_realized[symbol] = 0.0
+            # Open a triple-barrier watch: label this setup by the price PATH (target/stop/
+            # horizon first-touch), independent of when the bot actually exits. Uses the
+            # simulated clock under replay so barriers resolve there too.
+            self.predictor.open_barrier(
+                symbol, pred['features'], price, self._get_et_now().timestamp(),
+                float(self.config.get('harvest_trigger_pct', 4.0)),
+                float(self.config.get('max_single_loss_pct', 5.0)))
 
             cat_score  = self.catalyst.get_score(symbol) if self.catalyst else 0
             news_score = self.news.get_news_score(symbol) if self.news else 0
@@ -1722,8 +1807,8 @@ class AutoPilot:
                 spy_info    = ' | SPY:{:+.1f}%'.format(spy_chg) if spy_chg != 0 else ''
                 spread_info = ' | spread~{:.1f}%'.format(est_spread)
                 combined_score = best.get('combined_score', best.get('score', 0))
-                pred_info = ' | P(win):{:.0%}{}'.format(
-                    p_win, '' if pred['alpha'] >= 0.999 else '~') + (
+                pred_info = ' | P(win):{:.0%} edge:{:+.1f}%{}'.format(
+                    p_win, pred.get('expected_edge', 0.0), '' if pred['alpha'] >= 0.999 else '~') + (
                     ' [learning n={}]'.format(pred['n_trained']) if pred['n_trained'] < 100 else '')
                 self._entry('BUY',
                     '{} — {} shares @ ${:.4f} | cost ${:.2f} | kelly ${:.0f} | '

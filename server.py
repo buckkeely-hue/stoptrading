@@ -39,6 +39,8 @@ from modules.news_catalyst    import NewsAgent
 from modules.float_rotation   import FloatRotationAgent
 from modules.short_squeeze    import ShortSqueezeAgent
 from modules.sector_momentum  import SectorMomentumAgent
+from modules.social_flow       import SocialFlowAgent
+from modules.market_feed        import FeedManager
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -124,12 +126,17 @@ short_sq    = ShortSqueezeAgent(config, universe, ssr=ssr, engine=engine)
 short_sq.start()
 sector      = SectorMomentumAgent(config)
 sector.start()
+social      = SocialFlowAgent(config)
+feed_manager = FeedManager(config)
+print('[FEED] market-data mode at startup: %s (active=%s)' % (
+    feed_manager.mode(), feed_manager.status().get('active')))
 autopilot = AutoPilot(harvester, paper_trader, config, engine=engine, catalyst=catalyst,
                       notifier=notifier, halts=halts, ssr=ssr,
                       macro=macro, behavioral=behavioral,
                       insider=insider, earnings=earnings, congress=congress,
                       orb=orb, news=news_agent, float_rotation=float_rot,
-                      short_squeeze=short_sq, sector=sector, ibkr=ibkr)
+                      short_squeeze=short_sq, sector=sector, ibkr=ibkr, social=social,
+                      feed=feed_manager)
 ledger    = AccountingLedger(config, paper_trader)
 trial     = TrialManager(autopilot, paper_trader, harvester, config)
 scheduler = DailyScheduler(autopilot, paper_trader, load_config)
@@ -497,6 +504,31 @@ def api_predictor_stats():
         return jsonify(autopilot.predictor.stats())
     except Exception as e:
         return jsonify({'error': str(e), 'n_trained': 0}), 200
+
+
+@app.route('/api/feed/status')
+@require_auth
+def api_feed_status():
+    try:
+        return jsonify(feed_manager.status())
+    except Exception as e:
+        return jsonify({'mode': 'DOWN', 'error': str(e)}), 200
+
+
+@app.route('/api/journal')
+@require_auth
+def api_journal():
+    import json as _json
+    rows = []
+    p = os.path.join(BASE_DIR, 'daily_matrix.jsonl')
+    if os.path.exists(p):
+        for line in open(p):
+            if line.strip():
+                try:
+                    rows.append(_json.loads(line))
+                except Exception:
+                    pass
+    return jsonify(rows[-30:])
 
 @app.route('/api/autopilot/start', methods=['POST'])
 @require_auth

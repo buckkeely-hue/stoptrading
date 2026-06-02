@@ -23,3 +23,12 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+refinement_log.jsonl
+predictor_exit_data.jsonl
+sandbox_*.log
+sandbox_report.txt
+sandbox_cron.log
+daily_matrix.jsonl
+daily_matrix.txt
+decision_log.jsonl
+decision_outcomes.jsonl

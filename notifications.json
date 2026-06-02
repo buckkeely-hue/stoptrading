@@ -90,6 +90,139 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-06-01 08:31:19",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  UIS $4.700 score:67 vol:0.0x SCANNING\n  OPTU $1.105 score:60 vol:0.0x SCANNING\n  SABR $1.780 score:41 vol:0.0x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 08:59:21",
+      "message": "StopTrading Report \u2014 8:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  AMC $1.982 score:62 vol:0.6x SCANNING\n  OPTU $1.290 score:43 vol:0.2x SCANNING\n  NABL $3.980 score:30 vol:0.2x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 09:00:33",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  OPTU $1.290 score:39 vol:0.0x SCANNING\n  VTEX $4.100 score:29 vol:0.0x SCANNING\n  API $4.555 score:25 vol:0.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 09:30:59",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  HUMA $1.410 score:37 vol:0.0x SCANNING\n  API $4.685 score:28 vol:0.0x SCANNING\n  AMPY $4.930 score:28 vol:0.1x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 09:54:47",
+      "message": "\ud83d\udcc8 BUY: UIS \u00d7 20 @ $4.8750 | $98 deployed | score 38",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 10:01:35",
+      "message": "StopTrading Report \u2014 11:01 AM ET\n\nHOLDINGS:\n  [UP] UIS 20sh @ $4.8750 -> $4.9150 (+0.8%) | +0.8% since last\n\nTOP CANDIDATES:\n  KEEL $5.945 score:62 vol:0.4x SCANNING\n  OPTU $1.220 score:40 vol:0.1x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 10:07:25",
+      "message": "StopTrading Report \u2014 10:07 AM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.8400 (-0.7%) | -1.5% since last\n\nTOP CANDIDATES:\n  KOS $3.045 score:47 vol:1.1x SCANNING\n  NABL $4.065 score:40 vol:0.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 10:31:11",
+      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.8350 (-0.8%) | -0.1% since last\n\nTOP CANDIDATES:\n  ZIP $3.830 score:56 vol:0.0x SCANNING\n  KEEL $5.995 score:41 vol:0.2x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 11:00:22",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [UP] UIS 20sh @ $4.8750 -> $4.8800 (+0.1%) | +0.9% since last\n\nTOP CANDIDATES:\n  ZIP $3.980 score:54 vol:2.0x SCANNING\n  GTM $3.810 score:53 vol:0.3x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 11:30:57",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.7550 (-2.5%) | -2.6% since last\n\nTOP CANDIDATES:\n  MQ $4.325 score:44 vol:0.0x SCANNING\n  OPTU $1.090 score:33 vol:0.0x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 11:38:33",
+      "message": "\ud83d\udd34 STOP-LOSS: UIS | loss -5.2% exceeds -5% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 12:00:29",
+      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  MYGN $4.175 score:17 vol:1.4x SCANNING\n  EGY $5.475 score:14 vol:1.2x SCANNING\n  SNAP $5.820 score:6 vol:0.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 12:29:58",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  YEXT $4.530 score:36 vol:1.6x SCANNING\n  EVGO $2.385 score:30 vol:0.4x SCANNING\n  PACB $1.565 score:21 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 13:00:08",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PACB $1.470 score:5 vol:0.0x SCANNING",
+      "channel": "ntfy",
+      "ok": false,
+      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "time": "2026-06-01 13:30:21",
+      "message": "StopTrading Report \u2014 2:30 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 14:00:34",
+      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 14:15:17",
+      "message": "StopTrading Report \u2014 3:14 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 14:45:59",
+      "message": "StopTrading Report \u2014 3:45 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  EVH $4.225 score:18 vol:0.0x SCANNING\n  LAC $5.515 score:17 vol:0.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-01 15:05:30",
+      "message": "\ud83d\udcc9 EOD: P&L $-1.00 | 8 trades | 50% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }
