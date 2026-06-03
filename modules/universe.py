@@ -25,6 +25,19 @@ import requests
 import yfinance as yf
 from datetime import datetime
 
+try:
+    from config import load_config as _load_config
+except Exception:
+    _load_config = lambda: {}
+
+
+def _max_px():
+    """Configured upper price ceiling for the universe (default $15)."""
+    try:
+        return float(_load_config().get('max_stock_price', 15.0))
+    except Exception:
+        return 15.0
+
 _HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
     'Accept': 'application/json',
@@ -37,7 +50,7 @@ _SCREENER_BASE = (
 )
 _FINVIZ_URL = (
     'https://finviz.com/screener.ashx?v=111'
-    '&f=sh_price_u5,sh_avgvol_o100,sh_price_o0.1&o=-change&r=1'
+    '&f=sh_price_u15,sh_avgvol_o100,sh_price_o0.1&o=-change&r=1'
 )
 
 # Fallback — VERIFIED ACTIVE tickers only (delisted stocks removed May 2026)
@@ -133,6 +146,7 @@ class DynamicUniverse:
 
     def _refresh(self):
         tickers = {}   # symbol -> {price, volume, change_pct, sources}
+        maxpx = _max_px()   # configured upper ceiling (default $15)
 
         # ── Source 1: Yahoo screeners ─────────────────────────────────────────
         for scr_id in _SCREENER_IDS:
@@ -153,7 +167,7 @@ class DynamicUniverse:
                     price  = float(q.get('regularMarketPrice', 0) or 0)
                     volume = int(q.get('regularMarketVolume', 0) or 0)
                     change = float(q.get('regularMarketChangePercent', 0) or 0)
-                    if not (0.10 <= price <= 8.0) or volume < 100_000:
+                    if not (0.10 <= price <= maxpx) or volume < 100_000:
                         continue
                     if sym not in tickers:
                         tickers[sym] = {'price': round(price, 4), 'volume': volume,

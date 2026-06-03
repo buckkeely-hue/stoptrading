@@ -42,10 +42,26 @@ def load_config():
                 data = json.load(f)
             config = dict(DEFAULTS)
             config.update(data)
-            return config
+            return _derive(config)
         except Exception:
             pass
-    return dict(DEFAULTS)
+    return _derive(dict(DEFAULTS))
+
+
+def _derive(config):
+    """Single master switch for going real-time.
+
+    Flip `realtime_subscribed` true the day you activate a paid full-SIP feed (Alpaca Algo
+    Trader Plus ~$99/mo, Polygon Developer ~$79/mo, or an IBKR data bundle). The FeedManager
+    already auto-detects the entitlement and upgrades to REAL_TIME on its own; this just ties
+    the two model-integrity flags to that same decision so it's ONE flip, not three:
+      • train_on_live          → live outcomes are now delay-clean, so let them train the model
+      • block_trades_on_delayed → refuse to trade if the feed ever degrades (live money safety)
+    Explicit per-flag values still apply while realtime_subscribed is false."""
+    if config.get('realtime_subscribed'):
+        config['train_on_live'] = True
+        config['block_trades_on_delayed'] = True
+    return config
 
 def save_config(updates):
     # Serialize the read-modify-write so concurrent POST handlers can't lose updates.

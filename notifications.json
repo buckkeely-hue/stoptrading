@@ -223,6 +223,181 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-06-02 08:30:56",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLCE $4.350 score:33 vol:0.5x SCANNING\n  SNDL $1.450 score:11 vol:1.7x SCANNING\n  OCGN $1.360 score:4 vol:0.7x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 08:39:27",
+      "message": "StopTrading Report \u2014 9:39 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  REED $1.820 score:69 vol:6.6x SCANNING\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  PETZ $1.200 score:57 vol:4.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 08:49:36",
+      "message": "StopTrading Report \u2014 9:49 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:69 vol:8.2x SCANNING\n  PETZ $1.200 score:58 vol:4.0x SCANNING\n  CRNT $3.119 score:51 vol:17.2x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 08:55:05",
+      "message": "StopTrading Report \u2014 9:54 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  BFRI $1.000 score:60 vol:2.6x SCANNING\n  PETZ $1.200 score:57 vol:4.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 09:13:53",
+      "message": "StopTrading Report \u2014 10:13 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  CTRM $2.050 score:58 vol:14.2x SCANNING\n  UONE $6.510 score:48 vol:3.4x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 09:25:24",
+      "message": "StopTrading Report \u2014 10:25 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTRM $2.250 score:100 vol:19.3x SCANNING\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  REED $1.810 score:42 vol:6.5x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 09:55:27",
+      "message": "StopTrading Report \u2014 10:55 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SPWH $1.465 score:78 vol:8.2x SCANNING\n  TXMD $1.950 score:51 vol:23.8x SCANNING\n  BIRD $4.450 score:37 vol:1.3x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 10:25:57",
+      "message": "StopTrading Report \u2014 11:25 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:58 vol:23.0x SCANNING\n  BIRD $4.550 score:55 vol:1.4x SCANNING\n  SPWH $1.465 score:53 vol:8.7x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 10:38:21",
+      "message": "StopTrading Report \u2014 11:37 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.070 score:71 vol:5.1x SCANNING\n  CTRM $2.190 score:69 vol:14.0x SCANNING\n  BIRD $4.630 score:62 vol:1.4x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 10:43:49",
+      "message": "StopTrading Report \u2014 11:43 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.050 score:71 vol:5.4x SCANNING\n  CTRM $2.185 score:62 vol:13.5x SCANNING\n  BIRD $4.595 score:41 vol:1.6x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 11:13:22",
+      "message": "StopTrading Report \u2014 12:12 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  BIRD $4.803 score:67 vol:1.8x SCANNING\n  TXMD $1.950 score:58 vol:23.1x SCANNING\n  CMTG $2.525 score:25 vol:1.4x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 11:42:58",
+      "message": "StopTrading Report \u2014 12:42 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:52 vol:22.8x SCANNING\n  BIRD $4.705 score:45 vol:2.1x SCANNING\n  CMTG $2.470 score:16 vol:1.3x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 11:47:28",
+      "message": "StopTrading Report \u2014 12:47 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.042 score:69 vol:5.7x SCANNING\n  LFCR $5.350 score:67 vol:1.8x SCANNING\n  CTRM $2.190 score:52 vol:10.9x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 12:18:01",
+      "message": "StopTrading Report \u2014 1:17 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:61 vol:20.2x SCANNING\n  LFCR $5.305 score:54 vol:2.0x SCANNING\n  CRNT $3.215 score:50 vol:6.5x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 12:28:44",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.050 score:65 vol:4.8x SCANNING\n  CTRM $2.290 score:60 vol:10.1x SCANNING\n  SNBR $1.370 score:45 vol:1.3x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 12:31:38",
+      "message": "StopTrading Report \u2014 1:31 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTRM $2.290 score:59 vol:10.1x SCANNING\n  TOPS $1.040 score:51 vol:4.7x SCANNING\n  BIRD $4.510 score:38 vol:2.0x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 13:00:41",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUSK $3.595 score:52 vol:1.5x SCANNING\n  TXMD $2.010 score:48 vol:21.7x SCANNING\n  BIRD $4.510 score:41 vol:2.0x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 13:05:44",
+      "message": "\ud83d\udcc8 BUY: TUSK \u00d7 3 @ $3.6100 | $11 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 13:27:55",
+      "message": "StopTrading Report \u2014 2:27 PM ET\n\nHOLDINGS:\n  [DN] TUSK 3sh @ $3.6100 -> $3.6050 (-0.1%) | -0.1% since last\n\nTOP CANDIDATES:\n  CTRM $2.320 score:60 vol:9.3x SCANNING\n  TOPS $1.048 score:48 vol:4.2x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 13:58:12",
+      "message": "StopTrading Report \u2014 2:57 PM ET\n\nHOLDINGS:\n  [DN] TUSK 3sh @ $3.6100 -> $3.5650 (-1.2%) | -1.1% since last\n\nTOP CANDIDATES:\n  IH $1.760 score:51 vol:25.5x SCANNING\n  SPWH $1.445 score:38 vol:5.4x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 14:23:34",
+      "message": "\ud83d\udd34 STOP-LOSS: TUSK | loss -3.0% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 14:27:23",
+      "message": "\ud83d\udcc8 BUY: GGB \u00d7 2 @ $4.8835 | $10 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 14:28:47",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] GGB 2sh @ $4.8835 -> $4.8900 (+0.1%) | +0.1% since last\n\nTOP CANDIDATES:\n  TXMD $2.070 score:52 vol:21.1x SCANNING\n  GGB $4.885 score:40 vol:1.5x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 14:57:54",
+      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] GGB 2sh @ $4.8835 -> $4.9050 (+0.4%) | +0.3% since last\n\nTOP CANDIDATES:\n  CRMT $7.770 score:78 vol:1.6x SCANNING\n  TXMD $2.040 score:46 vol:19.4x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-02 15:05:13",
+      "message": "\ud83d\udcc9 EOD: P&L $-0.33 | 2 trades | 0% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }

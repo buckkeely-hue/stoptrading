@@ -57,7 +57,14 @@ body {
   display: flex;
   gap: 2px;
   flex: 1;
+  min-width: 0;                       /* allow the strip to shrink so overflow-x can engage */
+  flex-wrap: nowrap;
+  overflow-x: auto;                   /* swipeable horizontal strip on any width that overflows */
+  -webkit-overflow-scrolling: touch;  /* momentum scroll on iOS */
+  scrollbar-width: none;              /* hide scrollbar (Firefox) */
+  scroll-snap-type: x proximity;
 }
+.tabs::-webkit-scrollbar { display: none; }   /* hide scrollbar (WebKit/iOS/Android) */
 
 .tab-btn {
   background: none;
@@ -72,6 +79,8 @@ body {
   letter-spacing: 0.2px;
   transition: all var(--transition);
   white-space: nowrap;
+  flex-shrink: 0;                     /* never squish — scroll instead */
+  scroll-snap-align: start;
 }
 
 .tab-btn:hover { color: var(--text); background: var(--card2); }
@@ -764,14 +773,34 @@ input::placeholder { color: var(--muted); }
 @media (max-width: 900px) {
   .header { padding: 0 14px; gap: 12px; }
   .main   { padding: 14px; }
-  .tabs   { overflow-x: auto; }
-  .tab-btn { padding: 6px 10px; font-size: 12px; }
+  .tab-btn { padding: 8px 12px; font-size: 12px; }   /* roomier tap target */
 }
 
-@media (max-width: 600px) {
-  .logo         { font-size: 14px; }
+/* Phones / small tablets: drop the tab strip to its own full-width swipeable row so the
+   logo + account controls stay on top and all 13 tabs remain reachable by swiping. */
+@media (max-width: 640px) {
+  .header { flex-wrap: wrap; height: auto; min-height: 52px; padding: 8px 12px; gap: 10px; align-items: center; }
+  .tabs   { order: 10; flex-basis: 100%; flex: 0 0 100%; padding-bottom: 2px; }
+  .tab-btn { padding: 9px 13px; font-size: 13px; }   /* >=44px-ish touch targets */
+  .logo   { font-size: 15px; }
+  .main   { padding: 12px 12px 28px; }
   .balance-value { font-size: 24px; }
   thead th, tbody td { padding: 9px 10px; }
+  /* never let a wide table push the page past the viewport — scroll it instead */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* iOS: inputs/selects must be >=16px or Safari zooms the whole page on focus. */
+@media (max-width: 640px) {
+  input, select, textarea, button { font-size: 16px; }
+  .tab-btn { font-size: 13px; }
+}
+
+/* Global mobile stacking: force EVERY grid (including inline-styled multi-column ones across
+   all tabs) to a single column on phones. A stylesheet !important rule overrides inline styles,
+   so this catches the 14 hardcoded grids without editing each. Tablets/desktop keep their grids. */
+@media (max-width: 640px) {
+  [style*="grid-template-columns"], .rpt-kpi-row, .rpt-mid-row { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 1100px) {

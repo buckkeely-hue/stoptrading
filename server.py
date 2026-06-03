@@ -13,7 +13,7 @@ from modules.auth import (require_auth, check_password, get_secret_key,
 from config import load_config, save_config
 from modules.scanner import StockScanner
 from modules.watchlist import WatchlistManager
-from modules.paper_trade import PaperTrader
+from modules.broker_alpaca import get_trader
 from modules.sentiment import SentimentAnalyzer
 from modules.auto_trade import AutoTrader
 from modules.trend import TrendAnalyzer
@@ -84,7 +84,7 @@ def _safe_int(val, default: int) -> int:
 config = load_config()
 scanner = StockScanner(universe=None, config=config)   # wired to universe after it starts below
 watchlist = WatchlistManager()
-paper_trader = PaperTrader(config)
+paper_trader = get_trader(config)   # PaperTrader unless broker_execution=True (then Alpaca paper/live)
 sentiment = SentimentAnalyzer(config)
 auto_trader = AutoTrader(paper_trader, watchlist, config)
 trend_analyzer = TrendAnalyzer()
@@ -513,6 +513,28 @@ def api_feed_status():
         return jsonify(feed_manager.status())
     except Exception as e:
         return jsonify({'mode': 'DOWN', 'error': str(e)}), 200
+
+
+@app.route('/api/harvest_report')
+@require_auth
+def api_harvest_report():
+    try:
+        rep = autopilot.adaptive.harvest_report()
+        try:
+            rep['ladder'] = autopilot.harvest_ladder()
+        except Exception:
+            rep['ladder'] = []
+        try:
+            rep['funnel'] = autopilot.funnel_today()
+        except Exception:
+            rep['funnel'] = []
+        try:
+            rep['closed_trades'] = autopilot.trade_record.recent(50)
+        except Exception:
+            rep['closed_trades'] = []
+        return jsonify(rep)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 200
 
 
 @app.route('/api/journal')

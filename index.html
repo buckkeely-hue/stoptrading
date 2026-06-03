@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StopTrading — Penny Stock Terminal</title>
-<link rel="stylesheet" href="/index.css">
+<link rel="stylesheet" href="/index.css?v=20260602-responsive">
 </head>
 <body>
 
@@ -24,6 +24,7 @@
     <button class="tab-btn" data-tab="catalyst">⚡ Catalyst</button>
     <button class="tab-btn" data-tab="settings">⚙ Settings</button>
     <button class="tab-btn" data-tab="reports">📊 Reports</button>
+    <button class="tab-btn" data-tab="northstar">🌾 North Star</button>
   </nav>
   <!-- ── User menu ── -->
   <div class="user-menu" id="userMenu">
@@ -46,7 +47,7 @@
     <div class="section-header">
       <div>
         <div class="section-title">Penny Stock Scanner</div>
-        <div class="section-sub">Stocks under $5 ranked by momentum score</div>
+        <div class="section-sub">Stocks under $15 ranked by momentum score</div>
       </div>
       <button class="btn btn-primary" id="scan-btn" onclick="runScan()">Scan Now</button>
     </div>
@@ -1198,6 +1199,79 @@
 
   </div>
 
+  <div id="tab-northstar" class="tab-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+      <h2 style="margin:0">🌾 North Star — Harvesting the Predictable Middle</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="ns-mode" style="font-weight:800;padding:4px 12px;border-radius:14px;font-size:12px"></span>
+        <span id="ns-market" style="font-weight:700;padding:4px 12px;border-radius:14px;font-size:12px"></span>
+        <span id="ns-verdict" style="font-weight:700;padding:4px 12px;border-radius:14px;font-size:12px"></span>
+      </div>
+    </div>
+    <p style="color:var(--text-secondary);font-size:12px;margin:0 0 12px">
+      A continual stream of modest, repeatable profit from the middle ground of price movement —
+      not the extreme highs/lows. This tab aggregates the banked outcome data and draws the
+      guardrails that automate the windows of profitability.</p>
+
+    <!-- Row 1: thesis + governor -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:12px">
+      <div class="card" style="padding:12px"><div style="font-size:11px;color:var(--text-secondary)">WIN RATE vs BREAKEVEN</div><div id="ns-winrate" style="font-size:22px;font-weight:800"></div><div id="ns-winrate-sub" style="font-size:11px;color:var(--text-secondary)"></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:11px;color:var(--text-secondary)">EXPECTANCY / TRADE</div><div id="ns-ev" style="font-size:22px;font-weight:800"></div><div style="font-size:11px;color:var(--text-secondary)">net of spread-aware cost</div></div>
+      <div class="card" style="padding:12px"><div style="font-size:11px;color:var(--text-secondary)">LIVE EXPOSURE GOVERNOR</div><div id="ns-governor" style="font-size:22px;font-weight:800"></div><div id="ns-governor-sub" style="font-size:11px;color:var(--text-secondary)"></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:11px;color:var(--text-secondary)">SAMPLE (delay-immune)</div><div id="ns-n" style="font-size:22px;font-weight:800"></div><div style="font-size:11px;color:var(--text-secondary)">barrier outcomes</div></div>
+    </div>
+
+    <!-- Live harvest ladder -->
+    <div class="card" style="padding:14px;margin-bottom:12px">
+      <h3 style="margin:0 0 8px;font-size:14px">Live harvest ladder <span style="color:var(--text-secondary);font-weight:400;font-size:12px">— armed trigger ratchets up on sustained incline; time-harvest extracts the flat middle</span></h3>
+      <div class="table-wrap" style="max-height:240px;overflow:auto">
+        <table class="data-table" style="font-size:12px"><thead><tr><th>SYM</th><th>shares</th><th>net gain%</th><th>armed trigger%</th><th>harvests</th><th>held (m)</th><th>incline</th><th>next move</th></tr></thead><tbody id="ns-ladder-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Trade ledger: completed trades with full context -->
+    <div class="card" style="padding:14px;margin-bottom:12px">
+      <h3 style="margin:0 0 8px;font-size:14px">Trade ledger <span id="ns-ledger-count" style="color:var(--text-secondary);font-weight:400;font-size:12px"></span> <span style="color:var(--text-secondary);font-weight:400;font-size:12px">— every completed trade's full lifecycle (trades.jsonl)</span></h3>
+      <div class="table-wrap" style="max-height:260px;overflow:auto">
+        <table class="data-table" style="font-size:12px"><thead><tr><th>opened</th><th>SYM</th><th>net P&L</th><th>return%</th><th>score</th><th>spread%</th><th>P(win)</th><th>hv</th><th>dur(m)</th><th>exit</th><th>src</th></tr></thead><tbody id="ns-ledger-body"></tbody></table>
+      </div>
+      <div id="ns-ledger-summary" style="font-size:11px;color:var(--text-secondary);margin-top:8px"></div>
+    </div>
+
+    <!-- Funnel: where candidates die this session -->
+    <div class="card" style="padding:14px;margin-bottom:12px">
+      <h3 style="margin:0 0 8px;font-size:14px">Where candidates die — today's funnel <span style="color:var(--text-secondary);font-weight:400;font-size:12px">(scan → vetoes → gates → buys → harvests)</span></h3>
+      <div id="ns-funnel"></div>
+    </div>
+
+    <!-- Row 2: distribution + middle-ground trades -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px">
+      <div class="card" style="padding:14px">
+        <h3 style="margin:0 0 8px;font-size:14px">Does the middle exist?</h3>
+        <div id="ns-dist"></div>
+        <div id="ns-dist-note" style="font-size:11px;color:var(--text-secondary);margin-top:8px"></div>
+      </div>
+      <div class="card" style="padding:14px">
+        <h3 style="margin:0 0 8px;font-size:14px">Middle-ground trades <span id="ns-middle-count" style="color:var(--text-secondary);font-weight:400"></span></h3>
+        <div class="table-wrap" style="max-height:200px;overflow:auto">
+          <table class="data-table" style="font-size:12px"><thead><tr><th>ret%</th><th>Δ1h%</th><th>rvol</th><th>spread%</th></tr></thead><tbody id="ns-middle-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: potential profit -->
+    <div class="card" style="padding:14px;margin-bottom:12px">
+      <h3 style="margin:0 0 8px;font-size:14px">Potential profit (illustrative, ~3 round-trips/day, compounded)</h3>
+      <div id="ns-profit" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px"></div>
+    </div>
+
+    <!-- Row 4: guardrails -->
+    <div class="card" style="padding:14px">
+      <h3 style="margin:0 0 8px;font-size:14px">Guardrails — the windows of profitability (data-drawn, automated)</h3>
+      <div id="ns-guardrails" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast-container" id="toast-container"></div>
@@ -1217,8 +1291,194 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     if (tab === 'autotrade') loadAutoTrade();
     if (tab === 'settings') loadSettings();
     if (tab === 'reports') loadReports();
+    if (tab === 'northstar') loadNorthStar();
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// NORTH STAR TAB — harvesting thesis at a glance
+// ═══════════════════════════════════════════════════════════════════
+var _nsInterval = null;
+function loadNorthStar() {
+  nsLoad();
+  clearInterval(_nsInterval);
+  _nsInterval = setInterval(function() {
+    if (document.getElementById('tab-northstar').classList.contains('active')) nsLoad();
+    else clearInterval(_nsInterval);
+  }, 60000);
+}
+function _pct(x) { return (x == null) ? '—' : (x * 100).toFixed(0) + '%'; }
+function _sgn(x, d) { d = d || 2; return (x == null) ? '—' : (x >= 0 ? '+' : '') + Number(x).toFixed(d) + '%'; }
+function _sgn2(x, pre) { pre = pre || ''; return (x == null) ? '—' : (x >= 0 ? '+' : '-') + pre + Math.abs(Number(x)).toFixed(2); }
+function nsLoad() {
+  fetch('/api/harvest_report').then(function(r){return r.json();}).then(function(d){
+    if (!d || d.error) return;
+    var t = d.thesis || {}, b = d.bands || {}, g = d.guardrails || {}, p = d.profit || {};
+    var above = t.win_rate != null && t.breakeven != null && t.win_rate >= t.breakeven;
+    var ok = '#00d4aa', warn = '#ff9800', bad = '#ff5252', dim = 'var(--text-secondary)';
+    // mode + market status chips (the "are we live?" answer at a glance)
+    var st = d.status || {};
+    var mc = document.getElementById('ns-mode');
+    if (st.real_money) { mc.textContent = '🔴 LIVE — REAL MONEY'; mc.style.background = 'rgba(255,82,82,.18)'; mc.style.color = bad; }
+    else { mc.textContent = '🟢 PAPER — SIMULATED'; mc.style.background = 'rgba(0,212,170,.15)'; mc.style.color = ok; }
+    mc.title = 'feed: ' + (st.realtime ? 'real-time' : 'delayed');
+    var mk = document.getElementById('ns-market');
+    if (st.market_open === true) { mk.textContent = '● MARKET OPEN · ' + (st.et||''); mk.style.background = 'rgba(0,212,170,.12)'; mk.style.color = ok; }
+    else if (st.market_open === false) { mk.textContent = '○ MARKET CLOSED · ' + (st.et||''); mk.style.background = 'rgba(160,174,192,.15)'; mk.style.color = dim; }
+    else { mk.textContent = ''; }
+    // verdict chip
+    var vc = document.getElementById('ns-verdict');
+    if (t.win_rate == null) { vc.textContent = 'BUILDING SAMPLE'; vc.style.background = 'rgba(255,152,0,.15)'; vc.style.color = warn; }
+    else if (above) { vc.textContent = '+EV — PRESSING'; vc.style.background = 'rgba(0,212,170,.15)'; vc.style.color = ok; }
+    else { vc.textContent = '−EV — PROTECTING'; vc.style.background = 'rgba(255,82,82,.15)'; vc.style.color = bad; }
+    // cards
+    document.getElementById('ns-winrate').textContent = _pct(t.win_rate) + ' / ' + _pct(t.breakeven);
+    document.getElementById('ns-winrate').style.color = above ? ok : bad;
+    document.getElementById('ns-winrate-sub').textContent = 'cost ' + (t.cost != null ? t.cost.toFixed(2) + '%' : '—');
+    var ev = document.getElementById('ns-ev'); ev.textContent = _sgn(t.expectancy); ev.style.color = (t.expectancy >= 0) ? ok : bad;
+    var gv = document.getElementById('ns-governor'); gv.textContent = '×' + (t.exposure_scale != null ? t.exposure_scale.toFixed(2) : '1.00');
+    gv.style.color = (t.exposure_scale >= 1) ? ok : warn;
+    document.getElementById('ns-governor-sub').textContent = t.note || '';
+    document.getElementById('ns-n').textContent = t.n != null ? t.n : 0;
+    // distribution
+    var dist = t.dist || {}, order = ['<-3','-3..0','0..2','2..4','4..6','>=6'];
+    var mx = 1; order.forEach(function(k){ if ((dist[k]||0) > mx) mx = dist[k]; });
+    var html = '';
+    order.forEach(function(k){
+      var v = dist[k] || 0, mid = (k === '0..2' || k === '2..4');
+      var col = mid ? ok : (k === '>=6' ? warn : dim);
+      html += '<div style="display:flex;align-items:center;gap:8px;margin:3px 0">' +
+        '<span style="width:46px;font-size:11px;color:'+dim+'">'+k+'%</span>' +
+        '<div style="flex:1;background:var(--bg);border-radius:3px;overflow:hidden;height:16px">' +
+        '<div style="height:100%;width:'+(v/mx*100)+'%;background:'+col+'"></div></div>' +
+        '<span style="width:24px;text-align:right;font-size:11px">'+v+'</span></div>';
+    });
+    document.getElementById('ns-dist').innerHTML = html;
+    document.getElementById('ns-dist-note').textContent =
+      'Middle (0–' + (g.harvest ? g.harvest.target_now : 4) + '%): ' + (b.middle_pct||0) + '%  |  Fail (<0%): ' +
+      (b.fail_pct||0) + '%  |  Rip (≥6%): ' + (b.rip_pct||0) + '%' +
+      (b.middle_pct != null && b.middle_pct < 20 ? '  ⚠ middle is thin — universe may need changing' : '');
+    // middle-ground trades
+    document.getElementById('ns-middle-count').textContent = '(' + (b.middle_count||0) + ')';
+    var mb = '', samples = b.samples || [];
+    if (!samples.length) mb = '<tr><td colspan="4" style="color:'+dim+'">none yet</td></tr>';
+    samples.slice().reverse().forEach(function(s){
+      mb += '<tr><td style="color:'+ok+'">'+_sgn(s.ret)+'</td><td>'+s.change_1h+'</td><td>'+s.rvol+'</td><td>'+s.spread+'</td></tr>';
+    });
+    document.getElementById('ns-middle-body').innerHTML = mb;
+    // funnel — where candidates die this session
+    var fn = d.funnel || [];
+    var fh = '';
+    if (!fn.length) fh = '<div style="color:'+dim+'">no session activity yet</div>';
+    else {
+      var fmax = 1; fn.forEach(function(s){ if (s.count > fmax) fmax = s.count; });
+      // biggest non-scan/non-buy "death" step to highlight
+      var deaths = fn.filter(function(s){ return ['macro_veto','regime_veto','no_qualifying','rvol_gate','signal_gate','score_gate','spread_gate','vwap_gate','entry_skip','predict_gate','pos_limit','delayed_block'].indexOf(s.step) >= 0 && s.count > 0; });
+      var topDeath = deaths.sort(function(a,b){ return b.count - a.count; })[0];
+      fn.forEach(function(s){
+        if (s.count === 0 && ['rvol_gate','signal_gate','score_gate','spread_gate','vwap_gate','entry_skip','predict_gate','macro_veto','regime_veto','pos_limit','delayed_block'].indexOf(s.step) >= 0) return; // hide empty gates
+        var isBuy = (s.step === 'buys' || s.step === 'harvests');
+        var isScan = (s.step === 'scans');
+        var col = isBuy ? ok : (isScan ? '#a0aec0' : (topDeath && s.step === topDeath.step ? bad : warn));
+        var label = s.step.replace(/_/g,' ');
+        fh += '<div style="display:flex;align-items:center;gap:8px;margin:2px 0">' +
+          '<span style="width:108px;font-size:11px;color:'+col+';font-weight:'+(isBuy||(topDeath&&s.step===topDeath.step)?'700':'400')+'">'+label+'</span>' +
+          '<div style="flex:1;background:var(--bg);border-radius:3px;overflow:hidden;height:15px;position:relative">' +
+          '<div style="height:100%;width:'+(s.count/fmax*100)+'%;background:'+col+';opacity:.7"></div></div>' +
+          '<span style="width:28px;text-align:right;font-size:11px;font-weight:700">'+s.count+'</span>' +
+          '<span style="flex:1.4;font-size:10px;color:'+dim+'">'+s.desc+'</span></div>';
+      });
+      if (topDeath) fh += '<div style="font-size:11px;color:'+bad+';margin-top:6px">▸ biggest bottleneck: <b>'+topDeath.step.replace(/_/g,' ')+'</b> ('+topDeath.count+') — '+topDeath.desc+'</div>';
+    }
+    document.getElementById('ns-funnel').innerHTML = fh;
+    // live harvest ladder
+    var lad = d.ladder || [];
+    var lb = '';
+    if (!lad.length) lb = '<tr><td colspan="8" style="color:'+dim+'">no open positions</td></tr>';
+    lad.forEach(function(r){
+      var act = r.next_action, actCol = act === 'harvest' ? ok : (act === 'time_harvest' ? warn : dim);
+      var actLabel = act === 'harvest' ? 'HARVEST' : (act === 'time_harvest' ? 'TIME-HARVEST' : 'hold');
+      var inc = r.incline, incCol = inc > 0.1 ? ok : (inc < -0.1 ? bad : dim);
+      var ratcheted = r.armed_trigger > (d.guardrails && d.guardrails.harvest ? d.guardrails.harvest.target_now : 4) + 0.01;
+      lb += '<tr>' +
+        '<td style="font-weight:700">'+r.symbol+'</td>' +
+        '<td>'+r.shares+'</td>' +
+        '<td style="color:'+(r.net_gain>=0?ok:bad)+'">'+_sgn(r.net_gain)+'</td>' +
+        '<td>'+r.armed_trigger.toFixed(1)+'%'+(ratcheted?' <span style="color:'+warn+'" title="ratcheted up">▲</span>':'')+'</td>' +
+        '<td>'+r.harvests+'</td>' +
+        '<td>'+r.mins_held+'</td>' +
+        '<td style="color:'+incCol+'">'+(inc>=0?'+':'')+inc.toFixed(2)+'%</td>' +
+        '<td style="color:'+actCol+'" title="'+(r.next_reason||'').replace(/"/g,'')+'">'+actLabel+'</td>' +
+        '</tr>';
+    });
+    document.getElementById('ns-ladder-body').innerHTML = lb;
+    // trade ledger — completed trades
+    var tr = d.closed_trades || [];
+    document.getElementById('ns-ledger-count').textContent = '(' + tr.length + ')';
+    var tb = '';
+    if (!tr.length) tb = '<tr><td colspan="11" style="color:'+dim+'">no completed trades yet</td></tr>';
+    tr.slice().reverse().forEach(function(t){
+        var ctx = t.context || {};
+        var pnl = t.realized_pnl, ret = t.return_pct;
+        var pcol = (pnl >= 0) ? ok : bad;
+        var srcCol = (t.src === 'replay') ? dim : '#60a5fa';
+        tb += '<tr>' +
+          '<td style="color:'+dim+'">'+(t.opened||'').slice(5,16)+'</td>' +
+          '<td style="font-weight:700">'+t.symbol+'</td>' +
+          '<td style="color:'+pcol+';font-weight:700">'+_sgn2(pnl,'$')+'</td>' +
+          '<td style="color:'+pcol+'">'+(ret!=null?_sgn(ret):'—')+'</td>' +
+          '<td>'+(ctx.score!=null?ctx.score:'—')+'</td>' +
+          '<td>'+(ctx.spread_pct!=null?ctx.spread_pct:'—')+'</td>' +
+          '<td>'+(ctx.p_win!=null?(ctx.p_win*100).toFixed(0)+'%':'—')+'</td>' +
+          '<td>'+(t.harvests!=null?t.harvests:0)+'</td>' +
+          '<td>'+(t.duration_min!=null?t.duration_min:'—')+'</td>' +
+          '<td style="font-size:10px;color:'+warn+'">'+(t.exit_reason||'')+'</td>' +
+          '<td style="color:'+srcCol+';font-size:10px">'+(t.src||'')+'</td>' +
+          '</tr>';
+    });
+    document.getElementById('ns-ledger-body').innerHTML = tb;
+    if (tr.length) {
+        var wins = tr.filter(function(t){return t.realized_pnl>=0;}).length;
+        var net = tr.reduce(function(a,t){return a+(t.realized_pnl||0);},0);
+        document.getElementById('ns-ledger-summary').textContent =
+          tr.length + ' trades · ' + wins + 'W/' + (tr.length-wins) + 'L (' + (wins/tr.length*100).toFixed(0) + '%) · net ' + _sgn2(net,'$');
+    } else { document.getElementById('ns-ledger-summary').textContent = ''; }
+    // potential profit
+    function pcard(title, x, hi) {
+      if (!x) return '<div><div style="font-size:11px;color:'+dim+'">'+title+'</div><div style="color:'+dim+'">—</div></div>';
+      var ann = x.annual_x ? (x.annual_x.toFixed(1)+'×') : (x.annual != null ? _sgn(x.annual,0) : '—');
+      return '<div style="border-left:3px solid '+(hi?ok:dim)+';padding-left:10px">' +
+        '<div style="font-size:11px;color:'+dim+'">'+title+' — win '+_pct(x.win_rate)+'</div>' +
+        '<div style="font-size:13px">EV/trade <b style="color:'+(x.ev_trade>=0?ok:bad)+'">'+_sgn(x.ev_trade)+'</b> · EV/day <b>'+_sgn(x.ev_day)+'</b></div>' +
+        '<div style="font-size:18px;font-weight:800;color:'+(hi?ok:'var(--text)')+'">'+ann+' / yr</div></div>';
+    }
+    document.getElementById('ns-profit').innerHTML =
+      pcard('At current win rate', p.current, false) +
+      pcard('At target win rate (breakeven+5pts)', p.target, true);
+    // guardrails
+    function win(lo, hi, unit) { return (lo!=null?lo:'?') + (hi!=null ? '–'+hi : '') + (unit||''); }
+    var gb = g.buy||{}, gh = g.harvest||{}, gs = g.sell||{}, ga = g.automation||{};
+    var rec = function(now, r, unit) { return (r!=null && r!==now) ? ' <span style="color:'+warn+'">→ rec '+r+unit+'</span>' : ''; };
+    document.getElementById('ns-guardrails').innerHTML =
+      '<div style="border:1px solid var(--border-subtle);border-radius:6px;padding:10px">' +
+        '<div style="font-weight:700;color:'+ok+';font-size:12px">▸ BUY window</div>' +
+        '<div style="font-size:12px;margin-top:4px">Δ1h '+win(gb.change_1h&&gb.change_1h[0],gb.change_1h&&gb.change_1h[1],'%')+'<br>'+
+        'rvol '+win(gb.rvol&&gb.rvol[0],gb.rvol&&gb.rvol[1],'×')+'<br>price ≥ $'+(gb.price_min)+'<br>spread ≤ '+(gb.spread_max)+'%</div>'+
+        '<div style="font-size:10px;color:'+dim+';margin-top:6px">'+(gb.note||'')+'</div></div>' +
+      '<div style="border:1px solid var(--border-subtle);border-radius:6px;padding:10px">' +
+        '<div style="font-weight:700;color:'+ok+';font-size:12px">▸ HARVEST window</div>' +
+        '<div style="font-size:12px;margin-top:4px">target '+gh.target_now+'%'+rec(gh.target_now,gh.target_rec,'%')+'</div>'+
+        '<div style="font-size:10px;color:'+dim+';margin-top:6px">'+(gh.note||'')+'</div></div>' +
+      '<div style="border:1px solid var(--border-subtle);border-radius:6px;padding:10px">' +
+        '<div style="font-weight:700;color:'+bad+';font-size:12px">▸ SELL / stop window</div>' +
+        '<div style="font-size:12px;margin-top:4px">stop '+gs.stop_now+'%'+rec(gs.stop_now,gs.stop_rec,'%')+'<br>exit-compress '+gs.exit_trigger+'%</div>'+
+        '<div style="font-size:10px;color:'+dim+';margin-top:6px">'+(gs.stop_basis||'')+'</div></div>' +
+      '<div style="border:1px solid var(--border-subtle);border-radius:6px;padding:10px">' +
+        '<div style="font-weight:700;color:'+(ga.exposure_scale>=1?ok:warn)+';font-size:12px">▸ AUTOMATION</div>' +
+        '<div style="font-size:12px;margin-top:4px">exposure ×'+(ga.exposure_scale!=null?ga.exposure_scale.toFixed(2):'1.00')+'<br>bounds '+ga.floor+'–'+ga.cap+'<br>'+(ga.enabled?'enabled':'OFF')+' (min n='+ga.min_n+')</div>'+
+        '<div style="font-size:10px;color:'+dim+';margin-top:6px">'+(ga.state||'')+'</div></div>';
+  }).catch(function(){});
+}
 
 // ── Toast ──
 function toast(msg, type) {

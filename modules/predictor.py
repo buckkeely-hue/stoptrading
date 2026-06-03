@@ -24,7 +24,7 @@ import threading
 
 import numpy as np
 
-from modules.io_safe import atomic_write_json
+from modules.io_safe import atomic_write_json, append_jsonl
 
 _DIR        = os.path.dirname(os.path.abspath(__file__))
 MODEL_FILE     = os.path.join(_DIR, '..', 'predictor_model.json')
@@ -36,6 +36,7 @@ FEATURES = [
     'rvol', 'float_rotation', 'ofi', 'vwap_dev_pct', 'pct_1m', 'pct_5m', 'pct_15m',
     'tech_score', 'rt_score', 'combined_score', 'log_price',
     'social_velocity', 'social_bull', 'social_exhaustion',
+    'spread_pct',
 ]
 _N = len(FEATURES)
 
@@ -104,6 +105,9 @@ class Predictor:
             'social_velocity':   min(float(c.get('social_velocity', 0.0)) / 100.0, 6.0),
             'social_bull':       float(c.get('social_bull', 0.0)),
             'social_exhaustion': float(c.get('social_exhaustion', 0.0)),
+            # Observed bid-ask spread % at decision — both a predictive feature (wide spread
+            # ⇒ lower realized edge) and the per-trade cost-calibration target.
+            'spread_pct':        float(c.get('spread_pct', 0.0)),
         }
 
     def _vec(self, f):
@@ -162,13 +166,31 @@ class Predictor:
             'features':      f,
         }
 
-    def size_multiplier(self, p_win, expected_edge=None):
-        """Conviction multiplier. With an expected_edge it becomes EV-aware: edge above the
-        round-trip cost up-sizes, edge below it down-sizes — all tightly clamped."""
+    def size_multiplier(self, p_win, expected_edge=None, tx_cost=None):
+        """Conviction multiplier, sized by the chosen objective (config predictor_objective):
+
+          'consistency' (harvesting north star): size on P(modest win) confidence ALONE. The
+            expected edge is used only as a viability CHECK — if the predicted move doesn't clear
+            cost, shrink hard; otherwise the upper clamp is kept tight so every bet stays small
+            and uniform (many-small-positions harvesting, low single-name exposure). Edge
+            MAGNITUDE never up-sizes, so the model can't be lured into big variance/lottery bets.
+
+          'edge' (legacy momentum): EV-aware — edge above cost up-sizes, below it down-sizes.
+
+        tx_cost is the spread-aware per-trade hurdle (modules.tx_cost); falls back to flat config."""
         base = max(0.5, min(1.35, 0.5 + 1.7 * (p_win - 0.5) + 0.5))
         if expected_edge is None:
             return round(base, 3)
-        tx   = float(self.config.get('tx_cost_pct', 1.5))
+        tx = float(tx_cost if tx_cost is not None else self.config.get('tx_cost_pct', 1.5))
+        if self.config.get('predictor_objective', 'consistency') == 'consistency':
+            cap = float(self.config.get('predictor_size_cap', 1.15))
+            # The edge acts as a viability BRAKE only once the regressor is warm — a cold edge
+            # estimate is ~0 and would otherwise shrink every cold-start trade, starving
+            # deployment. Cold: size purely on P(win)/heuristic (tightly capped).
+            warm_edge = self.n_reg >= int(self.config.get('predictor_min_n_edge', 30))
+            if warm_edge and float(expected_edge) <= tx:
+                return round(max(0.40, base * 0.6), 3)        # warm + won't clear cost → shrink
+            return round(min(base, cap), 3)                   # else: P(win)-only, tightly capped
         tilt = 1.0 + max(-0.45, min(0.45, (float(expected_edge) - tx) * 0.10))
         return round(max(0.40, min(1.45, base * tilt)), 3)
 
@@ -278,16 +300,12 @@ class Predictor:
     def _append_exit(self, w, fwd):
         if not self._persist:
             return
-        try:
-            import json
-            with open(EXIT_DATA_FILE, 'a') as fh:
-                fh.write(json.dumps({
-                    'src': getattr(self, '_src', 'live'),
-                    'rs': w['rs'], 'gain': w['gain'], 'mins': w['mins'], 'reason': w['reason'],
-                    'fwd': round(float(fwd), 4), 'good': int(fwd <= 0.0),
-                }) + '\n')
-        except Exception:
-            pass
+        # Crash-safe append; NOT rotated — this is training corpus the evaluator reads in full.
+        append_jsonl(EXIT_DATA_FILE, {
+            'src': getattr(self, '_src', 'live'),
+            'rs': w['rs'], 'gain': w['gain'], 'mins': w['mins'], 'reason': w['reason'],
+            'fwd': round(float(fwd), 4), 'good': int(fwd <= 0.0),
+        })
 
     # ── Online training ──────────────────────────────────────────────────────────
     def train(self, features, y, ret=None):
@@ -376,14 +394,10 @@ class Predictor:
     def _append_data(self, features, y, ret=None, src='live'):
         if not self._persist:
             return
-        try:
-            import json
-            with open(DATA_FILE, 'a') as fh:
-                fh.write(json.dumps({'src': src, 'y': y,
-                                     'ret': (None if ret is None else round(float(ret), 4)),
-                                     'f': {k: round(features.get(k, 0.0), 5) for k in FEATURES}}) + '\n')
-        except Exception:
-            pass
+        # Crash-safe append; NOT rotated — this is the training corpus the evaluator reads in full.
+        append_jsonl(DATA_FILE, {'src': src, 'y': y,
+                                 'ret': (None if ret is None else round(float(ret), 4)),
+                                 'f': {k: round(features.get(k, 0.0), 5) for k in FEATURES}})
 
     def stats(self):
         with self._lock:

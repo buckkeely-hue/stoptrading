@@ -9,7 +9,10 @@ from datetime import datetime, timezone, timedelta
 from modules.signals import SignalAggregator
 from modules.io_safe import atomic_write_json
 from modules.predictor import Predictor
+from modules.tx_cost import transaction_cost_pct
 from modules.decision_log import DecisionRecorder
+from modules.adaptive_policy import AdaptivePolicy
+from modules.trade_record import TradeRecorder
 try:
     from zoneinfo import ZoneInfo
     _ET = ZoneInfo('America/New_York')
@@ -27,6 +30,10 @@ from modules.universe import FALLBACK as TOP_PENNY_UNIVERSE
 
 # Sessions where new buys are allowed; DEAD_ZONE and OVERNIGHT are skipped
 _BUY_SESSIONS = {'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON', 'CLOSE'}
+# Sessions when the regular market is OPEN (9:30-16:00 ET) — the only time it's safe to TRANSACT
+# exits. Includes DEAD_ZONE (open, just no new buys). Outside these (PRE_MARKET/OVERNIGHT/HOLIDAY)
+# penny prices are stale and fills unreliable, so exits are deferred to the next open.
+_MARKET_OPEN_SESSIONS = {'OPEN_MOMENTUM', 'STANDARD', 'DEAD_ZONE', 'AFTERNOON', 'CLOSE'}
 
 
 def _pdt_window_dates(today) -> set:
@@ -153,7 +160,7 @@ class StockHarvester:
                               s.get('lastTrade', {}).get('p', 0) or
                               s.get('prevDay', {}).get('c', 0) or 0)
                 vol   = float(day.get('v', 0))
-                if 0.50 <= price < 10.0 and price * vol >= 100_000:
+                if 0.50 <= price < float(self.config.get('max_stock_price', 15.0)) and price * vol >= 100_000:
                     filtered.append(sym)
             return filtered if len(filtered) >= 5 else symbols
         except Exception:
@@ -369,7 +376,7 @@ class StockHarvester:
 
     def _check_positions(self):
         """Core harvest loop — runs every 60s in background thread."""
-        tx_cost_pct = float(self.config.get('tx_cost_pct', 0.5))
+        tx_cost_pct = transaction_cost_pct(None, None, None, self.config)   # unified flat estimate
         harvest_trigger = float(self.config.get('harvest_trigger_pct', 10.0))
         exit_trigger = float(self.config.get('exit_trigger_pct', 5.0))
 
@@ -588,13 +595,19 @@ class AutoPilot:
         self.daily_date = _now_et().strftime('%Y-%m-%d')
         # Predictive model — calibrated P(win) for entries + reversal score for exits.
         self.predictor = Predictor(config)
+        # Adaptive policy — reads the banked barrier outcomes and throttles live exposure
+        # (size) up/down vs the breakeven win rate. Real-time risk/profitability governor.
+        self.adaptive = AdaptivePolicy(config)
         # Decision Record — captures the full per-cycle decision context (counterfactual
         # candidates + per-agent attribution + regime) for future learning paradigms.
         self.decision_log = DecisionRecorder(self)
+        # Immutable trade-lifecycle ledger (trades.jsonl) — full entry→harvests→exit record.
+        self.trade_record = TradeRecorder(self)
         self._predict_realized = {}   # symbol -> cumulative realized P&L this position (for labels)
-        # Central hook so EVERY exit path (harvest, stop, EOD, stream) recycles budget.
+        # Central hook so EVERY exit path (harvest, stop, EOD, stream) recycles budget + records.
         try:
             self.paper.register_callback(self._on_paper_sell)
+            self.paper.register_callback(self.trade_record.on_trade)
         except Exception:
             pass
         self.stats = {
@@ -608,6 +621,10 @@ class AutoPilot:
             'total_loss_pct': 0.0,
         }
         self._position_harvests   = {}   # symbol -> harvest count for this position
+        self._position_tx_cost    = {}   # symbol -> spread-aware round-trip cost % captured at entry
+        self._harvest_level       = {}   # symbol -> current armed harvest trigger %% (ratchets up on sustained incline)
+        self._last_time_harvest   = {}   # symbol -> epoch ts of last time-based harvest slice
+        self._entry_blacklist     = {}   # symbol -> epoch ts; skip entries (bad price / repeated buy failure)
         self._position_hwm        = {}   # symbol -> high-water mark price (trailing stop)
         self._position_opened     = {}   # symbol -> datetime when position was opened
         self._consecutive_losses  = 0    # straight losses since last winning exit
@@ -998,8 +1015,7 @@ class AutoPilot:
                     self._entry('ERROR', '{} EOD-CLOSE failed: {}'.format(sym, str(e)))
             return   # skip remaining tick after EOD close
 
-        # Parameters
-        tx_cost_pct  = float(self.config.get('tx_cost_pct', 3.0))
+        # Parameters (tx cost is now per-position + spread-aware; see self._tx_cost in the loop)
         harvest_trig = float(self.config.get('harvest_trigger_pct', 7.0))
         exit_trig    = float(self.config.get('exit_trigger_pct', 2.0))
         balance      = self.paper.get_state().get('balance', 0)
@@ -1017,12 +1033,26 @@ class AutoPilot:
             self.predictor.update_barriers(self._get_live_price, _bts)
             self.predictor.update_exit_watches(self._get_live_price, _bts)
             self.decision_log.update(self._get_live_price, _bts)
+            self.trade_record.flush_closed()   # finalize closed trades (exit reason now logged)
         except Exception:
             pass
 
         state = self.paper.get_state()
+        # Market-hours exit gate: only TRANSACT exits while the regular market is open. Outside
+        # 9:30-16:00 ET penny prices are stale and fills unreliable, so positions are HELD and
+        # exits deferred to the next open (barriers/labels above still update — they don't trade).
+        _exits_allowed = (session in _MARKET_OPEN_SESSIONS
+                          or not bool(self.config.get('market_hours_only_exits', True)))
+        if not _exits_allowed and state.get('positions'):
+            _nts = time.time()
+            if _nts - getattr(self, '_ahx_last_log', 0) >= 1800:
+                self._entry('SESSION', 'Outside market hours — holding {} position(s); exits deferred '
+                            'to next open (stale-price protection)'.format(len(state.get('positions', []))))
+                self._ahx_last_log = _nts
         for pos in state.get('positions', []):
             symbol = pos['symbol']
+            if not _exits_allowed:
+                continue   # hold; never transact an exit on a stale after-hours price
             try:
                 price = self._get_live_price(symbol)
                 entry = float(pos['avg_cost'])
@@ -1037,6 +1067,7 @@ class AutoPilot:
                     continue
 
                 gain_pct = (price - entry) / entry * 100
+                tx_cost_pct = self._tx_cost(symbol)   # spread-aware, locked in at entry
                 net_gain = gain_pct - tx_cost_pct
                 harvests_done = self._position_harvests.get(symbol, 0)
 
@@ -1194,19 +1225,23 @@ class AutoPilot:
                         self._notify(msg_evasive(symbol, evasive_shares, price, protected), 'alert')
                     continue   # re-evaluate the remainder next cycle
 
-                # Momentum-gated first harvest: lower trigger to 2% on strong slope
-                slope_now, _, _ = self._momentum_snapshot(symbol)
-                effective_trig = (min(2.0, harvest_trig)
-                                  if harvests_done == 0 and slope_now > 0.5
-                                  else harvest_trig)
+                # ── Adaptive incline-aware harvest planner (post-purchase monitor) ─────
+                mins_held = (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() / 60.0
+                if self.config.get('adaptive_harvest_enabled', True):
+                    plan = self._plan_harvest(symbol, net_gain, harvests_done, days_open, session, mins_held)
+                else:
+                    slope_now, _, _ = self._momentum_snapshot(symbol)
+                    eff = (min(2.0, harvest_trig) if harvests_done == 0 and slope_now > 0.5 else harvest_trig)
+                    plan = ({'action': 'harvest', 'ratchet_to': None, 'reason': 'fixed trigger',
+                             'fraction': self._harvest_fraction(symbol, days_open, harvests_done, session)}
+                            if net_gain >= eff else {'action': 'hold', 'fraction': 0.0, 'ratchet_to': None})
 
-                # ── HARVEST: net gain >= trigger (dynamic fraction) ────────────────────
-                if net_gain >= effective_trig:
-                    frac          = self._harvest_fraction(symbol, days_open, harvests_done, session)
+                if plan['action'] in ('harvest', 'time_harvest'):
+                    frac           = plan['fraction']
                     harvest_shares = max(1, int(shares * frac))
                     result = self.paper.sell(symbol, harvest_shares, price_override=price)
                     if result.get('ok'):
-                        profit = self._net_profit(harvest_shares, price, entry)
+                        profit = self._net_profit(harvest_shares, price, entry, symbol)
                         self.stats['total_harvests'] += 1
                         self.stats['total_profit']   += profit
                         self._position_harvests[symbol] = harvests_done + 1
@@ -1216,21 +1251,26 @@ class AutoPilot:
                         else:
                             self.stats['losses'] += 1
                             self._consecutive_losses += 1
-                        reinvest_note = 'holding remainder' if frac >= 0.75 else 'reinvesting (momentum slope {:.2f}%/bar)'.format(self._momentum_snapshot(symbol)[0])
+                        # Sustained incline → ratchet the armed trigger UP (let the runner run);
+                        # throttle the time-harvest cadence so it can't fire every tick.
+                        if plan.get('ratchet_to') is not None:
+                            self._harvest_level[symbol] = plan['ratchet_to']
+                        if plan['action'] == 'time_harvest':
+                            self._last_time_harvest[symbol] = time.time()
+                        tag = 'TIME-HARVEST' if plan['action'] == 'time_harvest' else 'HARVEST'
                         note = '{} — sold {:.0f}% ({} shares) @ ${:.4f} | net {:.1f}% | profit ${:.2f} | {}'.format(
-                                   symbol, frac * 100, harvest_shares, price, net_gain, profit, reinvest_note)
-                        self._entry('HARVEST', note)
+                                   symbol, frac * 100, harvest_shares, price, net_gain, profit, plan.get('reason', ''))
+                        self._entry(tag, note)
                         from modules.notify import msg_harvest
-                        self._notify(msg_harvest(symbol, frac * 100, net_gain, profit,
-                                                  harvests_done + 1))
+                        self._notify(msg_harvest(symbol, frac * 100, net_gain, profit, harvests_done + 1))
                         # Vault: 50% of net gain quarantined as profit — deducted from cash, not reinvested
                         if profit > 0:
                             self._vault_deposit(symbol, profit, harvests_done + 1)
-                        # Reinvest only on moderate harvests — aggressive exits (≥75%) mean we want out
-                        # Reinvested capital is recycled proceeds, NOT new deployment — exempt from daily_limit
-                        reinvest = 0 if frac >= 0.75 else harvest_shares
+                        # Reinvest moderate price-harvests back into the runner. NEVER reinvest a
+                        # time-harvest — its purpose is to recycle capital OUT of a stalled name.
+                        reinvest = 0 if (frac >= 0.75 or plan['action'] == 'time_harvest') else harvest_shares
                         if reinvest >= 1:
-                            buy = self.paper.buy(symbol, reinvest)
+                            buy = self.paper.buy(symbol, reinvest, price_override=price)
                             if buy.get('ok'):
                                 self._entry('REINVEST',
                                     '{} — bought {} shares @ ${:.4f} (reinvested harvest, exempt daily limit)'.format(
@@ -1256,8 +1296,11 @@ class AutoPilot:
                             self._notify(msg_exit('TRAIL-STOP', symbol,
                                 '{:.1f}% drop from HWM'.format(drop_from_hwm), loss), 'alert')
 
-                    # Time-exit: up >2% after 2 hours — harvest 60%, let remainder run
-                    elif (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 5400 and net_gain >= 1.5:
+                    # Time-exit: up >2% after 2 hours — harvest 60% (legacy; superseded by the
+                    # adaptive planner's TIME-HARVEST when adaptive_harvest_enabled).
+                    elif (not self.config.get('adaptive_harvest_enabled', True)
+                          and (datetime.now() - self._position_opened.get(symbol, datetime.now())).total_seconds() >= 5400
+                          and net_gain >= 1.5):
                         time_shares = max(1, int(shares * 0.60))
                         result = self.paper.sell(symbol, time_shares, price_override=price)
                         if result.get('ok'):
@@ -1336,8 +1379,9 @@ class AutoPilot:
         balance = self.paper.get_state().get('balance', 0)
         positions = [p['symbol'] for p in self.paper.get_state().get('positions', [])]
 
-        if len(positions) >= 5:
-            self._entry('LIMIT', 'Max 5 positions held — no new buys until one is sold')
+        max_positions = int(self.config.get('max_concurrent_positions', 8))
+        if len(positions) >= max_positions:
+            self._entry('LIMIT', 'Max {} positions held — no new buys until one is sold'.format(max_positions))
             return
 
         if self._net_deployed_today() >= daily_limit:
@@ -1369,11 +1413,17 @@ class AutoPilot:
             self._entry('REGIME', 'SPY {:.2f}% — bearish tape, no new buys this cycle'.format(spy_chg))
             return
 
-        # Macro environment gate: skip new buys when seasonal/economic/unrest signals are severely adverse
-        if self.macro and not self.macro.is_favorable():
+        # Macro environment gate: SEVERE-ONLY circuit breaker. A harvesting engine extracts the
+        # predictable middle regardless of the seasonal calendar, so a soft score (e.g. summer
+        # doldrums −10) must NOT sideline the whole session — macro still feeds the ranking bonus
+        # and the exposure governor. Only a genuine shock (real unrest/econ, ≤ macro_veto_score)
+        # halts new buys. Configurable; set macro_hard_gate=false to disable entirely.
+        if self.macro and self.config.get('macro_hard_gate', True):
             macro_score = self.macro.get_score()
-            self._entry('MACRO', 'Macro environment unfavorable (score {:+d}) — skipping new buys'.format(macro_score))
-            return
+            veto = float(self.config.get('macro_veto_score', -20))
+            if macro_score <= veto:
+                self._entry('MACRO', 'Macro SEVERELY adverse (score {:+d} ≤ {:+.0f}) — skipping new buys'.format(macro_score, veto))
+                return
 
         # Daily drawdown circuit breaker — halt if down >max_daily_loss_pct% from day open
         max_dd_pct = float(self.config.get('max_daily_loss_pct', 10.0))
@@ -1406,6 +1456,9 @@ class AutoPilot:
         # Hard cap: never deploy more than position_size_pct% of balance in one trade
         pos_cap = balance * float(self.config.get('position_size_pct', 15.0)) / 100.0
         buy_amount = min(kelly_size, remaining_today, balance, pos_cap)
+        # Adaptive exposure governor: throttle size up/down vs the breakeven win rate the banked
+        # outcomes imply — protect capital when we're losing, press when we're winning. Bounded.
+        buy_amount *= self.adaptive.exposure_scale()
         if buy_amount < 5:
             now_ts = time.time()
             if now_ts - self._session_last_log >= 1800:
@@ -1461,15 +1514,41 @@ class AutoPilot:
             else:
                 min_change_1h = float(self.config.get('min_change_1h_regular', 3.0))
                 min_rvol      = float(self.config.get('min_rvol_regular', 1.5))
-            candidates = [m for m in movers
-                          if m['symbol'] not in positions
-                          and m['price'] > 0
-                          and m['price'] < 10.0
-                          and m['change_1h'] > min_change_1h
-                          and m['vol_ratio'] > min_rvol
-                          # Skip only truly exhausted runners: big multi-day move AND volume fading.
-                          # A fresh catalyst with 15-20% intraday + 5× RVOL is accelerating, not exhausted.
-                          and not (m['change_5d'] > 30.0 and m['vol_ratio'] < 2.0)]
+            if self.config.get('harvest_regime', True):
+                # HARVEST REGIME (north star): fish for the predictable MIDDLE — steady, liquid,
+                # tight-spread names with repeatable intraday range — NOT explosive breakouts.
+                # Momentum hunting (open-ended change_1h, high RVOL spikes, parabolic runners)
+                # produces a bimodal "fail or rip" population with no harvestable middle. We
+                # therefore BOUND change and volume into a moderate band, impose a price floor
+                # (a tight-spread proxy — sub-$1 pennies carry punishing spreads), cap volatility,
+                # and reject extended runners outright.
+                lo_chg   = float(self.config.get('harvest_min_change_1h', 1.0))
+                hi_chg   = float(self.config.get('harvest_max_change_1h', 8.0))
+                lo_rvol  = float(self.config.get('harvest_min_rvol', 1.2))
+                hi_rvol  = float(self.config.get('harvest_max_rvol', 5.0))
+                max_vol  = float(self.config.get('harvest_max_volatility', 18.0))
+                min_px   = float(self.config.get('harvest_min_price', 1.0))
+                max_px   = float(self.config.get('max_stock_price', 15.0))
+                max_5d   = float(self.config.get('harvest_max_change_5d', 25.0))
+                candidates = [m for m in movers
+                              if m['symbol'] not in positions
+                              and not self._blacklisted(m['symbol'])
+                              and min_px <= m['price'] < max_px
+                              and lo_chg <= m['change_1h'] <= hi_chg          # moderate move, not parabolic
+                              and lo_rvol <= m['vol_ratio'] <= hi_rvol        # active but not a squeeze spike
+                              and (m.get('volatility', 0.0) <= max_vol or not m.get('volatility'))
+                              and m['change_5d'] <= max_5d]                   # not an extended runner
+            else:
+                # MOMENTUM REGIME (legacy): hunt explosive movers. Retained for A/B comparison.
+                candidates = [m for m in movers
+                              if m['symbol'] not in positions
+                              and not self._blacklisted(m['symbol'])
+                              and m['price'] > 0
+                              and m['price'] < float(self.config.get('max_stock_price', 15.0))
+                              and m['change_1h'] > min_change_1h
+                              and m['vol_ratio'] > min_rvol
+                              # Skip only truly exhausted runners: big multi-day move AND volume fading.
+                              and not (m['change_5d'] > 30.0 and m['vol_ratio'] < 2.0)]
 
             # Earnings guard: never open a position within 2 days of earnings
             if self.earnings:
@@ -1538,6 +1617,11 @@ class AutoPilot:
 
             # Boost candidates: halt-resume, SSR, behavioral, macro, insider, congress
             macro_score = self.macro.get_score() if self.macro else 0
+            # In harvest regime, suppress the explosive/breakout narrative bonuses (gap, ORB,
+            # rocket-streak, float-rotation, squeeze) — they bias ranking toward the parabolic
+            # names the north star avoids. Information-edge agents (news, insider, congress,
+            # sector, order-flow) stay on.
+            harvest_mode = bool(self.config.get('harvest_regime', True))
             for c in candidates:
                 sym = c['symbol']
                 bonus = 0
@@ -1576,12 +1660,12 @@ class AutoPilot:
                     c['rt_signal'] = c.get('rt_signal') or 'MULTI-STREAM'
                 # Pre-market gapper — identified before open as high-probability setup
                 gap_info = _premarket_map.get(sym)
-                if gap_info:
+                if gap_info and not harvest_mode:
                     gap_bonus = min(25, int(gap_info.get('gap_pct', 0) * 1.5))
                     bonus += gap_bonus
                     c['rt_signal'] = 'GAP-{:.0f}%'.format(gap_info['gap_pct'])
                 # ORB breakout — price broke above first-5m candle high
-                if self.orb:
+                if self.orb and not harvest_mode:
                     orb_lvl = self.orb.get_orb_level(sym)
                     if orb_lvl:
                         orb_high = orb_lvl.get('high', 0)
@@ -1591,7 +1675,7 @@ class AutoPilot:
                             bonus += orb_bonus
                             c['rt_signal'] = c.get('rt_signal') or 'ORB+{:.1f}%'.format(orb_pct)
                 # Rocket setup: consecutive green bars with volume acceleration
-                if c.get('green_streak', 0) >= 3:
+                if c.get('green_streak', 0) >= 3 and not harvest_mode:
                     bonus += min(c['green_streak'] * 3, 12)   # up to +12 for 4-bar streak
                 # News catalyst score
                 if self.news:
@@ -1601,12 +1685,12 @@ class AutoPilot:
                         if news_pts >= 15:
                             c['rt_signal'] = c.get('rt_signal') or 'NEWS-CATALYST'
                 # Float rotation: strong buying relative to available supply
-                if self.float_rotation:
+                if self.float_rotation and not harvest_mode:
                     fr_pts = self.float_rotation.get_rotation_score(sym)
                     if fr_pts != 0:
                         bonus += fr_pts
                 # Short squeeze setup
-                if self.short_squeeze:
+                if self.short_squeeze and not harvest_mode:
                     sq_pts = self.short_squeeze.get_squeeze_score(sym)
                     if sq_pts >= 10:
                         bonus += min(sq_pts, 20)
@@ -1656,9 +1740,24 @@ class AutoPilot:
                 self._entry('VWAP', 'All candidates above VWAP — no clean entry this cycle')
                 return
 
-            best   = candidates[0]
-            symbol = best['symbol']
-            price  = best['price']
+            # Pick the highest-ranked candidate with a VALID live price. A single bad-price /
+            # halted / stale top pick must NOT black-hole the day (smoke test caught exactly this:
+            # SNDL ranked #1 and failed to buy 24× in a row). Fall through to the next candidate
+            # and blacklist the bad one for the session so it isn't re-chosen every cycle.
+            best = None
+            for cand in candidates:
+                if self._blacklisted(cand['symbol']):
+                    continue
+                lp = self._get_live_price(cand['symbol'])
+                if lp and lp > 0:
+                    best, symbol, price = cand, cand['symbol'], lp
+                    break
+                self._blacklist_entry(cand['symbol'])
+                self._entry('ENTRY-SKIP',
+                    '{} no valid live price — blacklisted, trying next candidate'.format(cand['symbol']))
+            if best is None:
+                self._entry('SCAN', 'No candidate with a valid live price this cycle')
+                return
 
             # Decision Record — capture this cycle's full context (all movers, who passed the
             # filter, per-agent attribution, regime, the top pick) for counterfactual learning.
@@ -1719,6 +1818,7 @@ class AutoPilot:
 
             # Spread guard: estimated H-L spread must be < 40% of harvest target
             est_spread = self._estimate_spread_pct(symbol)
+            best['spread_pct'] = est_spread   # predictive feature + cost-calibration target
             spread_limit = harvest_trig * 0.40
             if est_spread > spread_limit:
                 self._entry('SPREAD',
@@ -1779,7 +1879,9 @@ class AutoPilot:
             if self.config.get('predictor_sizing', True):
                 # EV-aware conviction sizing (P(win) × expected edge), then re-clamp to the
                 # same caps the base size respected so it can't breach daily/balance/per-trade.
-                adj   = buy_amount * self.predictor.size_multiplier(p_win, pred.get('expected_edge'))
+                adj   = buy_amount * self.predictor.size_multiplier(
+                    p_win, pred.get('expected_edge'),
+                    transaction_cost_pct(est_spread, price, shares, self.config))
                 adj   = min(adj, remaining_today, balance, pos_cap * 1.25)
                 shares = max(1, int(adj / price))
                 cost   = shares * price
@@ -1795,11 +1897,33 @@ class AutoPilot:
             news_score = self.news.get_news_score(symbol) if self.news else 0
             cat_score  = cat_score + news_score
 
-            result = self.paper.buy(symbol, shares)
+            # Execute at the SAME validated live price the decision/barrier used — avoids a
+            # divergent second price-fetch inside the trader (which could fail or fill at a
+            # different tick) and keeps entry/barrier/decision prices consistent.
+            result = self.paper.buy(symbol, shares, price_override=price)
             if result.get('ok'):
                 self.daily_spent += cost
                 self.stats['total_trades'] += 1
                 self._position_harvests[symbol] = 0
+                # Lock in the spread-aware round-trip cost at entry — reused by the monitor loop
+                # so it never re-samples the quote per tick.
+                self._position_tx_cost[symbol] = transaction_cost_pct(est_spread, price, shares, self.config)
+                self._harvest_level[symbol] = float(self.config.get('harvest_trigger_pct', 4.0))  # arm; ratchets up on incline
+                # Bank the full entry context onto the trade-lifecycle ledger.
+                try:
+                    self.trade_record.set_context(symbol, {
+                        'score': round(float(best.get('combined_score', best.get('score', 0))), 1),
+                        'spread_pct': est_spread,
+                        'rvol': round(float(rvol), 2),
+                        'change_1h': round(float(best.get('change_1h', 0)), 2),
+                        'p_win': round(float(p_win), 4),
+                        'expected_edge': round(float(pred.get('expected_edge', 0.0)), 3),
+                        'tx_cost_pct': self._position_tx_cost[symbol],
+                        'exposure_scale': round(float(self.adaptive.exposure_scale()), 3),
+                        'session': session,
+                    })
+                except Exception:
+                    pass
                 self._position_entry_rvol[symbol] = rvol   # save for volume-exhaustion check
                 rt_info     = ' | RT:{} ({:.0f})'.format(
                     best.get('rt_signal', ''), best.get('rt_score', 0)) if self.engine else ''
@@ -1819,7 +1943,8 @@ class AutoPilot:
                 from modules.notify import msg_buy
                 self._notify(msg_buy(symbol, shares, price, cost, combined_score))
             else:
-                self._entry('ERROR', 'Buy failed: {}'.format(result.get('error', 'unknown')))
+                self._blacklist_entry(symbol)
+                self._entry('ERROR', 'Buy failed: {} — blacklisted for session'.format(result.get('error', 'unknown')))
 
         except Exception as e:
             self._entry('SCAN', 'Scan error: ' + str(e))
@@ -1895,8 +2020,11 @@ class AutoPilot:
         lg[symbol] = price
 
         # ── Fast-path 1: ORB breakout buy ──────────────────────────────────────
-        # Bypasses the 60s scan loop — entry fires within 1 stream tick of breakout
-        if (self.orb and symbol not in self._orb_fired
+        # Bypasses the 60s scan loop — entry fires within 1 stream tick of breakout.
+        # Disabled in harvest regime: it is a pure-breakout (extreme-entry) play, the opposite
+        # of harvesting the predictable middle. The stream stop-loss/harvest path below stays on.
+        if (self.orb and not self.config.get('harvest_regime', True)
+                and symbol not in self._orb_fired
                 and _get_session() in _BUY_SESSIONS - {'PRE_MARKET', 'AFTERNOON', 'CLOSE'}):
             orb_lvl = self.orb.get_orb_level(symbol)
             if orb_lvl:
@@ -1908,6 +2036,10 @@ class AutoPilot:
                         daemon=True).start()
 
         # ── Fast-path 2: stream harvest + stop-loss ────────────────────────────
+        # Market-hours exit gate: after-hours stream ticks are stale/illiquid — never transact on
+        # them; the tick loop holds and defers to the next open (same rule as the monitor loop).
+        if self.config.get('market_hours_only_exits', True) and _get_session() not in _MARKET_OPEN_SESSIONS:
+            return
         positions = {p['symbol']: p for p in self.paper.get_state().get('positions', [])}
         if symbol not in positions:
             return
@@ -1916,9 +2048,11 @@ class AutoPilot:
         shares = int(pos.get('shares', 0))
         if entry <= 0 or shares <= 0:
             return
-        tx_cost      = float(self.config.get('tx_cost_pct', 3.0))
+        tx_cost      = self._tx_cost(symbol)   # spread-aware, locked in at entry
         net_gain     = (price - entry) / entry * 100 - tx_cost
-        harvest_trig = float(self.config.get('harvest_trigger_pct', 6.0))
+        # Respect the ADAPTIVE ratcheted trigger — once the planner has raised the level on a
+        # sustained incline, the fast stream path must not harvest below it.
+        harvest_trig = self._harvest_level.get(symbol, float(self.config.get('harvest_trigger_pct', 6.0)))
         max_loss     = float(self.config.get('max_single_loss_pct', 8.0))
 
         # 2a: stream harvest — captures gain at the tick price rather than up to 60s later
@@ -2096,8 +2230,12 @@ class AutoPilot:
         wins   = self.stats.get('wins', 0)
         losses = self.stats.get('losses', 0)
         config_size = float(self.config.get('per_trade_capital', 50.0))
+        # Harvesting wants MANY SMALL positions, so the Kelly fraction is clamped low (default
+        # 4%-12% of balance, vs the old 5%-25%) — caps single-name exposure and spreads capital.
+        f_min = float(self.config.get('kelly_min_frac', 0.04))
+        f_max = float(self.config.get('kelly_max_frac', 0.12))
         if wins + losses < 10:
-            return min(config_size, balance * 0.15)
+            return min(config_size, balance * f_max)
 
         p       = wins / (wins + losses)
         q       = 1 - p
@@ -2105,7 +2243,7 @@ class AutoPilot:
         avg_loss = self.stats.get('total_loss_pct', 0) / losses if losses > 0 else 10.0
         b = avg_win / avg_loss if avg_loss > 0 else 1.5
         f = (p * b - q) / b
-        f = max(0.05, min(f, 0.25))   # hard cap 5%-25%
+        f = max(f_min, min(f, f_max))
         return round(balance * f, 2)
 
     def _market_regime(self):
@@ -2193,6 +2331,132 @@ class AutoPilot:
         self._momentum_cache[cache_key] = result
         return result
 
+    def _plan_harvest(self, symbol, net_gain, harvests_done, days_open, session, mins_held):
+        """Incline-aware adaptive harvest planner — the post-purchase monitor's brain.
+
+        Decides, from the live INCLINE (5-bar slope confirmed by order-flow + volume), whether to:
+          • RATCHET (sustained growth): take a thin slice and SCALE THE TRIGGER UP — re-arm the
+            next harvest a step higher so a genuine runner keeps running instead of being clipped
+            at a fixed %. This is the answer to 'scale upward when the incline shows sustained
+            growth'.
+          • HARVEST normally (fading/flat at the trigger): the standard adaptive fraction.
+          • TIME-HARVEST (range-bound drift, no incline): extract small slices on a TIMER once the
+            position is profitable-past-cost and has been idle — capture the predictable middle and
+            recycle capital instead of waiting on a % that may never come.
+        Returns {'action','fraction','ratchet_to','reason','incline'}."""
+        import time as _t
+        cfg = self.config
+        base_trig = float(cfg.get('harvest_trigger_pct', 4.0))
+        level = self._harvest_level.get(symbol, base_trig)        # armed trigger (may have ratcheted up)
+
+        slope, cascade, rvol = self._momentum_snapshot(symbol)
+        vel = self.engine.cache.velocity.get(symbol, {}) if (self.engine and hasattr(self.engine, 'cache')) else {}
+        ofi = float(vel.get('ofi', 0.0))
+        strong  = float(cfg.get('incline_strong_slope', 0.4))
+        flat_th = float(cfg.get('incline_flat_slope', 0.12))
+        incline_up   = slope >= strong and ofi >= 0 and rvol >= 1.0   # the incline predictor
+        incline_flat = abs(slope) < flat_th
+
+        if net_gain >= level:
+            if incline_up and harvests_done < int(cfg.get('harvest_ratchet_max', 4)):
+                step = float(cfg.get('harvest_ratchet_step', 2.0))
+                frac = float(cfg.get('harvest_ratchet_fraction', 0.20))
+                return {'action': 'harvest', 'fraction': frac, 'ratchet_to': round(net_gain + step, 2),
+                        'reason': 'sustained incline (slope {:.2f}%, ofi {:+.2f}, rvol {:.1f}) → slice {:.0f}%, raise trigger to {:.1f}%'.format(
+                            slope, ofi, rvol, frac * 100, net_gain + step),
+                        'incline': round(slope, 3)}
+            frac = self._harvest_fraction(symbol, days_open, harvests_done, session)
+            return {'action': 'harvest', 'fraction': frac, 'ratchet_to': None,
+                    'reason': 'at trigger, incline not sustained (slope {:.2f}%) → harvest {:.0f}%'.format(slope, frac * 100),
+                    'incline': round(slope, 3)}
+
+        if cfg.get('harvest_time_enabled', True) and incline_flat:
+            cost = self._tx_cost(symbol)
+            time_min = float(cfg.get('harvest_time_min', 45.0))
+            last = self._last_time_harvest.get(symbol, 0.0)
+            since = (_t.time() - last) / 60.0 if last else 1e9
+            if net_gain > cost and mins_held >= time_min and since >= time_min:
+                frac = float(cfg.get('harvest_time_fraction', 0.25))
+                return {'action': 'time_harvest', 'fraction': frac, 'ratchet_to': None,
+                        'reason': 'range-bound {:.0f}m (slope {:.2f}%), net {:.1f}% > cost {:.1f}% → time-slice {:.0f}%'.format(
+                            mins_held, slope, net_gain, cost, frac * 100),
+                        'incline': round(slope, 3)}
+        return {'action': 'hold', 'fraction': 0.0, 'ratchet_to': None, 'reason': 'below trigger', 'incline': round(slope, 3)}
+
+    def funnel_today(self):
+        """Where candidates die this session — tallied from the live log for the North-Star tab.
+        Ordered as the decision flow: scan → upstream vetoes → per-gate rejects → buys → harvests."""
+        log = self.log
+        start = 0
+        for i in range(len(log) - 1, -1, -1):
+            if 'New trading day' in str(log[i].get('note', '')):
+                start = i
+                break
+        day = log[start:]
+        def cnt(action, contains=None):
+            n = 0
+            for e in day:
+                if e.get('action') == action and (contains is None or contains in str(e.get('note', ''))):
+                    n += 1
+            return n
+        steps = [
+            ('scans',        cnt('SCAN', 'Scanning'),        'scan cycles run'),
+            ('macro_veto',   cnt('MACRO'),                   'blocked: macro severely adverse'),
+            ('regime_veto',  cnt('REGIME'),                  'blocked: bearish SPY tape'),
+            ('no_qualifying', cnt('SCAN', 'No qualifying') + cnt('SCAN', 'valid live price'), 'no candidate passed the bands'),
+            ('rvol_gate',    cnt('RVOL-GATE'),               'rejected: RVOL'),
+            ('signal_gate',  cnt('SIGNAL-GATE'),             'rejected: live composite'),
+            ('score_gate',   cnt('SCORE-GATE'),              'rejected: combined score < min'),
+            ('spread_gate',  cnt('SPREAD'),                  'rejected: spread too wide'),
+            ('vwap_gate',    cnt('VWAP'),                    'rejected: above VWAP'),
+            ('entry_skip',   cnt('ENTRY-SKIP'),              'skipped: cascade/slope/bad price'),
+            ('predict_gate', cnt('PREDICT-GATE'),            'rejected: model P(win)'),
+            ('pos_limit',    cnt('LIMIT'),                   'held: max positions / daily cap'),
+            ('delayed_block', cnt('DELAYED-FEED'),           'blocked: delayed feed'),
+            ('buys',         cnt('BUY'),                     'BUYS executed'),
+            ('harvests',     cnt('HARVEST') + cnt('TIME-HARVEST'), 'harvests taken'),
+        ]
+        return [{'step': k, 'count': v, 'desc': d} for (k, v, d) in steps]
+
+    def harvest_ladder(self):
+        """Live harvest state per open position for the North-Star dashboard: each position's
+        current net gain, its ARMED (possibly ratcheted) trigger, harvests already taken, incline,
+        and the planner's next move — so the ratchet/time-harvest mechanism is watchable live."""
+        out = []
+        try:
+            state = self.paper.get_state()
+        except Exception:
+            return out
+        base_trig = float(self.config.get('harvest_trigger_pct', 4.0))
+        try:
+            session = _get_session()
+        except Exception:
+            session = ''
+        for pos in state.get('positions', []):
+            sym = pos.get('symbol')
+            try:
+                entry  = float(pos.get('avg_cost', 0))
+                shares = int(pos.get('shares', 0))
+                if entry <= 0:
+                    continue
+                price = self._get_live_price(sym) or float(pos.get('current_price', entry) or entry)
+                gain  = (price - entry) / entry * 100.0
+                tx    = self._tx_cost(sym)
+                net   = gain - tx
+                armed = self._harvest_level.get(sym, base_trig)
+                hd    = self._position_harvests.get(sym, 0)
+                opened = self._position_opened.get(sym)
+                mins  = ((datetime.now() - opened).total_seconds() / 60.0) if opened else 0.0
+                slope = self._momentum_snapshot(sym)[0]
+                plan  = self._plan_harvest(sym, net, hd, 0, session, mins)
+                out.append({'symbol': sym, 'shares': shares, 'net_gain': round(net, 2),
+                            'armed_trigger': round(armed, 2), 'harvests': hd,
+                            'mins_held': round(mins, 0), 'incline': slope,
+                            'next_action': plan['action'], 'next_reason': plan.get('reason', '')})
+            except Exception:
+                continue
+        return out
+
     def _harvest_fraction(self, symbol: str, days_open: int, harvests_done: int, session: str) -> float:
         """
         Dynamic sell fraction at harvest time (0.25 – 0.80).
@@ -2258,6 +2522,9 @@ class AutoPilot:
         """Remove all per-position tracking state after a close."""
         self._position_harvests.pop(symbol, None)
         self._position_hwm.pop(symbol, None)
+        self._position_tx_cost.pop(symbol, None)
+        self._harvest_level.pop(symbol, None)
+        self._last_time_harvest.pop(symbol, None)
         opened = self._position_opened.pop(symbol, None)
         # Track PDT day trades — only relevant when NOT in cash account mode
         if opened and not self.config.get('cash_account_mode', False):
@@ -2278,10 +2545,39 @@ class AutoPilot:
             d += timedelta(days=1)
         return count
 
-    def _net_profit(self, shares: int, price: float, entry: float) -> float:
-        """Net profit after subtracting round-trip transaction cost."""
+    def _blacklisted(self, sym):
+        """True if a symbol is in the session entry-blacklist (and not yet expired)."""
+        exp = self._entry_blacklist.get(sym)
+        if not exp:
+            return False
+        try:
+            now = self._get_et_now().timestamp()
+        except Exception:
+            return True
+        if now >= exp:
+            self._entry_blacklist.pop(sym, None)
+            return False
+        return True
+
+    def _blacklist_entry(self, sym, minutes=20):
+        """Cool a symbol off from new entries (invalid price / repeated buy failure) so one bad
+        top-pick can't black-hole the day by being re-chosen every scan cycle."""
+        try:
+            self._entry_blacklist[sym] = self._get_et_now().timestamp() + minutes * 60
+        except Exception:
+            pass
+
+    def _tx_cost(self, symbol):
+        """Spread-aware round-trip cost % for an open position (captured at entry); falls back to
+        the unified flat estimate if we never recorded one (e.g. position opened pre-upgrade)."""
+        c = self._position_tx_cost.get(symbol)
+        return c if c is not None else transaction_cost_pct(None, None, None, self.config)
+
+    def _net_profit(self, shares: int, price: float, entry: float, symbol: str = None) -> float:
+        """Net profit after subtracting round-trip transaction cost (spread-aware when known)."""
         gross  = shares * (price - entry)
-        tx     = shares * entry * float(self.config.get('tx_cost_pct', 3.0)) / 100.0
+        tx_pct = self._tx_cost(symbol) if symbol else transaction_cost_pct(None, entry, shares, self.config)
+        tx     = shares * entry * tx_pct / 100.0
         return round(gross - tx, 2)
 
     def _daily_drawdown_pct(self, current_balance):

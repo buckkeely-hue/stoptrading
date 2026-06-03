@@ -6,6 +6,7 @@ from modules.market_data import MarketData
 class StockScanner:
     def __init__(self, universe=None, config=None):
         self.universe = universe   # DynamicUniverse instance — uses FALLBACK if None
+        self.config   = config or {}
         self._md      = MarketData(config or {})
 
     def scan(self):
@@ -35,7 +36,7 @@ class StockScanner:
                     continue
 
                 price = float(hist['Close'].iloc[-1])
-                if price <= 0 or price >= 8:
+                if price <= 0 or price >= float(self.config.get('max_stock_price', 15.0)):
                     continue
 
                 prev_close = float(hist['Close'].iloc[-2])

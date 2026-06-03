@@ -141,11 +141,25 @@ def whatif(date_str):
         return None
 
 
+def _profitability_snapshot():
+    """Return-distribution + win-rate-vs-breakeven + live exposure governor — the decisive
+    metric for the harvesting thesis: does a harvestable middle exist, and are we above the
+    breakeven win rate the target/stop/cost demand?"""
+    try:
+        from config import load_config
+        from modules.adaptive_policy import AdaptivePolicy
+        p = AdaptivePolicy(load_config())
+        return p.refresh(force=True)
+    except Exception:
+        return {}
+
+
 def build_row(today=None):
     today = today or _et_today()
     pnl = _trades_today(today)
     funnel, flags = _funnel_today()
     model = _model_snapshot()
+    profit = _profitability_snapshot()
     bal = round(_load('paper_trades.json', {}).get('balance', 0), 2)
     # new model samples since the prior journal row
     prev = _last_row()
@@ -155,6 +169,7 @@ def build_row(today=None):
         'trades': pnl['buys'] + pnl['sells'],
         'pnl': pnl, 'funnel': funnel, 'flags': flags,
         'model': {**model, 'n_new': max(0, n_new)},
+        'profit': profit,
         'end_balance': bal,
         'ts': datetime.now().strftime('%Y-%m-%d %H:%M'),
     }
@@ -196,6 +211,35 @@ def _render():
             p.get('deployed', 0),
             f.get('scan_cycles', 0), f.get('no_qualifying', 0), gates, f.get('buys', 0),
             m.get('n_trained', 0), auc, wi, flagstr))
+    # ── Harvesting thesis panel: return distribution + win-rate vs breakeven + governor ──
+    last = rows[-1] if rows else {}
+    pf = last.get('profit') or {}
+    if pf:
+        out.append('')
+        out.append('HARVESTING THESIS — does the predictable middle exist, and are we above breakeven?')
+        out.append('-' * 78)
+        d = pf.get('dist') or {}
+        if d:
+            order = ['<-3', '-3..0', '0..2', '2..4', '4..6', '>=6']
+            mx = max(d.values()) or 1
+            out.append('  barrier-outcome distribution (delay-immune, n=%d):' % pf.get('n', 0))
+            for k in order:
+                v = d.get(k, 0)
+                bar = '#' * int(v / mx * 34)
+                tag = '  ← the harvestable middle' if k in ('0..2', '2..4') else ''
+                out.append('    %-7s %3d %s%s' % (k + '%', v, bar, tag))
+        wr = pf.get('win_rate'); be = pf.get('breakeven'); ev = pf.get('expectancy')
+        if wr is not None:
+            verdict = 'ABOVE → +EV' if wr >= (be or 1) else 'BELOW → −EV'
+            out.append('  win rate %.0f%%  vs  breakeven %.0f%%  (cost %.2f%%)  →  %s   E=%+.2f%%/trade' % (
+                wr * 100, (be or 0) * 100, pf.get('cost', 0), verdict, ev or 0))
+        rt = pf.get('rec_target') or {}; rs = pf.get('rec_stop') or {}
+        if rt:
+            note = ' (HIGH ⇒ no middle in this universe — change the pond, not the exit)' if rt.get('target', 0) >= 5 else ''
+            out.append('  recommend: target %.1f%% (EV %+.2f%%)%s | stop %.1f%% [%s]' % (
+                rt.get('target', 0), rt.get('ev', 0), note, rs.get('stop', 0), rs.get('basis', '')))
+        out.append('  LIVE GOVERNOR: exposure ×%.2f — %s' % (
+            pf.get('exposure_scale', 1.0), pf.get('note', '')))
     open(MATRIX_TXT, 'w').write('\n'.join(out) + '\n')
 
 

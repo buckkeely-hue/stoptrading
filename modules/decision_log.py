@@ -13,10 +13,10 @@ symbol's subsequent return, so rejected near-misses get labeled too.
 Append-only, paper-phase-only, behind decision_log_enabled. All best-effort (never breaks trading).
 """
 import os
-import json
-import time
 import threading
 from datetime import datetime
+
+from modules.io_safe import append_jsonl
 
 _DIR           = os.path.dirname(os.path.abspath(__file__))
 DECISIONS_FILE = os.path.join(_DIR, '..', 'decision_log.jsonl')
@@ -113,8 +113,6 @@ class DecisionRecorder:
                                                  'ret_60m': round(ret, 3)})
 
     def _append(self, path, obj):
-        try:
-            with open(path, 'a') as f:
-                f.write(json.dumps(obj) + '\n')
-        except Exception:
-            pass
+        # Crash-safe + size-bounded: these high-churn records (one per scan cycle) rotate to a
+        # timestamped archive past ~8 MB so the live file stays fast to read.
+        append_jsonl(path, obj, max_bytes=8_000_000)
