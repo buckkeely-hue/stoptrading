@@ -7,6 +7,12 @@ from modules.io_safe import atomic_write_json
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.json')
 _SAVE_LOCK = threading.Lock()
 
+
+def _config_path():
+    """Active config path. STOPTRADING_CONFIG env var lets a child process (e.g. a backtest
+    sweep) point at an alternate config WITHOUT touching the live config.json the server reads."""
+    return os.environ.get('STOPTRADING_CONFIG', CONFIG_FILE)
+
 DEFAULTS = {
     'alpaca_paper_key': '',
     'alpaca_paper_secret': '',
@@ -36,9 +42,10 @@ DEFAULTS = {
 }
 
 def load_config():
-    if os.path.exists(CONFIG_FILE):
+    path = _config_path()
+    if os.path.exists(path):
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(path, 'r') as f:
                 data = json.load(f)
             config = dict(DEFAULTS)
             config.update(data)

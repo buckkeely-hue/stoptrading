@@ -398,6 +398,195 @@
       "channel": "ntfy",
       "ok": true,
       "error": ""
+    },
+    {
+      "time": "2026-06-03 08:30:52",
+      "message": "\ud83d\udd34 STOP-LOSS: GGB | loss -4.0% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 08:31:23",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] GGB 2sh @ $4.8835 -> $4.7500 (-2.7%) | -2.7% since last\n\nTOP CANDIDATES:\n  CRMT $7.520 score:62 vol:1.5x SCANNING\n  BIRD $4.360 score:23 vol:1.4x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 08:36:34",
+      "message": "\ud83d\udcc8 BUY: PETZ \u00d7 20 @ $1.1800 | $24 deployed | score 50",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 08:45:03",
+      "message": "\ud83d\udcc8 BUY: UONE \u00d7 3 @ $6.4700 | $19 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 09:10:44",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1600 (-1.7%) | -1.7% since last\n  [DN] UONE 3sh @ $6.4700 -> $6.4300 (-0.6%) | -0.6% since last\n\nTOP CANDIDATES:\n  TOPS $1.",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 09:31:55",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1501 (-2.5%) | -0.9% since last\n  [DN] UONE 3sh @ $6.4700 -> $6.3899 (-1.2%) | -0.6% since last\n\nTOP CANDIDATES:\n  CTRM $2.",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 09:42:30",
+      "message": "\ud83d\udcc8 BUY: CMTL \u00d7 3 @ $6.0500 | $18 deployed | score 27",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 10:01:02",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +2.6% since last\n  [DN] UONE 3sh @ $6.4700 -> $6.4100 (-0.9%) | +0.3% since last\n  [DN] CMTL 3sh @ $6.0500 -",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 10:12:09",
+      "message": "\ud83d\udd34 STOP-LOSS: CMTL | loss -3.9% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 10:28:46",
+      "message": "\ud83d\udd34 STOP-LOSS: UONE | stream stop -7.0%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 10:30:19",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 10:31:31",
+      "message": "StopTrading Report \u2014 11:31 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  NEXT $8.645 score:33 vol:1.1x SCANNING\n  MGNX $4.050 score:13 vol:0.9x S",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 11:01:04",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  TXMD $2.080 score:44 vol:4.1x SCANNING\n  SVV $9.370 score:24 vol:1.8x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 11:30:33",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  CSHR $4.730 score:39 vol:1.4x SCANNING\n  SND $5.180 score:26 vol:1.1x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 12:01:04",
+      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  TXMD $2.080 score:44 vol:4.1x SCANNING\n  CATO $3.240 score:40 vol:6.4x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 12:30:35",
+      "message": "StopTrading Report \u2014 1:30 PM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1750 (-0.4%) | -0.4% since last\n\nTOP CANDIDATES:\n  CSHR $4.710 score:53 vol:1.2x SCANNING\n  CATO $3.320 score:49 vol:5.7x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 13:00:04",
+      "message": "StopTrading Report \u2014 1:59 PM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1750 (-0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  CATO $3.321 score:51 vol:5.4x SCANNING\n  TXMD $2.080 score:44 vol:4.1x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 13:00:05",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 13:30:34",
+      "message": "StopTrading Report \u2014 2:30 PM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1750 (-0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TRVG $4.105 score:80 vol:3.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 13:30:45",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 14:00:10",
+      "message": "StopTrading Report \u2014 2:59 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.4% since last\n\nTOP CANDIDATES:\n  LESL $4.310 score:54 vol:1.9x SCANNING\n  TLYS $4.925 score:51 vol:2.6x SC",
+      "channel": "ntfy",
+      "ok": false,
+      "error": "<urlopen error timed out>"
+    },
+    {
+      "time": "2026-06-03 14:01:30",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 14:30:34",
+      "message": "StopTrading Report \u2014 3:30 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  LESL $4.450 score:45 vol:2.1x SCANNING\n  TLYS $4.695 score:33 vol:2.7x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 14:32:28",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 15:00:10",
+      "message": "StopTrading Report \u2014 3:59 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  LESL $4.640 score:55 vol:2.3x SCANNING\n  SSP $3.545 score:48 vol:2.7x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 15:05:06",
+      "message": "\ud83d\udcc9 EOD: P&L $-3.07 | 5 trades | 0% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-03 17:00:03",
+      "message": "Model refinement  \u2014 2026-06-03 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=4 corr=+0.79 good=50% mean_fwd=-0.03% | thre",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
     }
   ]
 }

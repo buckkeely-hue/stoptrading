@@ -50,6 +50,8 @@ class TradeRecorder:
     # ── central paper-trade callback (every BUY / SELL) ──────────────────────────
     def on_trade(self, event):
         try:
+            if not self.ap.config.get('trade_record_enabled', True):
+                return   # disabled (e.g. backtest sweeps) so replays don't append to the live ledger
             typ = event.get('type'); sym = event.get('symbol')
             if not sym:
                 return
