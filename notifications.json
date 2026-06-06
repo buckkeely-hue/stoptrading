@@ -834,8 +834,204 @@
       "error": ""
     },
     {
-      "time": "2026-06-04 17:00:04",
-      "message": "Model refinement  \u2014 2026-06-04 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=11 corr=+0.23 good=45% mean_fwd=+0.16% | thr",
+      "time": "2026-06-05 08:31:00",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.4% since last\n  [UP] INDO 8sh @ $2.9300 -> $2.9400 (+0.3%) | +0.3% since last\n  [DN] SNDL 15sh @ $1.4386 -",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 08:45:47",
+      "message": "\ud83d\udd34 STOP-LOSS: INDO | stream stop -3.1%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 08:46:12",
+      "message": "\u2705 FINAL-EXIT: SNDL | Volume collapsed 0.0x (was 3.3x at entry) \u2014 exit 1.4% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 08:49:03",
+      "message": "\ud83d\udcc8 BUY: OCGN \u00d7 6 @ $1.3699 | $8 deployed | score 27",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 08:51:24",
+      "message": "\ud83d\udd34 STOP-LOSS: OCGN | stream stop -3.4%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 08:54:53",
+      "message": "\ud83d\udcc8 BUY: SNDL \u00d7 5 @ $1.4750 | $7 deployed | score 29",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:00:13",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1500 (-2.5%) | -2.5% since last\n  [DN] SNDL 5sh @ $1.4750 -> $1.4720 (-0.2%) | +2.9% since last\n\nTOP CANDIDATES:\n  SQFT $2.",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:17:31",
+      "message": "\ud83d\udd34 STOP-LOSS: SNDL | stream stop -3.2%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:23:53",
+      "message": "\ud83d\udcc8 BUY: ACH \u00d7 2 @ $2.8100 | $6 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:30:45",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1129 (-5.7%) | -3.2% since last\n  [DN] ACH 2sh @ $2.8100 -> $2.7850 (-0.9%) | -0.9% since last\n\nTOP CANDIDATES:\n  TXMD $1.9",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:34:21",
+      "message": "\ud83d\udcc8 BUY: EHTH \u00d7 4 @ $1.6789 | $7 deployed | score 36",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:38:03",
+      "message": "\ud83d\udd34 STOP-LOSS: PETZ | stream stop -4.0%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 09:39:25",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 10:00:17",
+      "message": "\u2705 FINAL-EXIT: EHTH | Volume collapsed 0.0x (was 3.9x at entry) \u2014 exit 3.0% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 10:00:19",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7923 (-0.6%) | +0.3% since last\n  [UP] EHTH 4sh @ $1.6789 -> $1.7400 (+3.6%) | +3.6% since last\n\nTOP CANDIDATES:\n  EHTH $1.74",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 10:29:25",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7950 (-0.5%) | +0.1% since last\n\nTOP CANDIDATES:\n  AVD $2.825 score:60 vol:5.9x SCANNING\n  EHTH $1.725 score:55 vol:4.5x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 10:59:56",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7750 (-1.2%) | -0.7% since last\n\nTOP CANDIDATES:\n  EHTH $1.830 score:63 vol:5.5x SCANNING\n  AVD $2.790 score:54 vol:6.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 11:29:26",
+      "message": "StopTrading Report \u2014 12:28 PM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7899 (-0.7%) | +0.5% since last\n\nTOP CANDIDATES:\n  EHTH $1.795 score:55 vol:5.3x SCANNING\n  RFL $1.525 score:50 vol:6.9x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 11:59:56",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS:\n  [UP] ACH 2sh @ $2.8100 -> $2.8150 (+0.2%) | +0.9% since last\n\nTOP CANDIDATES:\n  EHTH $1.780 score:54 vol:4.7x SCANNING\n  RFL $1.500 score:45 vol:7.5x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 12:29:27",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS:\n  [UP] ACH 2sh @ $2.8100 -> $2.8150 (+0.2%) | +0.0% since last\n\nTOP CANDIDATES:\n  EHTH $1.765 score:48 vol:4.5x SCANNING\n  RFL $1.525 score:47 vol:6.9x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 12:58:57",
+      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.8000 (-0.4%) | -0.5% since last\n\nTOP CANDIDATES:\n  RFL $1.525 score:47 vol:6.5x SCANNING\n  EHTH $1.759 score:46 vol:4.2x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 13:29:31",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7900 (-0.7%) | -0.4% since last\n\nTOP CANDIDATES:\n  TXMD $1.985 score:37 vol:5.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 13:58:50",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [DN] ACH 2sh @ $2.8100 -> $2.7700 (-1.4%) | -0.7% since last\n\nTOP CANDIDATES:\n  APYX $4.535 score:34 vol:2.1x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 14:03:21",
+      "message": "\ud83d\udcc8 BUY: APYX \u00d7 1 @ $4.5550 | $5 deployed | score 29",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 14:24:43",
+      "message": "\ud83d\udd34 STOP-LOSS: ACH | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 14:29:04",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] APYX 1sh @ $4.5550 -> $4.5800 (+0.5%) | +0.5% since last\n\nTOP CANDIDATES:\n  APYX $4.580 score:38 vol:2.0x SCANNING\n  TXMD $1.990 score:29 vol:4.8x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 14:59:09",
+      "message": "StopTrading Report \u2014 3:59 PM ET\n\nHOLDINGS:\n  [UP] APYX 1sh @ $4.5550 -> $4.5600 (+0.1%) | -0.4% since last\n\nTOP CANDIDATES:\n  TXMD $1.950 score:31 vol:4.6x SCANNING\n  APYX $4.553 score:28 vol:1.9x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 15:05:24",
+      "message": "\ud83d\udcc9 EOD: P&L $-8.10 | 19 trades | 22% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-05 17:00:03",
+      "message": "Model refinement  \u2014 2026-06-05 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=18 corr=-0.23 good=56% mean_fwd=-0.02% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
