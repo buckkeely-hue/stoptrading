@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Wire — Cross-Spectrum News</title>
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121826; --panel2:#171f30; --line:#243049;
+    --text:#e8edf6; --muted:#93a1bd; --accent:#10e8b8;
+    --left:#3b82f6; --center:#94a3b8; --right:#ef4444; --indep:#a855f7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding-bottom:46px}
+  a{color:inherit;text-decoration:none}
+  /* Header */
+  header{position:sticky;top:0;z-index:30;background:rgba(11,15,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:16px;padding:12px 20px;max-width:1280px;margin:0 auto;flex-wrap:wrap}
+  .brand{font-weight:900;font-size:22px;letter-spacing:.5px}
+  .brand span{color:var(--accent)}
+  .updated{font-size:11px;color:var(--muted)}
+  .back{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:5px 10px}
+  .tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#04201a}
+  .tab .n{opacity:.6;font-size:11px;margin-left:4px}
+  /* Layout */
+  main{max-width:1280px;margin:0 auto;padding:20px}
+  .section-title{font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 0 12px;display:flex;align-items:center;gap:8px}
+  .section-title::before{content:'';width:4px;height:14px;background:var(--accent);border-radius:2px}
+  /* Media wall */
+  .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:28px}
+  .tile{position:relative;border-radius:12px;overflow:hidden;background:var(--panel2);border:1px solid var(--line);cursor:pointer;min-height:170px;display:flex;flex-direction:column}
+  .tile .thumb{height:120px;background-size:cover;background-position:center;background-color:#0e1626;position:relative}
+  .tile .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .tile .body{padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:6px}
+  .tile h3{font-size:14px;line-height:1.3;font-weight:700}
+  .tile .meta{font-size:11px;color:var(--muted);margin-top:auto;display:flex;align-items:center;gap:8px}
+  .cat-pill{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:10px;background:rgba(16,232,184,.12);color:var(--accent)}
+  /* Cards */
+  .cards{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;gap:16px}
+  .card .hero{flex:0 0 180px;height:120px;border-radius:8px;background-size:cover;background-position:center;background-color:#0e1626;position:relative;cursor:pointer}
+  .card .hero .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .card .content{flex:1;min-width:0}
+  .card .topline{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+  .card h2{font-size:18px;line-height:1.3;margin-bottom:6px;cursor:pointer}
+  .card h2:hover{color:var(--accent)}
+  .card .summary{font-size:13px;color:#c3cde0;line-height:1.5;margin-bottom:10px}
+  .biasbar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-bottom:8px;max-width:340px}
+  .biasbar i{display:block}
+  .spread{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .blindspot{font-size:11px;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:2px 8px;border-radius:10px}
+  .compare{margin-top:10px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:700;user-select:none}
+  .outlets{margin-top:10px;display:none;flex-direction:column;gap:7px;border-top:1px solid var(--line);padding-top:10px}
+  .outlets.open{display:flex}
+  .outlet{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+  .otag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;padding:2px 7px;border-radius:4px;color:#04201a}
+  .outlet a{color:#c3cde0}.outlet a:hover{color:#fff}
+  /* Ticker */
+  .ticker{position:fixed;bottom:0;left:0;right:0;height:38px;background:#0a0d14;border-top:2px solid var(--accent);display:flex;align-items:center;z-index:40;overflow:hidden}
+  .ticker .label{flex:0 0 auto;background:var(--accent);color:#04201a;font-weight:900;font-size:13px;letter-spacing:.5px;padding:0 14px;height:100%;display:flex;align-items:center}
+  .ticker .track{white-space:nowrap;will-change:transform;animation:scroll 90s linear infinite;font-size:14px;padding-left:100%}
+  .ticker .track a{margin:0 34px;color:#dbe4f2}
+  .ticker .track .sep{color:var(--accent);opacity:.6}
+  .ticker:hover .track{animation-play-state:paused}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+  .loading{color:var(--muted);text-align:center;padding:60px;font-size:14px}
+  @media(max-width:640px){.card{flex-direction:column}.card .hero{flex:none;width:100%;height:160px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">THE <span>WIRE</span></div>
+    <a class="back" href="/">← Dashboard</a>
+    <div class="updated" id="updated">loading…</div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-cat="all">All</button>
+      <button class="tab" data-cat="world">🌐 World</button>
+      <button class="tab" data-cat="science">🔬 Science</button>
+      <button class="tab" data-cat="tech">💻 Tech</button>
+      <button class="tab" data-cat="markets">📈 Markets</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="wall-wrap">
+    <div class="section-title">Breaking — Media Wall</div>
+    <div class="wall" id="wall"></div>
+  </div>
+  <div class="section-title">Top Stories — Compared Across Sources</div>
+  <div class="cards" id="cards"><div class="loading">Aggregating cross-spectrum coverage…</div></div>
+</main>
+
+<div class="ticker">
+  <div class="label">AP WIRE</div>
+  <div class="track" id="ticker-track">Loading the wire…</div>
+</div>
+
+<script>
+var CAT = 'all';
+var BIAS_COLOR = {left:'#3b82f6', center:'#94a3b8', right:'#ef4444', independent:'#a855f7'};
+var BIAS_LABEL = {left:'L', center:'C', right:'R', independent:'IND'};
+
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function ago(ts){if(!ts)return '';var s=Math.max(0,Math.floor(Date.now()/1000-ts));if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';}
+
+function biasBar(bc){
+  var total=(bc.left||0)+(bc.center||0)+(bc.right||0)+(bc.independent||0)||1;
+  var html='';
+  ['left','center','right','independent'].forEach(function(b){
+    var w=(bc[b]||0)/total*100;
+    if(w>0) html+='<i style="width:'+w+'%;background:'+BIAS_COLOR[b]+'"></i>';
+  });
+  return '<div class="biasbar">'+html+'</div>';
+}
+function spreadText(bc){
+  return ['left','center','right','independent'].filter(function(b){return bc[b];}).map(function(b){
+    return '<span><span class="dot" style="background:'+BIAS_COLOR[b]+'"></span>'+b.charAt(0).toUpperCase()+b.slice(1)+' '+bc[b]+'</span>';
+  }).join('');
+}
+function media(c){
+  if(c.video) return '<div class="thumb" style="'+(c.image?'background-image:url(\''+esc(c.image)+'\')':'')+'"><div class="play">▶</div></div>';
+  if(c.image) return '<div class="thumb" style="background-image:url(\''+esc(c.image)+'\')"></div>';
+  return '<div class="thumb"></div>';
+}
+function openStory(c){window.open(c.video||c.url,'_blank','noopener');}
+
+function renderWall(items){
+  var w=document.getElementById('wall'), wrap=document.getElementById('wall-wrap');
+  if(!items.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  w.innerHTML=items.map(function(c,i){
+    return '<div class="tile" onclick="openStory(FEED.wall['+i+'])">'+media(c)+
+      '<div class="body"><h3>'+esc(c.headline)+'</h3>'+
+      '<div class="meta"><span class="cat-pill">'+c.category+'</span> '+c.source_count+' sources · '+ago(c.latest_ts)+'</div></div></div>';
+  }).join('');
+}
+function renderCards(items){
+  var el=document.getElementById('cards');
+  if(!items.length){el.innerHTML='<div class="loading">No stories in this category yet — the next refresh will fill it in.</div>';return;}
+  el.innerHTML=items.map(function(c,i){
+    var hero=(c.image||c.video)?'<div class="hero" style="'+(c.image?'background-image:url(\''+esc(c.image)+'\')':'')+'" onclick="openStory(FEED.stories['+i+'])">'+(c.video?'<div class="play">▶</div>':'')+'</div>':'';
+    var blind=c.blindspot?'<span class="blindspot">⚠ Blindspot: under-covered on the '+c.blindspot.charAt(0).toUpperCase()+c.blindspot.slice(1)+'</span>':'';
+    var outlets=c.outlets.map(function(o){
+      return '<div class="outlet"><span class="otag" style="background:'+BIAS_COLOR[o.bias]+'">'+(BIAS_LABEL[o.bias]||'?')+'</span>'+
+        '<a href="'+esc(o.url)+'" target="_blank" rel="noopener"><b>'+esc(o.source)+'</b> — '+esc(o.title)+'</a></div>';
+    }).join('');
+    return '<div class="card">'+hero+
+      '<div class="content">'+
+        '<div class="topline"><span class="cat-pill">'+c.category+'</span> COVERAGE: '+c.source_count+' sources · '+ago(c.latest_ts)+' '+blind+'</div>'+
+        '<h2 onclick="openStory(FEED.stories['+i+'])">'+esc(c.headline)+'</h2>'+
+        (c.summary?'<div class="summary">'+esc(c.summary)+'</div>':'')+
+        biasBar(c.bias_counts)+
+        '<div class="spread">'+spreadText(c.bias_counts)+'</div>'+
+        '<div class="compare" onclick="this.nextElementSibling.classList.toggle(\'open\')">▸ Compare how '+c.outlets.length+' outlets framed it</div>'+
+        '<div class="outlets">'+outlets+'</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+var FEED={wall:[],stories:[]};
+function loadFeed(){
+  fetch('/api/wire/feed?category='+CAT).then(function(r){return r.json();}).then(function(d){
+    FEED=d;
+    renderWall(d.wall||[]);
+    renderCards(d.stories||[]);
+    document.getElementById('updated').textContent=d.updated?('updated '+ago(d.updated)):'';
+    // category counts
+    if(d.counts){
+      document.querySelectorAll('.tab').forEach(function(t){
+        var cat=t.dataset.cat; if(cat==='all')return;
+        var n=d.counts[cat]||0;
+        t.innerHTML=t.innerHTML.replace(/\s*<span class="n">.*<\/span>/,'')+' <span class="n">'+n+'</span>';
+      });
+    }
+  }).catch(function(){document.getElementById('cards').innerHTML='<div class="loading">Wire is starting up — refreshing shortly…</div>';});
+}
+function loadTicker(){
+  fetch('/api/wire/ticker').then(function(r){return r.json();}).then(function(d){
+    if(!d.items||!d.items.length)return;
+    var t=document.getElementById('ticker-track');
+    t.innerHTML=d.items.map(function(it){return '<a href="'+esc(it.url)+'" target="_blank" rel="noopener">'+esc(it.title)+'</a>';}).join('<span class="sep">•</span>');
+  }).catch(function(){});
+}
+
+document.getElementById('tabs').addEventListener('click',function(e){
+  var b=e.target.closest('.tab'); if(!b)return;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  b.classList.add('active'); CAT=b.dataset.cat; loadFeed();
+});
+
+loadFeed(); loadTicker();
+setInterval(loadFeed, 300000);   // 5-min heartbeat
+setInterval(loadTicker, 90000);  // AP crawl
+</script>
+</body>
+</html>

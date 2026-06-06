@@ -41,6 +41,7 @@ from modules.short_squeeze    import ShortSqueezeAgent
 from modules.sector_momentum  import SectorMomentumAgent
 from modules.social_flow       import SocialFlowAgent
 from modules.market_feed        import FeedManager
+from modules.wire               import WireAggregator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -127,6 +128,8 @@ short_sq.start()
 sector      = SectorMomentumAgent(config)
 sector.start()
 social      = SocialFlowAgent(config)
+wire_agg    = WireAggregator()
+wire_agg.start()
 feed_manager = FeedManager(config)
 print('[FEED] market-data mode at startup: %s (active=%s)' % (
     feed_manager.mode(), feed_manager.status().get('active')))
@@ -334,6 +337,24 @@ def api_health():
 @require_auth
 def index():
     return send_from_directory(BASE_DIR, 'index.html')
+
+
+@app.route('/wire')
+@require_auth
+def wire_page():
+    return send_from_directory(BASE_DIR, 'wire.html')
+
+
+@app.route('/api/wire/feed')
+@require_auth
+def api_wire_feed():
+    return jsonify(wire_agg.get_feed(category=request.args.get('category', 'all')))
+
+
+@app.route('/api/wire/ticker')
+@require_auth
+def api_wire_ticker():
+    return jsonify(wire_agg.get_ticker())
 
 
 @app.route('/login')
