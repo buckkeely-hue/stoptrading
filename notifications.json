@@ -1030,8 +1030,113 @@
       "error": ""
     },
     {
-      "time": "2026-06-05 17:00:03",
-      "message": "Model refinement  \u2014 2026-06-05 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=18 corr=-0.23 good=56% mean_fwd=-0.02% | thr",
+      "time": "2026-06-08 08:30:34",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] APYX 1sh @ $4.5550 -> $4.4700 (-1.9%) | -2.0% since last\n\nTOP CANDIDATES:\n  TXMD $1.940 score:25 vol:2.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 08:30:37",
+      "message": "\ud83d\udcb0 HARVEST #1: APYX \u2014 sold 25% at 1.1% gain | +$0.05",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 09:00:06",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  ENHA $2.994 score:84 vol:7.8x SCANNING\n  DLTH $3.830 score:64 vol:91.2x SCANNING\n  OCGN $1.285 score:34 vol:1.3x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 09:29:47",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  DLTH $4.060 score:88 vol:69.7x SCANNING\n  BTGO $5.620 score:77 vol:3.8x SCANNING\n  ENHA $3.060 score:72 vol:8.3x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 09:59:16",
+      "message": "StopTrading Report \u2014 10:58 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SENS $7.040 score:48 vol:1.8x SCANNING\n  FIP $4.410 score:43 vol:1.7x SCANNING\n  CWH $6.785 score:34 vol:0.8x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 10:29:45",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  ANGX $2.875 score:28 vol:1.3x SCANNING\n  SENS $7.160 score:23 vol:1.6x SCANNING\n  FIP $4.435 score:23 vol:1.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 11:00:15",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FIP $4.475 score:22 vol:1.4x SCANNING\n  OXSQ $1.315 score:20 vol:1.4x SCANNING\n  SENS $7.020 score:20 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 11:30:42",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  OXSQ $1.325 score:22 vol:1.2x SCANNING\n  FIP $4.505 score:20 vol:1.2x SCANNING\n  CWH $6.845 score:18 vol:0.7x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 12:01:30",
+      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FIP $4.525 score:20 vol:1.2x SCANNING\n  CWH $6.855 score:17 vol:0.6x SCANNING\n  TIGR $4.705 score:16 vol:0.7x SCANNING\n ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 12:31:05",
+      "message": "StopTrading Report \u2014 1:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  STUB $9.890 score:33 vol:2.3x SCANNING\n  AP $9.400 score:29 vol:1.4x SCANNING\n  YSG $2.660 score:28 vol:1.3x SCANNING\n  ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 13:01:35",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  HLX $9.785 score:45 vol:0.4x SCANNING\n  APYX $4.725 score:44 vol:1.1x SCANNING\n  BKKT $8.365 score:36 vol:0.7x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 13:30:03",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  JMIA $6.955 score:48 vol:0.5x SCANNING\n  EGY $5.290 score:24 vol:0.9x SCANNING\n  OXSQ $1.324 score:19 vol:0.9x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 14:00:33",
+      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 14:31:04",
+      "message": "StopTrading Report \u2014 3:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LESL $4.720 score:33 vol:1.3x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 15:05:22",
+      "message": "\ud83d\udcc9 EOD: P&L $-8.05 | 19 trades | 26% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-08 17:00:04",
+      "message": "Model refinement  \u2014 2026-06-08 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=19 corr=-0.21 good=53% mean_fwd=+0.11% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""

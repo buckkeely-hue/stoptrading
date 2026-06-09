@@ -1,5 +1,13 @@
 {
-  "balance": 0.0,
+  "balance": 0.025,
   "withdrawn": 0.0,
-  "entries": []
+  "entries": [
+    {
+      "ts": "2026-06-08 08:30:37",
+      "symbol": "APYX",
+      "gross_profit": 0.05,
+      "vault_amount": 0.025,
+      "harvest_num": 1
+    }
+  ]
 }
