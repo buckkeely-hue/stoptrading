@@ -1317,8 +1317,120 @@
       "error": ""
     },
     {
-      "time": "2026-06-09 17:00:03",
-      "message": "Model refinement  \u2014 2026-06-09 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=22 corr=-0.17 good=55% mean_fwd=+0.02% | thr",
+      "time": "2026-06-10 08:33:46",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.3650 (-1.2%) | -1.4% since last\n\nTOP CANDIDATES:\n  NRDY $0.821 score:12 vol:1.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 09:02:51",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4400 (-0.4%) | +0.9% since last\n\nTOP CANDIDATES:\n  BGS $4.080 score:43 vol:2.7x SCANNING\n  SVRA $5.210 score:32 vol:1.9x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 09:33:07",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4100 (-0.7%) | -0.4% since last\n\nTOP CANDIDATES:\n  LESL $9.015 score:69 vol:3.8x SCANNING\n  WOOF $2.975 score:45 vol:0.9x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 09:51:05",
+      "message": "\ud83d\udcc8 BUY: XERS \u00d7 1 @ $6.9050 | $7 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 10:04:18",
+      "message": "StopTrading Report \u2014 11:01 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.3900 (-0.9%) | -0.2% since last\n  [DN] XERS 1sh @ $6.9050 -> $6.8400 (-0.9%) | -0.9% since last\n\nTOP CANDIDATES:\n  PLBL $5.6",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 10:33:51",
+      "message": "StopTrading Report \u2014 11:31 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4100 (-0.7%) | +0.2% since last\n  [DN] XERS 1sh @ $6.9050 -> $6.8450 (-0.9%) | +0.1% since last\n\nTOP CANDIDATES:\n  LX $2.179",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 11:02:42",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4250 (-0.5%) | +0.2% since last\n  [DN] XERS 1sh @ $6.9050 -> $6.8100 (-1.4%) | -0.5% since last\n\nTOP CANDIDATES:\n  INNV $7.6",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 11:32:57",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4100 (-0.7%) | -0.2% since last\n  [DN] XERS 1sh @ $6.9050 -> $6.7850 (-1.7%) | -0.4% since last\n\nTOP CANDIDATES:\n  INNV $7.6",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 11:42:55",
+      "message": "\ud83d\udd34 STOP-LOSS: XERS | loss -3.2% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 12:03:41",
+      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4200 (-0.6%) | +0.1% since last\n\nTOP CANDIDATES:\n  FRMI $6.415 score:64 vol:2.2x SCANNING\n  INNV $7.690 score:44 vol:1.6x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 12:32:51",
+      "message": "StopTrading Report \u2014 1:30 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4000 (-0.8%) | -0.2% since last\n\nTOP CANDIDATES:\n  INNV $7.690 score:44 vol:1.6x SCANNING\n  BGS $4.070 score:17 vol:1.2x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 13:02:36",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4300 (-0.5%) | +0.4% since last\n\nTOP CANDIDATES:\n  INNV $8.200 score:33 vol:1.0x SCANNING\n  JRVR $4.185 score:24 vol:1.6x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 13:32:42",
+      "message": "StopTrading Report \u2014 2:30 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4050 (-0.8%) | -0.3% since last\n\nTOP CANDIDATES:\n  DWSN $4.795 score:48 vol:4.6x SCANNING\n  MERC $0.841 score:34 vol:1.4x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 14:02:32",
+      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.4000 (-0.8%) | -0.1% since last\n\nTOP CANDIDATES:\n  DWSN $4.745 score:47 vol:4.7x SCANNING\n  INNV $7.690 score:44 vol:1.6x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 14:32:41",
+      "message": "StopTrading Report \u2014 3:30 PM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.3800 (-1.1%) | -0.2% since last\n\nTOP CANDIDATES:\n  PLBL $5.965 score:50 vol:19.9x SCANNING\n  DWSN $4.230 score:39 vol:1.8x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 15:05:04",
+      "message": "\ud83d\udcc9 EOD: P&L $-9.00 | 24 trades | 22% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-10 17:00:03",
+      "message": "Model refinement  \u2014 2026-06-10 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=23 corr=-0.17 good=52% mean_fwd=+0.04% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
