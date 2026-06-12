@@ -1429,8 +1429,120 @@
       "error": ""
     },
     {
-      "time": "2026-06-10 17:00:03",
-      "message": "Model refinement  \u2014 2026-06-10 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=23 corr=-0.17 good=52% mean_fwd=+0.04% | thr",
+      "time": "2026-06-11 08:34:26",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] OPFI 1sh @ $8.4700 -> $8.1610 (-3.6%) | -2.6% since last\n\nTOP CANDIDATES:\n  LUCK $8.845 score:71 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 08:36:24",
+      "message": "\ud83d\udd34 STOP-LOSS: OPFI | loss -4.3% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 09:03:55",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.628 score:81 vol:3.4x SCANNING\n  TXMD $1.885 score:42 vol:3.4x SCANNING\n  OCGN $1.205 score:41 vol:3.3x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 09:31:24",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.590 score:67 vol:2.9x SCANNING\n  TXMD $1.889 score:58 vol:2.9x SCANNING\n  NKTX $2.615 score:42 vol:1.8x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 10:01:01",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.660 score:54 vol:2.2x SCANNING\n  WBX $2.880 score:54 vol:3427.2x SCANNING\n  LESL $8.780 score:52 vol:0.8x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 10:30:44",
+      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SPRO $2.705 score:36 vol:2.2x SCANNING\n  XXI $5.705 score:35 vol:1.6x SCANNING\n  NKTX $2.615 score:35 vol:2.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 11:00:17",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.830 score:58 vol:1.9x SCANNING\n  ZEPP $4.460 score:38 vol:0.8x SCANNING\n  PICS $9.875 score:22 vol:1.7x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 11:29:48",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  ZEPP $4.397 score:34 vol:0.7x SCANNING\n  NMG $1.435 score:15 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 11:59:23",
+      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.695 score:42 vol:1.6x SCANNING\n  ZEPP $4.255 score:27 vol:0.7x SCANNING\n  NMG $1.440 score:24 vol:1.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 12:28:56",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.675 score:50 vol:1.4x SCANNING\n  ZEPP $4.280 score:29 vol:0.6x SCANNING\n  GERN $1.110 score:22 vol:0.9x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 12:58:30",
+      "message": "StopTrading Report \u2014 1:57 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUYA $2.100 score:57 vol:2.8x SCANNING\n  GETY $0.762 score:30 vol:0.8x SCANNING\n  REAL $9.590 score:30 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 13:28:02",
+      "message": "StopTrading Report \u2014 2:27 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUYA $2.095 score:48 vol:3.3x SCANNING\n  GETY $0.763 score:28 vol:0.8x SCANNING\n  REAL $9.620 score:27 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 13:57:44",
+      "message": "StopTrading Report \u2014 2:57 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUYA $2.095 score:43 vol:3.7x SCANNING\n  GERN $1.110 score:22 vol:0.9x SCANNING\n  ANVS $1.810 score:18 vol:1.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 14:27:15",
+      "message": "StopTrading Report \u2014 3:26 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUYA $2.145 score:50 vol:4.9x SCANNING\n  REAL $9.720 score:25 vol:0.6x SCANNING\n  GERN $1.110 score:22 vol:0.9x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 14:57:36",
+      "message": "StopTrading Report \u2014 3:56 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  NVAX $9.075 score:47 vol:0.7x SCANNING\n  EVTL $2.195 score:26 vol:0.6x SCANNING\n  GETY $0.750 score:23 vol:1.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 15:05:21",
+      "message": "\ud83d\udcc9 EOD: P&L $-9.44 | 24 trades | 21% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-11 17:00:05",
+      "message": "Model refinement  \u2014 2026-06-11 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=24 corr=-0.15 good=54% mean_fwd=-0.01% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
