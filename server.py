@@ -42,6 +42,8 @@ from modules.sector_momentum  import SectorMomentumAgent
 from modules.social_flow       import SocialFlowAgent
 from modules.market_feed        import FeedManager
 from modules.wire               import WireAggregator
+from modules.reg_sho            import RegSHOMonitor
+from modules.event_guard        import EventGuard
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,6 +130,10 @@ short_sq.start()
 sector      = SectorMomentumAgent(config)
 sector.start()
 social      = SocialFlowAgent(config)
+reg_sho     = RegSHOMonitor(config)
+reg_sho.start()
+event_guard = EventGuard(config)
+event_guard.start()
 wire_agg    = WireAggregator()
 wire_agg.start()
 feed_manager = FeedManager(config)
@@ -139,7 +145,7 @@ autopilot = AutoPilot(harvester, paper_trader, config, engine=engine, catalyst=c
                       insider=insider, earnings=earnings, congress=congress,
                       orb=orb, news=news_agent, float_rotation=float_rot,
                       short_squeeze=short_sq, sector=sector, ibkr=ibkr, social=social,
-                      feed=feed_manager)
+                      feed=feed_manager, reg_sho=reg_sho, event_guard=event_guard)
 ledger    = AccountingLedger(config, paper_trader)
 trial     = TrialManager(autopilot, paper_trader, harvester, config)
 scheduler = DailyScheduler(autopilot, paper_trader, load_config)

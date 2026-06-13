@@ -560,7 +560,7 @@ class AutoPilot:
     - All decisions logged with reasoning
     """
 
-    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None, ibkr=None, social=None, feed=None):
+    def __init__(self, harvester, paper_trader, config, engine=None, catalyst=None, notifier=None, halts=None, ssr=None, macro=None, behavioral=None, insider=None, earnings=None, congress=None, orb=None, news=None, float_rotation=None, short_squeeze=None, sector=None, ibkr=None, social=None, feed=None, reg_sho=None, event_guard=None):
         self.harvester  = harvester
         self.paper      = paper_trader
         self.config     = config
@@ -583,6 +583,8 @@ class AutoPilot:
         self.ibkr           = ibkr            # IBKRFeed — optional, for real bid-ask spread
         self.social         = social          # SocialFlowAgent — optional crowd-flow signal
         self.feed           = feed            # FeedManager — real-time/delayed/down contract
+        self.reg_sho        = reg_sho         # RegSHOMonitor — optional Reg SHO threshold flag/bonus
+        self.event_guard    = event_guard     # EventGuard — optional binary-event (FOMC/CPI/FDA) avoidance
         self.running   = False
         self._thread = None
         self._lock = threading.Lock()
@@ -1079,8 +1081,9 @@ class AutoPilot:
                 drop_from_hwm = (hwm - price) / hwm * 100 if hwm > 0 else 0
                 days_open = self._business_days_open(self._position_opened[symbol])
 
-                # ── EARNINGS-EXIT: force exit before earnings report ───────────
-                if self.earnings and self.earnings.should_force_exit(symbol):
+                # ── EARNINGS / BINARY-EVENT EXIT: force exit before earnings or a known catalyst ─
+                if (self.earnings and self.earnings.should_force_exit(symbol)) \
+                        or (self.event_guard and self.event_guard.should_force_exit(symbol)):
                     result = self.paper.sell(symbol, shares, price_override=price)
                     if result.get('ok'):
                         profit = self._net_profit(shares, price, entry)
@@ -1425,6 +1428,12 @@ class AutoPilot:
                 self._entry('MACRO', 'Macro SEVERELY adverse (score {:+d} ≤ {:+.0f}) — skipping new buys'.format(macro_score, veto))
                 return
 
+        # Binary-event guard: no NEW entries on scheduled market-wide shock days (FOMC / CPI).
+        if self.event_guard and self.event_guard.block_new_buys_today():
+            self._entry('EVENT', '{} today — market-wide binary event, no new entries'.format(
+                self.event_guard.macro_event_today()))
+            return
+
         # Daily drawdown circuit breaker — halt if down >max_daily_loss_pct% from day open
         max_dd_pct = float(self.config.get('max_daily_loss_pct', 10.0))
         drawdown = self._daily_drawdown_pct(balance)
@@ -1558,6 +1567,13 @@ class AutoPilot:
                 if blocked:
                     self._entry('EARNINGS', '{} candidates blocked — earnings within {} days'.format(
                         blocked, 2))
+            # Binary-event guard: never open within N days of a known per-ticker catalyst (FDA, etc.)
+            if self.event_guard:
+                pre_count = len(candidates)
+                candidates = [c for c in candidates if not self.event_guard.should_block_buy(c['symbol'])]
+                blocked = pre_count - len(candidates)
+                if blocked:
+                    self._entry('EVENT', '{} candidates blocked — binary catalyst near'.format(blocked))
                 # Register any new tickers for earnings tracking
                 for c in candidates:
                     self.earnings.register(c['symbol'])
@@ -1630,6 +1646,9 @@ class AutoPilot:
                     c['rt_signal'] = 'RESUME'
                 if self.ssr and self.ssr.is_ssr(sym):
                     bonus += 10
+                if self.reg_sho and self.reg_sho.is_threshold(sym):
+                    bonus += int(self.config.get('reg_sho_bonus', 8))   # Reg SHO threshold = short pressure / squeeze tailwind
+                    c['reg_sho'] = True
                 if self.behavioral:
                     beh = self.behavioral.get_score(sym)
                     bonus += max(-10, min(20, beh))
@@ -1816,14 +1835,17 @@ class AutoPilot:
                         symbol, entry_slope))
                 return
 
-            # Spread guard: estimated H-L spread must be < 40% of harvest target
+            # Spread guard: estimated H-L spread must be < (spread_guard_frac × harvest target).
+            # Tightened default 0.40 -> 0.30 — on sub-$15 names the spread+slippage is the single
+            # biggest cost leak, so only take names where it can't eat most of the harvest.
             est_spread = self._estimate_spread_pct(symbol)
             best['spread_pct'] = est_spread   # predictive feature + cost-calibration target
-            spread_limit = harvest_trig * 0.40
+            guard_frac   = float(self.config.get('spread_guard_frac', 0.30))
+            spread_limit = harvest_trig * guard_frac
             if est_spread > spread_limit:
                 self._entry('SPREAD',
-                    '{} estimated spread {:.1f}% > {:.1f}% limit (40% of {:.0f}% harvest target) '
-                    '— entry not viable'.format(symbol, est_spread, spread_limit, harvest_trig))
+                    '{} estimated spread {:.1f}% > {:.1f}% limit ({:.0f}% of {:.0f}% harvest target) '
+                    '— entry not viable'.format(symbol, est_spread, spread_limit, guard_frac * 100, harvest_trig))
                 return
 
             # Live conviction gate — use the already-computed combined_score (scan momentum +

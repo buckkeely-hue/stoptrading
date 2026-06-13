@@ -28,6 +28,7 @@ import requests
 
 PAPER_BASE = 'https://paper-api.alpaca.markets'
 LIVE_BASE  = 'https://api.alpaca.markets'
+DATA_BASE  = 'https://data.alpaca.markets'   # free IEX quotes — used for smart limit pegging
 _FILL_POLL_TIMEOUT = 12.0   # seconds to wait for a market/marketable order to reach terminal state
 _FILL_POLL_INTERVAL = 0.4
 
@@ -81,13 +82,35 @@ class AlpacaBroker:
             pass
         return 0, 0.0
 
+    def _quote(self, symbol):
+        """Latest bid/ask (free IEX feed). Returns (bid, ask) or (0.0, 0.0)."""
+        try:
+            r = requests.get(DATA_BASE + '/v2/stocks/%s/quotes/latest' % symbol.upper(),
+                             headers=self._hdr(), params={'feed': 'iex'}, timeout=6)
+            if r.status_code == 200:
+                q = r.json().get('quote', {}) or {}
+                return float(q.get('bp', 0) or 0), float(q.get('ap', 0) or 0)
+        except Exception:
+            pass
+        return 0.0, 0.0
+
     def _submit(self, symbol, shares, side, price_override=None):
         """Submit one order and poll to a terminal state. Returns (filled_qty, avg_fill_price, err)."""
         order = {'symbol': symbol.upper(), 'qty': str(int(shares)), 'side': side,
                  'time_in_force': 'day'}
         if price_override is not None and float(price_override) > 0:
             order['type'] = 'limit'
-            order['limit_price'] = str(round(float(price_override), 4))
+            limit = float(price_override)
+            # Smart entry pegging: for BUYS, peg inside the spread toward mid rather than paying
+            # the full ask — recovers a chunk of the spread on wide-spread pennies. Never pay more
+            # than the bot's intended price, never below the bid; non-fills are retried next tick.
+            # Sells keep crossing at the override for exit certainty. entry_peg_frac: 0=bid, 1=ask.
+            if side == 'buy':
+                bid, ask = self._quote(symbol)
+                if ask > bid > 0:
+                    peg = float(self._config.get('entry_peg_frac', 0.6))
+                    limit = max(bid, min(limit, bid + peg * (ask - bid)))
+            order['limit_price'] = str(round(limit, 4))
         else:
             order['type'] = 'market'
         try:
