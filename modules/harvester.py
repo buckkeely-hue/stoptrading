@@ -1894,8 +1894,18 @@ class AutoPilot:
             if self.config.get('predictor_gate', False):
                 min_p = float(self.config.get('predictor_min_p', 0.45))
                 if p_win < min_p:
+                    # Learn-while-gated: open a SHADOW barrier watch on the rejected setup so the
+                    # model keeps labeling outcomes (win/loss by price PATH) even though we don't
+                    # buy. Without this, a hard gate starves the model of training data and it
+                    # stays permanently bearish. Pure observation — no position, no capital at risk;
+                    # resolves through the same update_barriers/train path as a real entry.
+                    if self.config.get('predictor_shadow_watch', True):
+                        self.predictor.open_barrier(
+                            symbol, pred['features'], price, self._get_et_now().timestamp(),
+                            float(self.config.get('harvest_trigger_pct', 4.0)),
+                            float(self.config.get('max_single_loss_pct', 5.0)))
                     self._entry('PREDICT-GATE',
-                        '{} P(win) {:.0%} below {:.0%} — skip (model n={})'.format(
+                        '{} P(win) {:.0%} below {:.0%} — skip + shadow-watch to keep learning (model n={})'.format(
                             symbol, p_win, min_p, pred['n_trained']))
                     return
             if self.config.get('predictor_sizing', True):
