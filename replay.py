@@ -119,24 +119,45 @@ def _tz_strip(df):
     return df
 
 
+def _bars_have_signal(df, min_range_pct=0.5):
+    """Reject degenerate 1-min data. yfinance rate-limits/serves stale intraday bars on
+    repeated or bulk pulls, returning a flat single value (e.g. CMTG pinned at one price all
+    day). Flat bars make every triple-barrier resolve at ret=0 → a fake loss that poisons the
+    predictor's training corpus. Require enough bars AND real intraday range so only genuine
+    price paths feed the model."""
+    if df is None or len(df) <= 30 or 'Close' not in df:
+        return False
+    c = df['Close']
+    mean = float(c.mean())
+    if mean <= 0:
+        return False
+    return (float(c.max()) - float(c.min())) / mean * 100.0 >= float(min_range_pct)
+
+
+_flat_rejected = []
 for sym in UNIVERSE:
     try:
         t = _yf_real.Ticker(sym)
         m1 = _tz_strip(t.history(start=DATE_STR, end=DATE_NEXT,
                                    interval='1m', prepost=False))
-        if not m1.empty and len(m1) > 30:
+        if _bars_have_signal(m1):
             _bars_1m[sym] = m1
+        elif m1 is not None and len(m1) > 30:
+            _flat_rejected.append(sym)   # had bars but they're flat → rate-limit artifact
         d1 = _tz_strip(t.history(start=DATE_PREV, end=DATE_NEXT, interval='1d'))
         if not d1.empty:
             _bars_1d[sym] = d1
     except Exception:
         pass
 
-VALID = [s for s in _bars_1m if len(_bars_1m[s]) > 30]
-print(f'[Data] {len(VALID)} symbols with 1-min data')
+VALID = list(_bars_1m)
+print(f'[Data] {len(VALID)} symbols with usable 1-min data'
+      + (f' ({len(_flat_rejected)} rejected as flat/degenerate — likely yfinance rate-limit)'
+         if _flat_rejected else ''))
 
 if not VALID:
-    print('[ERROR] No 1-min data downloaded — is this a trading day?')
+    print('[ERROR] No usable 1-min data — not a trading day, or yfinance is rate-limiting '
+          '(all bars flat). Retry later or space out runs.')
     sys.exit(1)
 
 # 1-hour bars in batch (for scan_movers)
