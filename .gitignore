@@ -32,3 +32,6 @@ daily_matrix.jsonl
 daily_matrix.txt
 decision_log.jsonl
 decision_outcomes.jsonl
+
+# Replay bar-data cache (regenerable, large)
+bar_cache/

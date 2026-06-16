@@ -40,6 +40,8 @@ parser.add_argument('--min-rvol', type=float, default=None,
                     help='Override the candidate vol_ratio gate (sweep/measurement)')
 parser.add_argument('--min-change', type=float, default=None,
                     help='Override the candidate change_1h%% gate (sweep/measurement)')
+parser.add_argument('--refresh-cache', action='store_true',
+                    help='Ignore any cached bars for this date and re-download from yfinance')
 args = parser.parse_args()
 
 SPEED     = args.speed
@@ -81,31 +83,6 @@ import yfinance as _yf_real
 from modules.harvester import TOP_PENNY_UNIVERSE
 from modules.universe import DynamicUniverse as _DU, FALLBACK as _FALLBACK
 
-if args.symbols:
-    UNIVERSE = [s.strip().upper() for s in args.symbols.split(',')]
-else:
-    # Try to pull a live universe snapshot (no background thread — one sync refresh)
-    print('[Data] Fetching live universe from Yahoo/StockTwits/Finviz…')
-    try:
-        _du = _DU()
-        _du._refresh()
-        _live = _du.get()
-        if len(_live) >= 10:
-            UNIVERSE = _live[:80]
-            print(f'[Data] Live universe: {len(UNIVERSE)} symbols')
-        else:
-            raise ValueError('too few')
-    except Exception as _e:
-        print(f'[Data] Live fetch failed ({_e}) — using fallback list')
-        UNIVERSE = list(_FALLBACK)
-
-print(f'[Data] Downloading 1-min bars for up to {len(UNIVERSE)} symbols on {DATE_STR}…')
-
-_bars_1m = {}   # sym → DataFrame, 1-min bars for replay date
-_bars_1h = {}   # sym → DataFrame, 1-hour bars last 2 days (for scan_movers)
-_bars_1d = {}   # sym → DataFrame, daily bars last 5 days (for _get_rvol)
-
-
 def _tz_strip(df):
     """Convert timezone-aware DatetimeIndex to naive ET."""
     if df is None or df.empty:
@@ -134,90 +111,153 @@ def _bars_have_signal(df, min_range_pct=0.5):
     return (float(c.max()) - float(c.min())) / mean * 100.0 >= float(min_range_pct)
 
 
-_flat_rejected = []
-for sym in UNIVERSE:
+_bars_1m = {}        # sym → DataFrame, 1-min bars for replay date
+_bars_1h = {}        # sym → DataFrame, 1-hour bars last 2 days (for scan_movers)
+_bars_1d = {}        # sym → DataFrame, daily bars last 5 days (for _get_rvol)
+_bars_5m_prev = {}   # sym → DataFrame, 5m bars from DATE_PREV up to (not incl.) replay date
+
+# ── Bar-data cache: download each date's validated bars ONCE, then reuse. yfinance intraday
+# data is unreliable under repeated/bulk pulls (flat/stale bars that poison training); the
+# cache makes warm-up runs deterministic and stops re-triggering rate limits. --refresh-cache
+# forces a fresh download.
+import pickle
+_CACHE_DIR = BASE / 'bar_cache'
+_cache_fp  = _CACHE_DIR / f'{DATE_STR}.pkl'
+_use_cache = _cache_fp.exists() and not args.refresh_cache
+
+if _use_cache:
     try:
-        t = _yf_real.Ticker(sym)
-        m1 = _tz_strip(t.history(start=DATE_STR, end=DATE_NEXT,
-                                   interval='1m', prepost=False))
-        if _bars_have_signal(m1):
-            _bars_1m[sym] = m1
-        elif m1 is not None and len(m1) > 30:
-            _flat_rejected.append(sym)   # had bars but they're flat → rate-limit artifact
-        d1 = _tz_strip(t.history(start=DATE_PREV, end=DATE_NEXT, interval='1d'))
-        if not d1.empty:
-            _bars_1d[sym] = d1
+        with open(_cache_fp, 'rb') as _cf:
+            _cached = pickle.load(_cf)
+        UNIVERSE      = _cached.get('universe', [])
+        _bars_1m      = _cached.get('bars_1m', {})
+        _bars_1h      = _cached.get('bars_1h', {})
+        _bars_1d      = _cached.get('bars_1d', {})
+        _bars_5m_prev = _cached.get('bars_5m_prev', {})
+        VALID = list(_bars_1m)
+        print(f'[Data] Loaded cached bars for {DATE_STR}: {len(VALID)} symbols '
+              f'({_cache_fp.name}) — no yfinance calls')
+        if not VALID:
+            print('[ERROR] Cached bar set is empty — delete the cache file and retry.')
+            sys.exit(1)
+    except Exception as _ce:
+        print(f'[Data] Cache load failed ({_ce}) — re-downloading')
+        _use_cache = False
+
+if not _use_cache:
+    if args.symbols:
+        UNIVERSE = [s.strip().upper() for s in args.symbols.split(',')]
+    else:
+        # Try to pull a live universe snapshot (no background thread — one sync refresh)
+        print('[Data] Fetching live universe from Yahoo/StockTwits/Finviz…')
+        try:
+            _du = _DU()
+            _du._refresh()
+            _live = _du.get()
+            if len(_live) >= 10:
+                UNIVERSE = _live[:80]
+                print(f'[Data] Live universe: {len(UNIVERSE)} symbols')
+            else:
+                raise ValueError('too few')
+        except Exception as _e:
+            print(f'[Data] Live fetch failed ({_e}) — using fallback list')
+            UNIVERSE = list(_FALLBACK)
+
+    print(f'[Data] Downloading 1-min bars for up to {len(UNIVERSE)} symbols on {DATE_STR}…')
+
+    _flat_rejected = []
+    for sym in UNIVERSE:
+        try:
+            t = _yf_real.Ticker(sym)
+            m1 = _tz_strip(t.history(start=DATE_STR, end=DATE_NEXT,
+                                       interval='1m', prepost=False))
+            if _bars_have_signal(m1):
+                _bars_1m[sym] = m1
+            elif m1 is not None and len(m1) > 30:
+                _flat_rejected.append(sym)   # had bars but they're flat → rate-limit artifact
+            d1 = _tz_strip(t.history(start=DATE_PREV, end=DATE_NEXT, interval='1d'))
+            if not d1.empty:
+                _bars_1d[sym] = d1
+        except Exception:
+            pass
+
+    VALID = list(_bars_1m)
+    print(f'[Data] {len(VALID)} symbols with usable 1-min data'
+          + (f' ({len(_flat_rejected)} rejected as flat/degenerate — likely yfinance rate-limit)'
+             if _flat_rejected else ''))
+
+    if not VALID:
+        print('[ERROR] No usable 1-min data — not a trading day, or yfinance is rate-limiting '
+              '(all bars flat). Retry later or space out runs.')
+        sys.exit(1)
+
+    # 1-hour bars in batch (for scan_movers)
+    try:
+        h1_date_from = (replay_date - timedelta(days=3)).strftime('%Y-%m-%d')
+        h1_raw = _yf_real.download(
+            tickers=' '.join(VALID),
+            start=h1_date_from, end=DATE_NEXT,
+            interval='1h', group_by='ticker',
+            auto_adjust=True, progress=False, threads=True, timeout=30,
+        )
+        for sym in VALID:
+            try:
+                if len(VALID) == 1:
+                    df = h1_raw.dropna()
+                else:
+                    if sym not in h1_raw.columns.get_level_values(0):
+                        continue
+                    df = h1_raw[sym].dropna()
+                _bars_1h[sym] = _tz_strip(df)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f'[Data] 1-hour batch failed: {e} — scan_movers will use 1m data')
+
+    # SPY for market-regime check
+    try:
+        spy = _tz_strip(_yf_real.Ticker('SPY').history(start=DATE_PREV,
+                                                        end=DATE_NEXT, interval='1d'))
+        _bars_1d['SPY'] = spy
     except Exception:
         pass
 
-VALID = list(_bars_1m)
-print(f'[Data] {len(VALID)} symbols with usable 1-min data'
-      + (f' ({len(_flat_rejected)} rejected as flat/degenerate — likely yfinance rate-limit)'
-         if _flat_rejected else ''))
+    # Historical 5m bars for prior 5 days — gives scan_movers() the multi-day fallback
+    # context it needs for change_5d and average-volume baselines.
+    try:
+        m5_raw = _yf_real.download(
+            tickers=' '.join(VALID),
+            start=DATE_PREV, end=DATE_STR,
+            interval='5m', group_by='ticker',
+            auto_adjust=True, progress=False, threads=True, timeout=30,
+        )
+        for sym in VALID:
+            try:
+                if len(VALID) == 1:
+                    df = m5_raw.dropna()
+                else:
+                    if sym not in m5_raw.columns.get_level_values(0):
+                        continue
+                    df = m5_raw[sym].dropna()
+                if not df.empty:
+                    _bars_5m_prev[sym] = _tz_strip(df)
+            except Exception:
+                pass
+        print(f'[Data] Historical 5m bars: {len(_bars_5m_prev)} symbols (prior {DATE_PREV}–{DATE_STR})')
+    except Exception as e:
+        print(f'[Data] Historical 5m batch failed: {e} — early-session signal quality reduced')
 
-if not VALID:
-    print('[ERROR] No usable 1-min data — not a trading day, or yfinance is rate-limiting '
-          '(all bars flat). Retry later or space out runs.')
-    sys.exit(1)
+    # Persist validated bars so later runs are deterministic and skip yfinance entirely.
+    try:
+        _CACHE_DIR.mkdir(exist_ok=True)
+        with open(_cache_fp, 'wb') as _cf:
+            pickle.dump({'universe': VALID, 'bars_1m': _bars_1m, 'bars_1h': _bars_1h,
+                         'bars_1d': _bars_1d, 'bars_5m_prev': _bars_5m_prev}, _cf)
+        print(f'[Data] Cached bars → {_cache_fp}')
+    except Exception as _se:
+        print(f'[Data] Cache save failed: {_se}')
 
-# 1-hour bars in batch (for scan_movers)
-try:
-    h1_date_from = (replay_date - timedelta(days=3)).strftime('%Y-%m-%d')
-    h1_raw = _yf_real.download(
-        tickers=' '.join(VALID),
-        start=h1_date_from, end=DATE_NEXT,
-        interval='1h', group_by='ticker',
-        auto_adjust=True, progress=False, threads=True, timeout=30,
-    )
-    for sym in VALID:
-        try:
-            if len(VALID) == 1:
-                df = h1_raw.dropna()
-            else:
-                if sym not in h1_raw.columns.get_level_values(0):
-                    continue
-                df = h1_raw[sym].dropna()
-            _bars_1h[sym] = _tz_strip(df)
-        except Exception:
-            pass
-except Exception as e:
-    print(f'[Data] 1-hour batch failed: {e} — scan_movers will use 1m data')
-
-# SPY for market-regime check
-try:
-    spy = _tz_strip(_yf_real.Ticker('SPY').history(start=DATE_PREV,
-                                                    end=DATE_NEXT, interval='1d'))
-    _bars_1d['SPY'] = spy
-except Exception:
-    pass
-
-# Historical 5m bars for prior 5 days — gives scan_movers() the multi-day fallback
-# context it needs for change_5d and average-volume baselines.
-_bars_5m_prev = {}   # sym → DataFrame, 5m bars from DATE_PREV up to (but not including) replay date
-try:
-    m5_raw = _yf_real.download(
-        tickers=' '.join(VALID),
-        start=DATE_PREV, end=DATE_STR,
-        interval='5m', group_by='ticker',
-        auto_adjust=True, progress=False, threads=True, timeout=30,
-    )
-    for sym in VALID:
-        try:
-            if len(VALID) == 1:
-                df = m5_raw.dropna()
-            else:
-                if sym not in m5_raw.columns.get_level_values(0):
-                    continue
-                df = m5_raw[sym].dropna()
-            if not df.empty:
-                _bars_5m_prev[sym] = _tz_strip(df)
-        except Exception:
-            pass
-    print(f'[Data] Historical 5m bars: {len(_bars_5m_prev)} symbols (prior {DATE_PREV}–{DATE_STR})')
-except Exception as e:
-    print(f'[Data] Historical 5m batch failed: {e} — early-session signal quality reduced')
-
-print(f'[Data] Download complete — {len(VALID)} 1m | {len(_bars_1h)} 1h | '
+print(f'[Data] Bars ready — {len(VALID)} 1m | {len(_bars_1h)} 1h | '
       f'{len(_bars_1d)} daily | {len(_bars_5m_prev)} 5m-hist\n')
 
 # ── Replay clock ──────────────────────────────────────────────────────────────
