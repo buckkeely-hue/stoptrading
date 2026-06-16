@@ -208,10 +208,26 @@ class ReplayClock:
         self._speed      = speed
         self._real_start = time.monotonic()
         self._et_start   = _OPEN
+        self._frozen     = None    # when set, now() returns this fixed instant
 
     def now(self):
+        if self._frozen is not None:
+            return self._frozen
         elapsed = time.monotonic() - self._real_start
         return self._et_start + timedelta(seconds=elapsed * self._speed)
+
+    def freeze_at(self, t):
+        """Pin the clock to market time `t` for the duration of a tick. Heavy per-tick
+        work (scans/network) otherwise advances real time, which at high speed drifts the
+        sim clock hours forward mid-tick — stamping triple-barrier entries far in the future
+        so they never mature and the predictor never trains. Pinning makes a tick an instant."""
+        self._frozen = t
+
+    def resume(self, t):
+        """Resume free-running from instant `t`, discarding the real time the tick consumed
+        (so processing time doesn't leak into sim time and skip ticks)."""
+        self._frozen = None
+        self._real_start = time.monotonic() - (t - self._et_start).total_seconds() / self._speed
 
     def done(self):
         return self.now() >= _CLOSE
@@ -813,11 +829,18 @@ while not _clock.done():
     if tick_number != getattr(_clock, '_last_tick', -1):
         _clock._last_tick = tick_number
 
+        # Pin the clock to this tick's exact market time so per-tick processing can't drift
+        # it (see ReplayClock.freeze_at). Resume from the same instant afterward.
+        _tick_et = _OPEN + timedelta(minutes=tick_number * TICK_MARKET_MINS)
+        _clock.freeze_at(_tick_et)
         autopilot._momentum_cache = {}   # flush per-tick cache
         try:
             autopilot._tick()
         except Exception as e:
             print(f'  [{now_et.strftime("%H:%M")}] ❌ tick error: {e}')
+        finally:
+            _clock.resume(_tick_et)
+        now_et = _tick_et
 
         # Tick competitor strategy (same cadence)
         try:
