@@ -28,8 +28,11 @@ HARVEST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'h
 
 from modules.universe import FALLBACK as TOP_PENNY_UNIVERSE
 
-# Sessions where new buys are allowed; DEAD_ZONE and OVERNIGHT are skipped
-_BUY_SESSIONS = {'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON', 'CLOSE'}
+# Sessions where new buys are allowed. DEAD_ZONE/OVERNIGHT are skipped, and CLOSE
+# (15:30–16:00 ET) is excluded so we don't open positions in the final 30 minutes — a late
+# entry can't reach its target before the bell and just gets marked down at the close
+# (the observed end-of-day drag). Exits still run in CLOSE via _MARKET_OPEN_SESSIONS.
+_BUY_SESSIONS = {'OPEN_MOMENTUM', 'STANDARD', 'AFTERNOON'}
 # Sessions when the regular market is OPEN (9:30-16:00 ET) — the only time it's safe to TRANSACT
 # exits. Includes DEAD_ZONE (open, just no new buys). Outside these (PRE_MARKET/OVERNIGHT/HOLIDAY)
 # penny prices are stale and fills unreliable, so exits are deferred to the next open.
