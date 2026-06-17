@@ -1919,8 +1919,176 @@
       "error": ""
     },
     {
-      "time": "2026-06-15 17:00:06",
-      "message": "Model refinement  \u2014 2026-06-15 17:00\nn=48 base=10% | AUC model 0.512 vs heuristic 0.512 | Brier 0.160 (base 0.093)\nmode: shadow | blend_k=40\nexit ladder: n=33 corr=-0.08 good=55% mean_fwd=-0.10% | thr",
+      "time": "2026-06-16 08:30:37",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.450 score:59 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:01:04",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  NMRA $1.060 score:100 vol:4.6x SCANNING\n  TTEC $2.460 score:51 vol:4.0x SCANNING\n  CTRM $2.238 score:42 vol:3.8x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:08:05",
+      "message": "\ud83d\udcc8 BUY: CERT \u00d7 3 @ $5.7600 | $17 deployed | score 37",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:10:22",
+      "message": "\ud83d\udcc8 BUY: LZM \u00d7 4 @ $4.3900 | $18 deployed | score 30",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:12:42",
+      "message": "\ud83d\udcc8 BUY: GOTU \u00d7 11 @ $1.5700 | $17 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:18:34",
+      "message": "\u2705 FINAL-EXIT: CERT | Volume collapsed 0.2x (was 10.8x at entry) \u2014 exit 1.5% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:31:03",
+      "message": "\ud83d\udd34 STOP-LOSS: LZM | loss -3.2% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 09:31:41",
+      "message": "StopTrading Report \u2014 10:31 AM ET\n\nHOLDINGS:\n  [UP] GOTU 11sh @ $1.5700 -> $1.5714 (+0.1%) | +0.1% since last\n\nTOP CANDIDATES:\n  NMRA $1.115 score:76 vol:4.1x SCANNING\n  CERT $5.985 score:62 vol:2.4x S",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 10:01:16",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS:\n  [UP] GOTU 11sh @ $1.5700 -> $1.5850 (+1.0%) | +0.9% since last\n\nTOP CANDIDATES:\n  NMRA $1.135 score:75 vol:5.9x SCANNING\n  GPRO $0.817 score:67 vol:2.4x S",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 10:06:01",
+      "message": "\u2705 FINAL-EXIT: GOTU | Volume collapsed 0.0x (was 3.9x at entry) \u2014 exit 1.0% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 10:06:02",
+      "message": "\ud83d\udea8 HALT: Daily loss floor hit \u2014 down 10.6% ($52.11) from day open \u2014 no new buys for rest of session",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 10:30:47",
+      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  NMRA $1.252 score:100 vol:6.0x SCANNING\n  WBX $3.625 score:55 vol:0.2x SCANNING\n  BLND $1.785 score:50 vol:1.3x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 11:00:23",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  WBX $3.820 score:68 vol:0.3x SCANNING\n  GPRO $0.807 score:54 vol:2.1x SCANNING\n  CERT $6.045 score:36 vol:2.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 11:30:07",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  WBX $3.975 score:54 vol:0.3x SCANNING\n  CHGG $1.175 score:39 vol:3.3x SCANNING\n  CSTE $1.980 score:34 vol:5.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 11:59:11",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TRVG $4.529 score:46 vol:2.5x SCANNING\n  CHGG $1.180 score:44 vol:3.0x SCANNING\n  WBX $3.760 score:37 vol:0.3x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 12:23:23",
+      "message": "StopTrading Report \u2014 1:22 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  WBX $3.810 score:30 vol:0.3x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 12:52:52",
+      "message": "StopTrading Report \u2014 1:52 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  WBX $3.850 score:34 vol:0.3x SCANNING\n  DHX $3.585 score:19 vol:1.6x SCANNING\n  HAIN $0.623 score:13 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 13:14:01",
+      "message": "\ud83d\udcc8 BUY: GREE \u00d7 5 @ $1.6000 | $8 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 13:23:28",
+      "message": "StopTrading Report \u2014 2:22 PM ET\n\nHOLDINGS:\n  [UP] GREE 5sh @ $1.6000 -> $1.6150 (+0.9%) | +0.9% since last\n\nTOP CANDIDATES:\n  WBX $3.870 score:38 vol:0.3x SCANNING\n  GREE $1.615 score:32 vol:2.5x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 13:53:01",
+      "message": "StopTrading Report \u2014 2:52 PM ET\n\nHOLDINGS:\n  [UP] GREE 5sh @ $1.6000 -> $1.6100 (+0.6%) | -0.3% since last\n\nTOP CANDIDATES:\n  BARK $9.245 score:43 vol:1.4x SCANNING\n  OPFI $8.820 score:41 vol:1.5x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 14:07:08",
+      "message": "\u2705 FINAL-EXIT: GREE | Volume collapsed 0.1x (was 2.5x at entry) \u2014 exit 0.9% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 14:22:16",
+      "message": "StopTrading Report \u2014 3:22 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TMCI $4.210 score:41 vol:0.7x SCANNING\n  AMC $2.488 score:31 vol:0.9x SCANNING\n  GREE $1.607 score:30 vol:2.3x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 14:52:19",
+      "message": "StopTrading Report \u2014 3:52 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  DXC $9.290 score:34 vol:0.5x SCANNING\n  SEAT $7.140 score:32 vol:1.6x SCANNING\n  NFE $0.521 score:30 vol:1.5x SCANNING\n ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 15:05:16",
+      "message": "\ud83d\udcc9 EOD: P&L $-10.89 | 37 trades | 32% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-16 17:00:04",
+      "message": "Model refinement  \u2014 2026-06-16 17:00\nn=55 base=25% | AUC model 0.337 vs heuristic 0.337 | Brier 0.206 (base 0.190)\nmode: shadow | blend_k=40\nexit ladder: n=37 corr=-0.08 good=54% mean_fwd=-0.08% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""

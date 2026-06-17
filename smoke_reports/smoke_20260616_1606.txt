@@ -1,0 +1,12 @@
+StopTrading live smoke check — 2026-06-16 16:06 CDT
+================================================================
+[PASS] server up (pid 94230), :5175 listening
+[PASS] autopilot ticking — decision_log written 333s ago (458 rows)
+[INFO] predictor training samples: 92  (was 79 at build; growth = learning)
+[INFO] PREDICT-GATE mentions: 4 | shadow-watch mentions: 4
+[PASS] gate rejecting + opening shadow-watches (learn-while-gated working)
+[INFO] predictor_gate=False  min_p=0.4  shadow=default-true
+[PASS] no Python tracebacks in recent log
+[PASS] real-time feed stable (0 reconnects in recent log)
+================================================================
+RESULT: PASS — build healthy + behaving
