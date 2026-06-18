@@ -163,7 +163,8 @@ class StockHarvester:
                               s.get('lastTrade', {}).get('p', 0) or
                               s.get('prevDay', {}).get('c', 0) or 0)
                 vol   = float(day.get('v', 0))
-                if 0.50 <= price < float(self.config.get('max_stock_price', 15.0)) and price * vol >= 100_000:
+                if float(self.config.get('scan_min_price', 0.50)) <= price < \
+                   float(self.config.get('scan_max_price', 10.0)) and price * vol >= 100_000:
                     filtered.append(sym)
             return filtered if len(filtered) >= 5 else symbols
         except Exception:
@@ -221,12 +222,19 @@ class StockHarvester:
                     today_bars = hist.tail(78)
 
                 price = float(today_bars['Close'].iloc[-1])
-                if price < 0.50 or price >= 10.0:
+                # Price band (config-driven; defaults preserve the legacy 0.50–10.0 penny band).
+                # Raise scan_max_price / scan_min_price to move the pond out of penny territory.
+                if price < float(self.config.get('scan_min_price', 0.50)) or \
+                   price >= float(self.config.get('scan_max_price', 10.0)):
                     continue
 
-                # Float filter: micro-caps produce explosive moves; large-float stocks filtered out
+                # Float band (config-driven; defaults preserve the legacy "skip float > 10M" =
+                # micro-float-only behavior). Set float_min_shares / float_max_shares to a
+                # moderate band (e.g. 20M–500M) for names that trend instead of pin-or-rip.
                 fl = self._float_cache.get(symbol, (0, 0))[0]
-                if fl > 0 and fl > 10_000_000:
+                fmin = float(self.config.get('float_min_shares', 0) or 0)
+                fmax = float(self.config.get('float_max_shares', 10_000_000) or 0)
+                if fl > 0 and ((fmin and fl < fmin) or (fmax and fl > fmax)):
                     continue
 
                 # change_from_open: compare to today's 9:30 open (more signal than bar-vs-bar)

@@ -40,6 +40,12 @@ FEATURES = [
 ]
 _N = len(FEATURES)
 
+# A barrier that expires with |return| below this is treated as degenerate/flat source data
+# (price never moved from entry — e.g. rate-limited replay bars), NOT a real loss. Such rows
+# poisoned the corpus and inverted the model (AUC 0.51 → 0.34), so they are dropped, never
+# labeled y=0. See modules/model_eval.load_rows for the matching read-side filter.
+_FLAT_EPS = 1e-4
+
 
 def _sigmoid(z):
     if z >= 0:
@@ -249,6 +255,13 @@ class Predictor:
                     won, ret = False, r
             if won is None and now_ts >= w['expiry']:
                 r = w['last_ret']
+                # Drop a barrier that expired with ~zero net move: it's degenerate/flat source
+                # data (price never advanced from entry), not a real loss. Labeling it y=0
+                # poisons the corpus and inverts the model.
+                if abs(r) < _FLAT_EPS:
+                    with self._lock:
+                        self._watch.pop(key, None)
+                    continue
                 won, ret = (r > 0), r            # vertical barrier: label by sign at horizon
             if won is not None:
                 with self._lock:

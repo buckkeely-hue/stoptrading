@@ -10,7 +10,7 @@ import os
 
 import numpy as np
 
-from modules.predictor import Predictor, FEATURES, _N
+from modules.predictor import Predictor, FEATURES, _N, _FLAT_EPS
 
 _DIR           = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE      = os.path.join(_DIR, '..', 'predictor_data.jsonl')
@@ -33,6 +33,8 @@ def load_rows(path=DATA_FILE, include_live=False):
             continue
         if r.get('ret') is None or 'f' not in r:
             continue
+        if abs(float(r.get('ret') or 0.0)) < _FLAT_EPS:
+            continue                       # flat/degenerate barrier artifact, not a real outcome
         if not include_live and r.get('src') == 'live':
             continue
         rows.append(r)
