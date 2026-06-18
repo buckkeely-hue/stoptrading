@@ -36,7 +36,9 @@ VARIANTS = {
 
 
 def trading_days(n):
-    d = date(2026, 6, 2)   # most recent settled day (today 6/3 is unsettled)
+    d = date.today() - timedelta(days=1)   # most recent settled day (yesterday); keeps the
+    while d.weekday() >= 5:                 # window inside yfinance's ~30-day 1m retention
+        d -= timedelta(days=1)
     out = []
     while len(out) < n:
         if d.weekday() < 5 and not (d.month == 5 and d.day == 25):  # skip weekends + Memorial Day
