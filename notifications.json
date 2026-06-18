@@ -1,104 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-05-26 15:05:07",
-      "message": "\ud83d\udcc8 EOD: P&L $+0.00 | 0 trades | 0% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-27 15:05:28",
-      "message": "\ud83d\udcc8 EOD: P&L $+0.00 | 0 trades | 0% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-28 09:00:14",
-      "message": "\ud83d\udcc8 BUY: CLOV \u00d7 12 @ $3.9700 | $48 deployed | score 40",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-28 09:22:17",
-      "message": "\ud83d\udcc8 BUY: YSG \u00d7 15 @ $3.1400 | $47 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-28 09:55:50",
-      "message": "\ud83d\udcc8 BUY: OGI \u00d7 4 @ $1.1850 | $5 deployed | score 13",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-28 15:05:15",
-      "message": "\ud83d\udcc8 EOD: P&L $+2.21 | 3 trades | 0% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 08:55:57",
-      "message": "\ud83d\udcc8 BUY: CCCC \u00d7 12 @ $4.0350 | $48 deployed | score 34",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 09:23:38",
-      "message": "\ud83d\udcc8 BUY: TMCI \u00d7 14 @ $3.3950 | $48 deployed | score 39",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 10:10:04",
-      "message": "\u2705 FINAL-EXIT: CCCC | Volume collapsed 0.0x (was 2.0x at entry) \u2014 exit 3.8% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 14:00:15",
-      "message": "\ud83d\udcc8 BUY: AMC \u00d7 28 @ $1.7500 | $49 deployed | score 21",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 14:25:25",
-      "message": "\ud83d\udcc8 BUY: AUTL \u00d7 9 @ $1.8592 | $17 deployed | score 53",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-29 15:05:11",
-      "message": "\ud83d\udcc8 EOD: P&L $+4.06 | 7 trades | 100% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-05-31 19:25:37",
-      "message": "StopTrading Report \u2014 7:25 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  STG $5.193 score:18 vol:0.1x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 08:31:19",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  UIS $4.700 score:67 vol:0.0x SCANNING\n  OPTU $1.105 score:60 vol:0.0x SCANNING\n  SABR $1.780 score:41 vol:0.0x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-01 08:59:21",
       "message": "StopTrading Report \u2014 8:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  AMC $1.982 score:62 vol:0.6x SCANNING\n  OPTU $1.290 score:43 vol:0.2x SCANNING\n  NABL $3.980 score:30 vol:0.2x SCANNING\n",
       "channel": "ntfy",
@@ -2087,8 +1989,113 @@
       "error": ""
     },
     {
-      "time": "2026-06-16 17:00:04",
-      "message": "Model refinement  \u2014 2026-06-16 17:00\nn=55 base=25% | AUC model 0.337 vs heuristic 0.337 | Brier 0.206 (base 0.190)\nmode: shadow | blend_k=40\nexit ladder: n=37 corr=-0.08 good=54% mean_fwd=-0.08% | thr",
+      "time": "2026-06-17 08:30:53",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SST $3.050 score:45 vol:2.5x SCANNING\n  WBX $3.920 score:30 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 09:00:34",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  IFRX $1.750 score:69 vol:3.2x SCANNING\n  BIRD $4.260 score:60 vol:12.0x SCANNING\n  RXT $7.080 score:58 vol:4.9x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 09:30:01",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  BIRD $4.675 score:88 vol:15.8x SCANNING\n  ERII $9.340 score:73 vol:2.4x SCANNING\n  IFRX $1.805 score:70 vol:5.8x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 10:00:47",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  BIRD $6.037 score:100 vol:107.7x SCANNING\n  TGE $1.220 score:65 vol:4.7x SCANNING\n  ERII $9.280 score:55 vol:2.2x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 10:30:23",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SNBR $0.649 score:100 vol:119.2x SCANNING\n  TSHA $6.300 score:62 vol:1.0x SCANNING\n  VIR $9.205 score:57 vol:0.8x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 11:00:00",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SNBR $0.573 score:89 vol:120.4x SCANNING\n  EDIT $2.655 score:76 vol:2.1x SCANNING\n  RGNX $8.430 score:67 vol:4.9x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 11:29:41",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SNBR $0.502 score:70 vol:111.7x SCANNING\n  SPCE $3.610 score:63 vol:0.3x SCANNING\n  RGNX $8.490 score:63 vol:4.7x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 11:59:24",
+      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  REPL $9.900 score:72 vol:2.9x SCANNING\n  SNBR $0.520 score:65 vol:103.3x SCANNING\n  SANA $3.195 score:60 vol:1.9x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 12:28:50",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTMX $3.075 score:22 vol:1.4x SCANNING\n  MRVI $5.260 score:13 vol:0.6x SCANNING\n  EVTL $2.230 score:11 vol:0.7x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 12:59:20",
+      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTMX $3.085 score:23 vol:1.4x SCANNING\n  LAC $4.454 score:6 vol:0.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 13:29:52",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  IFRX $1.810 score:35 vol:2.5x SCANNING\n  STTK $4.620 score:28 vol:0.7x SCANNING\n  BTGO $6.169 score:20 vol:2.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 13:59:32",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  NVAX $9.615 score:20 vol:1.0x SCANNING\n  BRBR $9.240 score:18 vol:0.9x SCANNING\n  BYND $0.688 score:6 vol:0.3x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 14:29:03",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  IFRX $1.845 score:61 vol:2.3x SCANNING\n  TGE $1.000 score:36 vol:0.2x SCANNING\n  TEAD $1.315 score:34 vol:1.1x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 14:58:37",
+      "message": "StopTrading Report \u2014 3:58 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  STTK $4.755 score:59 vol:0.7x SCANNING\n  ENHA $3.955 score:48 vol:1.2x SCANNING\n  AVXL $2.670 score:46 vol:1.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 15:05:23",
+      "message": "\ud83d\udcc9 EOD: P&L $-10.89 | 37 trades | 32% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-17 17:00:02",
+      "message": "Model refinement  \u2014 2026-06-17 17:00\nn=55 base=25% | AUC model 0.337 vs heuristic 0.337 | Brier 0.206 (base 0.190)\nmode: shadow | blend_k=40\nexit ladder: n=37 corr=-0.08 good=54% mean_fwd=-0.08% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
