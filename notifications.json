@@ -1,258 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-01 08:59:21",
-      "message": "StopTrading Report \u2014 8:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  AMC $1.982 score:62 vol:0.6x SCANNING\n  OPTU $1.290 score:43 vol:0.2x SCANNING\n  NABL $3.980 score:30 vol:0.2x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 09:00:33",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  OPTU $1.290 score:39 vol:0.0x SCANNING\n  VTEX $4.100 score:29 vol:0.0x SCANNING\n  API $4.555 score:25 vol:0.0x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 09:30:59",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  HUMA $1.410 score:37 vol:0.0x SCANNING\n  API $4.685 score:28 vol:0.0x SCANNING\n  AMPY $4.930 score:28 vol:0.1x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 09:54:47",
-      "message": "\ud83d\udcc8 BUY: UIS \u00d7 20 @ $4.8750 | $98 deployed | score 38",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 10:01:35",
-      "message": "StopTrading Report \u2014 11:01 AM ET\n\nHOLDINGS:\n  [UP] UIS 20sh @ $4.8750 -> $4.9150 (+0.8%) | +0.8% since last\n\nTOP CANDIDATES:\n  KEEL $5.945 score:62 vol:0.4x SCANNING\n  OPTU $1.220 score:40 vol:0.1x SC",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 10:07:25",
-      "message": "StopTrading Report \u2014 10:07 AM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.8400 (-0.7%) | -1.5% since last\n\nTOP CANDIDATES:\n  KOS $3.045 score:47 vol:1.1x SCANNING\n  NABL $4.065 score:40 vol:0.1x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 10:31:11",
-      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.8350 (-0.8%) | -0.1% since last\n\nTOP CANDIDATES:\n  ZIP $3.830 score:56 vol:0.0x SCANNING\n  KEEL $5.995 score:41 vol:0.2x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 11:00:22",
-      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [UP] UIS 20sh @ $4.8750 -> $4.8800 (+0.1%) | +0.9% since last\n\nTOP CANDIDATES:\n  ZIP $3.980 score:54 vol:2.0x SCANNING\n  GTM $3.810 score:53 vol:0.3x SCAN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 11:30:57",
-      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [DN] UIS 20sh @ $4.8750 -> $4.7550 (-2.5%) | -2.6% since last\n\nTOP CANDIDATES:\n  MQ $4.325 score:44 vol:0.0x SCANNING\n  OPTU $1.090 score:33 vol:0.0x SCAN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 11:38:33",
-      "message": "\ud83d\udd34 STOP-LOSS: UIS | loss -5.2% exceeds -5% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 12:00:29",
-      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  MYGN $4.175 score:17 vol:1.4x SCANNING\n  EGY $5.475 score:14 vol:1.2x SCANNING\n  SNAP $5.820 score:6 vol:0.0x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 12:29:58",
-      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  YEXT $4.530 score:36 vol:1.6x SCANNING\n  EVGO $2.385 score:30 vol:0.4x SCANNING\n  PACB $1.565 score:21 vol:0.2x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 13:00:08",
-      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PACB $1.470 score:5 vol:0.0x SCANNING",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-01 13:30:21",
-      "message": "StopTrading Report \u2014 2:30 PM ET\n\nHOLDINGS: no open positions",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 14:00:34",
-      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS: no open positions",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 14:15:17",
-      "message": "StopTrading Report \u2014 3:14 PM ET\n\nHOLDINGS: no open positions",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 14:45:59",
-      "message": "StopTrading Report \u2014 3:45 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  EVH $4.225 score:18 vol:0.0x SCANNING\n  LAC $5.515 score:17 vol:0.0x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-01 15:05:30",
-      "message": "\ud83d\udcc9 EOD: P&L $-1.00 | 8 trades | 50% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 08:30:56",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLCE $4.350 score:33 vol:0.5x SCANNING\n  SNDL $1.450 score:11 vol:1.7x SCANNING\n  OCGN $1.360 score:4 vol:0.7x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 08:39:27",
-      "message": "StopTrading Report \u2014 9:39 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  REED $1.820 score:69 vol:6.6x SCANNING\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  PETZ $1.200 score:57 vol:4.0x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 08:49:36",
-      "message": "StopTrading Report \u2014 9:49 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:69 vol:8.2x SCANNING\n  PETZ $1.200 score:58 vol:4.0x SCANNING\n  CRNT $3.119 score:51 vol:17.2x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 08:55:05",
-      "message": "StopTrading Report \u2014 9:54 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  BFRI $1.000 score:60 vol:2.6x SCANNING\n  PETZ $1.200 score:57 vol:4.0x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 09:13:53",
-      "message": "StopTrading Report \u2014 10:13 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  CTRM $2.050 score:58 vol:14.2x SCANNING\n  UONE $6.510 score:48 vol:3.4x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 09:25:24",
-      "message": "StopTrading Report \u2014 10:25 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTRM $2.250 score:100 vol:19.3x SCANNING\n  SQFT $2.700 score:68 vol:8.2x SCANNING\n  REED $1.810 score:42 vol:6.5x SCANN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 09:55:27",
-      "message": "StopTrading Report \u2014 10:55 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SPWH $1.465 score:78 vol:8.2x SCANNING\n  TXMD $1.950 score:51 vol:23.8x SCANNING\n  BIRD $4.450 score:37 vol:1.3x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 10:25:57",
-      "message": "StopTrading Report \u2014 11:25 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:58 vol:23.0x SCANNING\n  BIRD $4.550 score:55 vol:1.4x SCANNING\n  SPWH $1.465 score:53 vol:8.7x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 10:38:21",
-      "message": "StopTrading Report \u2014 11:37 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.070 score:71 vol:5.1x SCANNING\n  CTRM $2.190 score:69 vol:14.0x SCANNING\n  BIRD $4.630 score:62 vol:1.4x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 10:43:49",
-      "message": "StopTrading Report \u2014 11:43 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.050 score:71 vol:5.4x SCANNING\n  CTRM $2.185 score:62 vol:13.5x SCANNING\n  BIRD $4.595 score:41 vol:1.6x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 11:13:22",
-      "message": "StopTrading Report \u2014 12:12 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  BIRD $4.803 score:67 vol:1.8x SCANNING\n  TXMD $1.950 score:58 vol:23.1x SCANNING\n  CMTG $2.525 score:25 vol:1.4x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 11:42:58",
-      "message": "StopTrading Report \u2014 12:42 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:52 vol:22.8x SCANNING\n  BIRD $4.705 score:45 vol:2.1x SCANNING\n  CMTG $2.470 score:16 vol:1.3x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 11:47:28",
-      "message": "StopTrading Report \u2014 12:47 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.042 score:69 vol:5.7x SCANNING\n  LFCR $5.350 score:67 vol:1.8x SCANNING\n  CTRM $2.190 score:52 vol:10.9x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 12:18:01",
-      "message": "StopTrading Report \u2014 1:17 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TXMD $1.950 score:61 vol:20.2x SCANNING\n  LFCR $5.305 score:54 vol:2.0x SCANNING\n  CRNT $3.215 score:50 vol:6.5x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 12:28:44",
-      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TOPS $1.050 score:65 vol:4.8x SCANNING\n  CTRM $2.290 score:60 vol:10.1x SCANNING\n  SNBR $1.370 score:45 vol:1.3x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 12:31:38",
-      "message": "StopTrading Report \u2014 1:31 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTRM $2.290 score:59 vol:10.1x SCANNING\n  TOPS $1.040 score:51 vol:4.7x SCANNING\n  BIRD $4.510 score:38 vol:2.0x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 13:00:41",
-      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TUSK $3.595 score:52 vol:1.5x SCANNING\n  TXMD $2.010 score:48 vol:21.7x SCANNING\n  BIRD $4.510 score:41 vol:2.0x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 13:05:44",
-      "message": "\ud83d\udcc8 BUY: TUSK \u00d7 3 @ $3.6100 | $11 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-02 13:27:55",
       "message": "StopTrading Report \u2014 2:27 PM ET\n\nHOLDINGS:\n  [DN] TUSK 3sh @ $3.6100 -> $3.6050 (-0.1%) | -0.1% since last\n\nTOP CANDIDATES:\n  CTRM $2.320 score:60 vol:9.3x SCANNING\n  TOPS $1.048 score:48 vol:4.2x SCA",
       "channel": "ntfy",
@@ -2094,8 +1842,260 @@
       "error": ""
     },
     {
-      "time": "2026-06-17 17:00:02",
-      "message": "Model refinement  \u2014 2026-06-17 17:00\nn=55 base=25% | AUC model 0.337 vs heuristic 0.337 | Brier 0.206 (base 0.190)\nmode: shadow | blend_k=40\nexit ladder: n=37 corr=-0.08 good=54% mean_fwd=-0.08% | thr",
+      "time": "2026-06-18 08:30:57",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  BIRD $6.559 score:74 vol:3.9x SCANNING\n  SSPC $8.700 score:8 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 08:51:48",
+      "message": "\ud83d\udcc8 BUY: BLMN \u00d7 1 @ $8.2100 | $8 deployed | score 25",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 08:56:51",
+      "message": "\ud83d\udcc8 BUY: JELD \u00d7 5 @ $1.8250 | $9 deployed | score 33",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:00:52",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] BLMN 1sh @ $8.2100 -> $8.2700 (+0.7%) | +0.7% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8350 (+0.5%) | +0.5% since last\n\nTOP CANDIDATES:\n  UXIN $2.0",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:07:59",
+      "message": "\ud83d\udcc8 BUY: ULCC \u00d7 1 @ $7.1677 | $7 deployed | score 29",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:20:43",
+      "message": "\ud83d\udcc8 BUY: MX \u00d7 1 @ $5.7799 | $6 deployed | score 34",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:30:42",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [UP] BLMN 1sh @ $8.2100 -> $8.2100 (+0.0%) | -0.7% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8900 (+3.6%) | +3.0% since last\n  [DN] ULCC 1sh @ $7.1677 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:33:34",
+      "message": "\ud83d\udcc8 BUY: JBLU \u00d7 1 @ $5.6600 | $6 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:35:57",
+      "message": "\u2705 FINAL-EXIT: MX | Volume collapsed 0.2x (was 2.4x at entry) \u2014 exit 1.1% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:37:31",
+      "message": "\ud83d\udcc8 BUY: MX \u00d7 1 @ $5.8600 | $6 deployed | score 43",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:40:10",
+      "message": "\ud83d\udcc8 BUY: VLRS \u00d7 1 @ $9.2450 | $9 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:45:49",
+      "message": "\ud83d\udcc8 BUY: GCTS \u00d7 3 @ $2.9050 | $9 deployed | score 29",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:50:20",
+      "message": "\u2705 FINAL-EXIT: GCTS | Volume collapsed 0.0x (was 3.0x at entry) \u2014 exit 1.5% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 09:59:45",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.0950 (-1.4%) | -1.4% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8477 (+1.2%) | -2.2% since last\n  [DN] ULCC 1sh @ $7.1677 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 10:07:05",
+      "message": "\ud83d\udd34 STOP-LOSS: VLRS | loss -3.9% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 10:29:58",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1400 (-0.9%) | +0.6% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8400 (+0.8%) | -0.4% since last\n  [DN] ULCC 1sh @ $7.1677 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 10:39:43",
+      "message": "\ud83d\udd34 STOP-LOSS: MX | loss -3.5% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 10:51:40",
+      "message": "\ud83d\udcc8 BUY: MX \u00d7 1 @ $5.7874 | $6 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 11:00:07",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1450 (-0.8%) | +0.1% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8250 (+0.0%) | -0.8% since last\n  [DN] ULCC 1sh @ $7.1677 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 11:19:41",
+      "message": "\ud83d\udd34 STOP-LOSS: ULCC | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 11:30:41",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1500 (-0.7%) | +0.1% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8300 (+0.3%) | +0.3% since last\n  [DN] JBLU 1sh @ $5.6600 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 11:53:08",
+      "message": "\ud83d\udd34 FINAL-EXIT: MX | Volume collapsed 0.2x (was 1.6x at entry) \u2014 exit 0.6% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 12:00:17",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1350 (-0.9%) | -0.2% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8450 (+1.1%) | +0.8% since last\n  [DN] JBLU 1sh @ $5.6600 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 12:29:51",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1250 (-1.0%) | -0.1% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8350 (+0.5%) | -0.5% since last\n  [DN] JBLU 1sh @ $5.6600 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 12:59:32",
+      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.1200 (-1.1%) | -0.1% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8350 (+0.5%) | +0.0% since last\n  [DN] JBLU 1sh @ $5.6600 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 13:00:22",
+      "message": "\ud83d\udea8 HALT: 4 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 13:29:11",
+      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.0800 (-1.6%) | -0.5% since last\n  [UP] JELD 5sh @ $1.8250 -> $1.8250 (+0.0%) | -0.5% since last\n  [DN] JBLU 1sh @ $5.6600 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 13:30:41",
+      "message": "\ud83d\udea8 HALT: 4 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 13:58:26",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.0950 (-1.4%) | +0.2% since last\n  [DN] JELD 5sh @ $1.8250 -> $1.8100 (-0.8%) | -0.8% since last\n  [DN] JBLU 1sh @ $5.6600 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:00:49",
+      "message": "\ud83d\udea8 HALT: 4 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:03:03",
+      "message": "\ud83d\udd34 TRAIL-STOP: JELD | 5.0% drop from HWM",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:03:08",
+      "message": "\ud83d\udea8 HALT: Daily loss floor hit \u2014 down 10.6% ($65.55) from day open \u2014 no new buys for rest of session",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:29:03",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [DN] BLMN 1sh @ $8.2100 -> $8.0500 (-1.9%) | -0.6% since last\n  [DN] JBLU 1sh @ $5.6600 -> $5.5650 (-1.7%) | -0.7% since last\n\nTOP CANDIDATES:\n  FLO $7.735",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:30:55",
+      "message": "\ud83d\udd34 STOP-LOSS: BLMN | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 14:58:43",
+      "message": "StopTrading Report \u2014 3:58 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +2.1% since last\n\nTOP CANDIDATES:\n  FLO $7.765 score:46 vol:1.6x SCANNING\n  TRLV $9.920 score:29 vol:0.7x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 15:05:12",
+      "message": "\ud83d\udcc9 EOD: P&L $-12.28 | 46 trades | 31% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-18 17:00:06",
+      "message": "Model refinement  \u2014 2026-06-18 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=45 corr=-0.07 good=53% mean_fwd=-0.10% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
