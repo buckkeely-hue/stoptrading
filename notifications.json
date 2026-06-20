@@ -1,97 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-02 13:27:55",
-      "message": "StopTrading Report \u2014 2:27 PM ET\n\nHOLDINGS:\n  [DN] TUSK 3sh @ $3.6100 -> $3.6050 (-0.1%) | -0.1% since last\n\nTOP CANDIDATES:\n  CTRM $2.320 score:60 vol:9.3x SCANNING\n  TOPS $1.048 score:48 vol:4.2x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 13:58:12",
-      "message": "StopTrading Report \u2014 2:57 PM ET\n\nHOLDINGS:\n  [DN] TUSK 3sh @ $3.6100 -> $3.5650 (-1.2%) | -1.1% since last\n\nTOP CANDIDATES:\n  IH $1.760 score:51 vol:25.5x SCANNING\n  SPWH $1.445 score:38 vol:5.4x SCAN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 14:23:34",
-      "message": "\ud83d\udd34 STOP-LOSS: TUSK | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 14:27:23",
-      "message": "\ud83d\udcc8 BUY: GGB \u00d7 2 @ $4.8835 | $10 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 14:28:47",
-      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] GGB 2sh @ $4.8835 -> $4.8900 (+0.1%) | +0.1% since last\n\nTOP CANDIDATES:\n  TXMD $2.070 score:52 vol:21.1x SCANNING\n  GGB $4.885 score:40 vol:1.5x SCAN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 14:57:54",
-      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] GGB 2sh @ $4.8835 -> $4.9050 (+0.4%) | +0.3% since last\n\nTOP CANDIDATES:\n  CRMT $7.770 score:78 vol:1.6x SCANNING\n  TXMD $2.040 score:46 vol:19.4x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-02 15:05:13",
-      "message": "\ud83d\udcc9 EOD: P&L $-0.33 | 2 trades | 0% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 08:30:52",
-      "message": "\ud83d\udd34 STOP-LOSS: GGB | loss -4.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 08:31:23",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] GGB 2sh @ $4.8835 -> $4.7500 (-2.7%) | -2.7% since last\n\nTOP CANDIDATES:\n  CRMT $7.520 score:62 vol:1.5x SCANNING\n  BIRD $4.360 score:23 vol:1.4x SCAN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 08:36:34",
-      "message": "\ud83d\udcc8 BUY: PETZ \u00d7 20 @ $1.1800 | $24 deployed | score 50",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 08:45:03",
-      "message": "\ud83d\udcc8 BUY: UONE \u00d7 3 @ $6.4700 | $19 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 09:10:44",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1600 (-1.7%) | -1.7% since last\n  [DN] UONE 3sh @ $6.4700 -> $6.4300 (-0.6%) | -0.6% since last\n\nTOP CANDIDATES:\n  TOPS $1.",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-03 09:31:55",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [DN] PETZ 20sh @ $1.1800 -> $1.1501 (-2.5%) | -0.9% since last\n  [DN] UONE 3sh @ $6.4700 -> $6.3899 (-1.2%) | -0.6% since last\n\nTOP CANDIDATES:\n  CTRM $2.",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-03 09:42:30",
       "message": "\ud83d\udcc8 BUY: CMTL \u00d7 3 @ $6.0500 | $18 deployed | score 27",
       "channel": "ntfy",
@@ -2094,8 +2003,99 @@
       "error": ""
     },
     {
-      "time": "2026-06-18 17:00:06",
-      "message": "Model refinement  \u2014 2026-06-18 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=45 corr=-0.07 good=53% mean_fwd=-0.10% | thr",
+      "time": "2026-06-19 08:31:14",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 09:00:43",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 09:31:11",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 10:01:42",
+      "message": "StopTrading Report \u2014 11:01 AM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 10:31:11",
+      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 11:01:45",
+      "message": "StopTrading Report \u2014 12:01 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 11:31:12",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 12:01:40",
+      "message": "StopTrading Report \u2014 1:01 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 12:32:12",
+      "message": "StopTrading Report \u2014 1:31 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 13:01:40",
+      "message": "StopTrading Report \u2014 2:01 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 13:32:09",
+      "message": "StopTrading Report \u2014 2:31 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 14:02:39",
+      "message": "StopTrading Report \u2014 3:02 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 14:33:12",
+      "message": "StopTrading Report \u2014 3:32 PM ET\n\nHOLDINGS:\n  [UP] JBLU 1sh @ $5.6600 -> $5.6800 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  TGE $1.205 score:46 vol:0.8x SCANNING\n  BIRD $5.925 score:-3 vol:1.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-19 17:00:03",
+      "message": "Model refinement  \u2014 2026-06-19 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=45 corr=-0.07 good=53% mean_fwd=-0.10% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
