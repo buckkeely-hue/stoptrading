@@ -1,125 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-04 08:59:32",
-      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [DN] INDO 8sh @ $2.9300 -> $2.9250 (-0.2%) | -0.2% since last\n  [DN] SNDL 15sh @ $1.4386 -",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:01:31",
-      "message": "\ud83d\udcc8 BUY: LDI \u00d7 16 @ $1.2750 | $20 deployed | score 64",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:03:35",
-      "message": "\ud83d\udcc8 BUY: SRFM \u00d7 15 @ $1.2199 | $18 deployed | score 46",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:07:59",
-      "message": "\ud83d\udcc8 BUY: NAVI \u00d7 2 @ $7.9400 | $16 deployed | score 30",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:11:18",
-      "message": "\ud83d\udd34 STOP-LOSS: SRFM | loss -3.2% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:12:39",
-      "message": "\ud83d\udcc8 BUY: GENI \u00d7 2 @ $6.3200 | $13 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:15:22",
-      "message": "\ud83d\udcc8 BUY: RC \u00d7 10 @ $1.6650 | $17 deployed | score 46",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:30:04",
-      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [DN] INDO 8sh @ $2.9300 -> $2.8950 (-1.2%) | -1.0% since last\n  [UP] SNDL 15sh @ $1.4386 ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:32:09",
-      "message": "\ud83d\udd34 STOP-LOSS: NAVI | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:57:58",
-      "message": "\ud83d\udcc8 BUY: MRVI \u00d7 3 @ $5.1600 | $15 deployed | score 34",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 09:59:33",
-      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [UP] INDO 8sh @ $2.9300 -> $2.9300 (+0.0%) | +1.2% since last\n  [UP] SNDL 15sh @ $1.4386 ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 10:30:07",
-      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [UP] INDO 8sh @ $2.9300 -> $2.9350 (+0.2%) | +0.2% since last\n  [UP] SNDL 15sh @ $1.4386 ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 10:30:42",
-      "message": "\u2705 FINAL-EXIT: RC | Volume collapsed 0.0x (was 1.8x at entry) \u2014 exit 2.9% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 10:59:17",
-      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [DN] INDO 8sh @ $2.9300 -> $2.9201 (-0.3%) | -0.5% since last\n  [UP] SNDL 15sh @ $1.4386 ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 11:09:52",
-      "message": "\ud83d\udd34 STOP-LOSS: MRVI | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 11:27:36",
-      "message": "\ud83d\udd34 STOP-LOSS: LDI | loss -3.1% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-04 11:28:44",
-      "message": "\ud83d\udd34 STOP-LOSS: DJT | loss -3.1% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-04 11:29:49",
       "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [UP] PETZ 20sh @ $1.1800 -> $1.1800 (+0.0%) | +0.0% since last\n  [DN] INDO 8sh @ $2.9300 -> $2.9150 (-0.5%) | -0.2% since last\n  [UP] SNDL 15sh @ $1.4386 ",
       "channel": "ntfy",
@@ -2094,8 +1975,127 @@
       "error": ""
     },
     {
-      "time": "2026-06-22 17:00:03",
-      "message": "Model refinement  \u2014 2026-06-22 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=49 corr=-0.08 good=55% mean_fwd=-0.10% | thr",
+      "time": "2026-06-23 08:31:17",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] INDO 3sh @ $2.6500 -> $2.6200 (-1.1%) | -1.1% since last\n  [DN] SB 1sh @ $7.0950 -> $6.9750 (-1.7%) | -0.8% since last\n\nTOP CANDIDATES:\n  CRMT $2.890 ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 09:00:50",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] INDO 3sh @ $2.6500 -> $2.6800 (+1.1%) | +2.3% since last\n  [DN] SB 1sh @ $7.0950 -> $7.0200 (-1.1%) | +0.6% since last\n\nTOP CANDIDATES:\n  XRX $3.310 ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 09:08:55",
+      "message": "\ud83d\udd34 FINAL-EXIT: INDO | Volume collapsed 0.0x (was 3.4x at entry) \u2014 exit 0.7% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 09:30:25",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [DN] SB 1sh @ $7.0950 -> $7.0850 (-0.1%) | +0.9% since last\n\nTOP CANDIDATES:\n  SKLZ $8.790 score:25 vol:1.3x SCANNING\n  CRMT $2.880 score:21 vol:0.2x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 09:59:57",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [UP] SB 1sh @ $7.0950 -> $7.1050 (+0.1%) | +0.3% since last\n\nTOP CANDIDATES:\n  OSG $6.015 score:26 vol:1.9x SCANNING\n  ALLT $7.410 score:25 vol:2.7x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 10:29:30",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] SB 1sh @ $7.0950 -> $7.0900 (-0.1%) | -0.2% since last\n\nTOP CANDIDATES:\n  OWL $9.030 score:40 vol:3.4x SCANNING\n  TGE $1.250 score:38 vol:0.3x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 10:59:02",
+      "message": "StopTrading Report \u2014 11:58 AM ET\n\nHOLDINGS:\n  [UP] SB 1sh @ $7.0950 -> $7.0950 (+0.0%) | +0.1% since last\n\nTOP CANDIDATES:\n  NTSK $9.390 score:28 vol:0.6x SCANNING\n  OWL $9.300 score:27 vol:0.6x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 11:28:34",
+      "message": "StopTrading Report \u2014 12:28 PM ET\n\nHOLDINGS:\n  [UP] SB 1sh @ $7.0950 -> $7.1350 (+0.6%) | +0.6% since last\n\nTOP CANDIDATES:\n  PRTA $9.700 score:37 vol:0.6x SCANNING\n  TGE $1.220 score:25 vol:0.3x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 11:58:06",
+      "message": "StopTrading Report \u2014 12:57 PM ET\n\nHOLDINGS:\n  [UP] SB 1sh @ $7.0950 -> $7.1000 (+0.1%) | -0.5% since last\n\nTOP CANDIDATES:\n  PRTA $9.738 score:44 vol:0.6x SCANNING\n  SFIX $4.311 score:29 vol:1.0x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 12:27:36",
+      "message": "StopTrading Report \u2014 1:27 PM ET\n\nHOLDINGS:\n  [UP] SB 1sh @ $7.0950 -> $7.1150 (+0.3%) | +0.2% since last\n\nTOP CANDIDATES:\n  CTKB $4.115 score:23 vol:0.5x SCANNING\n  NTSK $9.575 score:23 vol:0.6x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 12:39:45",
+      "message": "\ud83d\udd34 FINAL-EXIT: SB | Volume collapsed 0.4x (was 2.6x at entry) \u2014 exit 0.7% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 12:57:09",
+      "message": "StopTrading Report \u2014 1:56 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.880 score:21 vol:0.2x SCANNING\n  LESL $9.320 score:21 vol:0.6x SCANNING\n  NTSK $9.500 score:20 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 13:27:16",
+      "message": "StopTrading Report \u2014 2:26 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CRMT $2.880 score:21 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 13:56:52",
+      "message": "StopTrading Report \u2014 2:56 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CHMI $2.400 score:28 vol:3.1x SCANNING\n  SKLZ $8.790 score:25 vol:1.3x SCANNING\n  CRMT $2.880 score:21 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 14:26:39",
+      "message": "StopTrading Report \u2014 3:25 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  ZIP $3.240 score:48 vol:1.0x SCANNING\n  CRMT $2.880 score:21 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 14:56:14",
+      "message": "StopTrading Report \u2014 3:55 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  KPTI $9.650 score:77 vol:2.9x SCANNING\n  MNTN $8.365 score:24 vol:0.9x SCANNING\n  CRMT $2.880 score:21 vol:0.2x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 15:05:07",
+      "message": "\ud83d\udcc9 EOD: P&L $-12.63 | 51 trades | 33% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-06-23 17:00:04",
+      "message": "Model refinement  \u2014 2026-06-23 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=51 corr=-0.10 good=57% mean_fwd=-0.11% | thr",
       "channel": "ntfy",
       "ok": true,
       "error": ""
