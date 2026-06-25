@@ -1,5 +1,5 @@
 {
-  "balance": 0.025,
+  "balance": 0.045,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -7,6 +7,13 @@
       "symbol": "APYX",
       "gross_profit": 0.05,
       "vault_amount": 0.025,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-06-24 11:13:11",
+      "symbol": "DNUT",
+      "gross_profit": 0.04,
+      "vault_amount": 0.02,
       "harvest_num": 1
     }
   ]
