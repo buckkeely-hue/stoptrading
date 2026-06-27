@@ -1,5 +1,5 @@
 {
-  "balance": 0.045,
+  "balance": 0.165,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -14,6 +14,20 @@
       "symbol": "DNUT",
       "gross_profit": 0.04,
       "vault_amount": 0.02,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-06-26 12:00:11",
+      "symbol": "ANGI",
+      "gross_profit": 0.17,
+      "vault_amount": 0.085,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-06-26 12:59:55",
+      "symbol": "SPCE",
+      "gross_profit": 0.07,
+      "vault_amount": 0.035,
       "harvest_num": 1
     }
   ]
