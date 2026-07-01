@@ -1,5 +1,5 @@
 {
-  "balance": 0.275,
+  "balance": 0.28,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -35,6 +35,13 @@
       "symbol": "IFRX",
       "gross_profit": 0.22,
       "vault_amount": 0.11,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-06-30 08:43:57",
+      "symbol": "BMEA",
+      "gross_profit": 0.01,
+      "vault_amount": 0.005,
       "harvest_num": 1
     }
   ]
