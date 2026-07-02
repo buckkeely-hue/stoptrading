@@ -1,5 +1,5 @@
 {
-  "balance": 0.28,
+  "balance": 0.395,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -42,6 +42,20 @@
       "symbol": "BMEA",
       "gross_profit": 0.01,
       "vault_amount": 0.005,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-07-01 08:30:49",
+      "symbol": "FIP",
+      "gross_profit": 0.15,
+      "vault_amount": 0.075,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-07-01 12:59:21",
+      "symbol": "OPFI",
+      "gross_profit": 0.08,
+      "vault_amount": 0.04,
       "harvest_num": 1
     }
   ]
