@@ -1,258 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-24 12:30:12",
-      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [DN] MYGN 1sh @ $5.0300 -> $5.0250 (-0.1%) | +0.0% since last\n  [DN] SWIM 1sh @ $6.1450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 12:40:46",
-      "message": "\ud83d\udd34 STOP-LOSS: LDI | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 12:59:52",
-      "message": "StopTrading Report \u2014 1:59 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [DN] MYGN 1sh @ $5.0300 -> $5.0150 (-0.3%) | -0.2% since last\n  [DN] SWIM 1sh @ $6.1450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 13:03:25",
-      "message": "\ud83d\udcc8 BUY: DNUT \u00d7 2 @ $3.7450 | $7 deployed | score 27",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 13:29:44",
-      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] MYGN 1sh @ $5.0300 -> $5.0700 (+0.8%) | +1.1% since last\n  [DN] SWIM 1sh @ $6.1450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 13:59:29",
-      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] MYGN 1sh @ $5.0300 -> $5.0700 (+0.8%) | +0.0% since last\n  [DN] SWIM 1sh @ $6.1450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 14:28:32",
-      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] MYGN 1sh @ $5.0300 -> $5.1800 (+3.0%) | +2.2% since last\n  [DN] SWIM 1sh @ $6.1450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 14:32:31",
-      "message": "\u2705 FINAL-EXIT: MYGN | CLOSE session, day-1 position \u2014 taking 2.3% gain, no overnight",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 14:59:10",
-      "message": "StopTrading Report \u2014 3:58 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [DN] SWIM 1sh @ $6.1450 -> $6.0450 (-1.6%) | -0.2% since last\n  [DN] DNUT 2sh @ $3.7450 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-24 15:05:31",
-      "message": "\ud83d\udcc9 EOD: P&L $-12.85 | 57 trades | 36% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-25 08:31:58",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +1.7% since last\n  [UP] DNUT 2sh @ $3.7450 -> ",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 08:37:36",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:04:22",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last\n  [UP] DNUT 2sh @ $3.7450 ->",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:20:26",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 09:36:32",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
       "time": "2026-06-25 09:36:32",
       "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last\n  [UP] DNUT 2sh @ $3.7450 ->",
       "channel": "ntfy",
@@ -2094,8 +1842,260 @@
       "error": ""
     },
     {
-      "time": "2026-07-01 17:00:06",
-      "message": "Model refinement  \u2014 2026-07-01 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=105 corr=-0.03 good=54% mean_fwd=+0.02% | th",
+      "time": "2026-07-02 08:30:52",
+      "message": "\ud83d\udd34 TIME-STOP: SKLZ | 3 days open, no profit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:31:00",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] ITUB 1sh @ $8.1650 -> $8.2500 (+1.0%) | +1.4% since last\n  [DN] BLND 4sh @ $1.8350 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:37:01",
+      "message": "\ud83d\udd34 FINAL-EXIT: ITUB | Volume collapsed 0.4x (was 4.0x at entry) \u2014 exit 0.7% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:47:14",
+      "message": "\ud83d\udcc8 BUY: NG \u00d7 1 @ $6.5940 | $7 deployed | score 45",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:49:30",
+      "message": "\ud83d\udcc8 BUY: NIO \u00d7 1 @ $4.8850 | $5 deployed | score 41",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:51:55",
+      "message": "\ud83d\udcc8 BUY: TLRY \u00d7 1 @ $4.8150 | $5 deployed | score 40",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:54:30",
+      "message": "\ud83d\udcc8 BUY: CABA \u00d7 2 @ $3.2400 | $6 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 08:58:18",
+      "message": "\u2705 FINAL-EXIT: NIO | Volume collapsed 0.1x (was 4.8x at entry) \u2014 exit 1.1% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:00:41",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] BLND 4sh @ $1.8350 -> $1.8100 (-1.4%) | +0.6% since last\n  [UP] TIGR 1sh @ $4.6550 -> $4.6550 (+0.0%) | +0.8% since last\n  [UP] NG 1sh @ $6.5940 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:07:40",
+      "message": "\ud83d\udcc8 BUY: SANA \u00d7 2 @ $3.8600 | $8 deployed | score 35",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:14:40",
+      "message": "\ud83d\udcc8 BUY: KYTX \u00d7 1 @ $9.1050 | $9 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:18:26",
+      "message": "\ud83d\udd34 STOP-LOSS: NG | loss -3.2% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:27:55",
+      "message": "\ud83d\udd34 STOP-LOSS: TLRY | loss -3.4% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:27:57",
+      "message": "\ud83d\udd34 STOP-LOSS: KYTX | loss -3.5% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:27:58",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:30:17",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [DN] BLND 4sh @ $1.8350 -> $1.8000 (-1.9%) | -0.6% since last\n  [DN] TIGR 1sh @ $4.6550 -> $4.6000 (-1.2%) | -1.2% since last\n  [DN] CABA 2sh @ $3.2400 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:35:13",
+      "message": "\ud83d\udd34 STOP-LOSS: CABA | loss -3.2% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:57:32",
+      "message": "\ud83d\udd34 STOP-LOSS: BLND | loss -3.2% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:58:43",
+      "message": "\ud83d\udea8 HALT: 5 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 09:59:47",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] TIGR 1sh @ $4.6550 -> $4.5850 (-1.5%) | -0.3% since last\n  [DN] SANA 2sh @ $3.8600 -> $3.8400 (-0.5%) | +0.8% since last\n\nTOP CANDIDATES:\n  MERC $0.7",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 10:11:36",
+      "message": "\ud83d\udd34 STOP-LOSS: TIGR | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 10:29:36",
+      "message": "\ud83d\udea8 HALT: 6 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 10:30:18",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] SANA 2sh @ $3.8600 -> $3.8000 (-1.6%) | -1.0% since last\n\nTOP CANDIDATES:\n  VYGR $3.880 score:56 vol:2.3x SCANNING\n  YRD $1.170 score:54 vol:603.6x S",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 10:59:46",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [DN] SANA 2sh @ $3.8600 -> $3.7950 (-1.7%) | -0.1% since last\n\nTOP CANDIDATES:\n  BAK $2.478 score:17 vol:0.7x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 11:03:20",
+      "message": "\ud83d\udd34 STOP-LOSS: SANA | loss -3.5% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 11:30:22",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $5.454 score:87 vol:1.2x SCANNING\n  FLX $2.350 score:48 vol:1.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 11:59:52",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $5.479 score:89 vol:1.6x SCANNING\n  WBX $4.224 score:51 vol:3.8x SCANNING\n  FLX $2.325 score:24 vol:1.0x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 12:30:24",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FLX $2.350 score:55 vol:1.0x SCANNING\n  WBX $4.260 score:55 vol:4.2x SCANNING\n  SLBT $5.260 score:48 vol:1.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 12:59:53",
+      "message": "StopTrading Report \u2014 1:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $5.560 score:51 vol:1.8x SCANNING\n  WBX $4.251 score:50 vol:4.1x SCANNING\n  FLX $2.335 score:23 vol:1.0x SCANNING\n ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 13:01:00",
+      "message": "\ud83d\udea8 HALT: 7 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 13:30:22",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $5.850 score:63 vol:2.3x SCANNING\n  GREE $1.800 score:40 vol:1.7x SCANNING\n  FLX $2.340 score:23 vol:1.0x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 13:31:27",
+      "message": "\ud83d\udea8 HALT: 7 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 14:00:52",
+      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $6.060 score:62 vol:3.1x SCANNING\n  FLX $2.360 score:55 vol:0.9x SCANNING\n  GREE $1.845 score:40 vol:1.6x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 14:01:51",
+      "message": "\ud83d\udea8 HALT: 7 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 14:30:21",
+      "message": "StopTrading Report \u2014 3:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLBT $6.158 score:80 vol:3.5x SCANNING\n  AVD $3.220 score:54 vol:1.2x SCANNING\n  BRCC $1.170 score:39 vol:1.2x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 15:05:05",
+      "message": "\ud83d\udcc9 EOD: P&L $-17.97 | 111 trades | 43% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-02 17:00:03",
+      "message": "Model refinement  \u2014 2026-07-02 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=115 corr=-0.03 good=56% mean_fwd=-0.02% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
