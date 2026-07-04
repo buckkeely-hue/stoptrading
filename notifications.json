@@ -1,97 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-25 09:36:32",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last\n  [UP] DNUT 2sh @ $3.7450 ->",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 10:27:03",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 10:27:03",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 10:34:33",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 10:34:33",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 10:42:33",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 10:42:33",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 10:51:54",
-      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last\n  [UP] DNUT 2sh @ $3.7450 ->",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 11:02:25",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 11:02:25",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 11:02:25",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 11:02:25",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 11:02:25",
-      "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
       "time": "2026-06-25 11:02:25",
       "message": "\u26a0\ufe0f DNUT \u2014 NO LIVE PRICE for held position (2 sh @ $3.7450); stop-loss is BLIND until feed returns",
       "channel": "none",
@@ -2094,8 +2003,99 @@
       "error": ""
     },
     {
-      "time": "2026-07-02 17:00:03",
-      "message": "Model refinement  \u2014 2026-07-02 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=115 corr=-0.03 good=56% mean_fwd=-0.02% | th",
+      "time": "2026-07-03 08:30:41",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 09:01:11",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 09:30:38",
+      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 10:01:06",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 10:31:35",
+      "message": "StopTrading Report \u2014 11:31 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 11:02:02",
+      "message": "StopTrading Report \u2014 12:01 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 11:32:30",
+      "message": "StopTrading Report \u2014 12:32 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 12:03:21",
+      "message": "StopTrading Report \u2014 1:02 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 12:32:56",
+      "message": "StopTrading Report \u2014 1:32 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 13:02:38",
+      "message": "StopTrading Report \u2014 2:01 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 13:32:18",
+      "message": "StopTrading Report \u2014 2:31 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 14:01:49",
+      "message": "StopTrading Report \u2014 3:01 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 14:31:18",
+      "message": "StopTrading Report \u2014 3:30 PM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-03 17:00:05",
+      "message": "Model refinement  \u2014 2026-07-03 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=115 corr=-0.03 good=56% mean_fwd=-0.02% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
