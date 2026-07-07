@@ -1,5 +1,5 @@
 {
-  "balance": 0.395,
+  "balance": 0.41,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -56,6 +56,13 @@
       "symbol": "OPFI",
       "gross_profit": 0.08,
       "vault_amount": 0.04,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-07-06 11:45:08",
+      "symbol": "TMCI",
+      "gross_profit": 0.03,
+      "vault_amount": 0.015,
       "harvest_num": 1
     }
   ]
