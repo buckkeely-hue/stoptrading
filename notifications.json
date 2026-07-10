@@ -1,160 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-25 13:41:41",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 13:41:41",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 13:54:41",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 13:54:41",
-      "message": "\u26a0\ufe0f SKLZ \u2014 NO LIVE PRICE for held position (1 sh @ $8.8400); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 13:54:41",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 13:54:41",
-      "message": "\u26a0\ufe0f SWIM \u2014 NO LIVE PRICE for held position (1 sh @ $6.1450); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-06-25 13:54:41",
-      "message": "StopTrading Report \u2014 1:25 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
-    },
-    {
-      "time": "2026-06-25 13:56:58",
-      "message": "StopTrading Report \u2014 2:55 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.1450 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  PHIO $0.99",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-25 14:26:27",
-      "message": "StopTrading Report \u2014 3:25 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.2450 (+1.6%) | +1.6% since last\n\nTOP CANDIDATES:\n  BMBL $2.88",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-25 14:57:06",
-      "message": "StopTrading Report \u2014 3:56 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] SWIM 1sh @ $6.1450 -> $6.3050 (+2.6%) | +1.0% since last\n\nTOP CANDIDATES:\n  TPCS $3.86",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-25 14:57:41",
-      "message": "\u2705 FINAL-EXIT: SWIM | Volume collapsed 0.0x (was 2.0x at entry) \u2014 exit 1.8% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-25 15:05:25",
-      "message": "\ud83d\udcc9 EOD: P&L $-13.11 | 57 trades | 37% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:31:37",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  CTRM $2.035 score:70 vol:2.3x SCANNING\n  TOPS $0.810 score:60 vol:1.6x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:41:31",
-      "message": "\ud83d\udcc8 BUY: CLOV \u00d7 1 @ $5.3150 | $5 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:45:03",
-      "message": "\ud83d\udcc8 BUY: OCGN \u00d7 6 @ $1.4200 | $9 deployed | score 25",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:47:57",
-      "message": "\ud83d\udd34 FINAL-EXIT: OCGN | Volume collapsed 0.0x (was 16.5x at entry) \u2014 exit 0.8% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:57:37",
-      "message": "\ud83d\udcc8 BUY: CRBU \u00d7 5 @ $1.6650 | $8 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 08:59:29",
-      "message": "\ud83d\udcc8 BUY: ALLO \u00d7 4 @ $2.1801 | $9 deployed | score 40",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:01:09",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] CLOV 1sh @ $5.3150 -> $5.3500 (+0.7%) | +0.7% since last\n  [UP] CRBU 5sh @ $1.6650 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:01:14",
-      "message": "\ud83d\udcc8 BUY: LFMD \u00d7 2 @ $4.2250 | $8 deployed | score 37",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:10:59",
-      "message": "\ud83d\udcc8 BUY: SANA \u00d7 2 @ $3.4850 | $7 deployed | score 30",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:15:02",
-      "message": "\ud83d\udcc8 BUY: INDO \u00d7 3 @ $2.6600 | $8 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-26 09:30:20",
       "message": "\ud83d\udcc8 BUY: ANGI \u00d7 1 @ $5.6000 | $6 deployed | score 35",
       "channel": "ntfy",
@@ -2094,8 +1940,162 @@
       "error": ""
     },
     {
-      "time": "2026-07-08 17:00:12",
-      "message": "Model refinement  \u2014 2026-07-08 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=127 corr=-0.01 good=54% mean_fwd=-0.07% | th",
+      "time": "2026-07-09 08:30:29",
+      "message": "\ud83d\udd34 STOP-LOSS: GRNT | loss -4.4% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 08:30:48",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1000 (+1.7%) | -0.7% since last\n  [DN] GRNT 1sh @ $4.7050 -> $4.5300 (-3.7%) | -2.1% since last",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 08:59:51",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.2650 (+3.8%) | +2.0% since last\n\nTOP CANDIDATES:\n  UONE $4.820 score:54 vol:8.2x SCANNING\n  REED $1.130 score:50 vol:4.7x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 09:26:19",
+      "message": "\ud83d\udcc8 BUY: PACB \u00d7 5 @ $1.6500 | $8 deployed | score 31",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 09:30:20",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.2000 (+3.0%) | -0.8% since last\n  [UP] PACB 5sh @ $1.6500 -> $1.6594 (+0.6%) | +0.6% since last\n\nTOP CANDIDATES:\n  PACB $1.6",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 09:36:27",
+      "message": "\ud83d\udcc8 BUY: CRSR \u00d7 1 @ $9.4650 | $9 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 09:40:28",
+      "message": "\ud83d\udcc8 BUY: DNA \u00d7 1 @ $9.4650 | $9 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 10:00:27",
+      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1250 (+2.0%) | -0.9% since last\n  [UP] PACB 5sh @ $1.6500 -> $1.6700 (+1.2%) | +0.6% since last\n  [UP] CRSR 1sh @ $9.4650 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 10:30:39",
+      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1100 (+1.8%) | -0.2% since last\n  [DN] PACB 5sh @ $1.6500 -> $1.6409 (-0.6%) | -1.7% since last\n  [UP] CRSR 1sh @ $9.4650 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 11:01:15",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1150 (+1.9%) | +0.1% since last\n  [DN] PACB 5sh @ $1.6500 -> $1.6491 (-0.1%) | +0.5% since last\n  [UP] CRSR 1sh @ $9.4650 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 11:14:35",
+      "message": "\ud83d\udd34 STOP-LOSS: DNA | loss -3.0% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 11:30:45",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1000 (+1.7%) | -0.2% since last\n  [DN] PACB 5sh @ $1.6500 -> $1.6400 (-0.6%) | -0.6% since last\n  [UP] CRSR 1sh @ $9.4650 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 12:00:14",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.0800 (+1.4%) | -0.2% since last\n  [UP] PACB 5sh @ $1.6500 -> $1.6550 (+0.3%) | +0.9% since last\n  [UP] CRSR 1sh @ $9.4650 ->",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 12:29:48",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.0900 (+1.6%) | +0.1% since last\n  [UP] PACB 5sh @ $1.6500 -> $1.6650 (+0.9%) | +0.6% since last\n  [UP] CRSR 1sh @ $9.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 12:59:20",
+      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.0600 (+1.2%) | -0.4% since last\n  [UP] PACB 5sh @ $1.6500 -> $1.6550 (+0.3%) | -0.6% since last\n  [UP] CRSR 1sh @ $9.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 13:28:35",
+      "message": "\ud83d\udd34 STOP-LOSS: PACB | loss -3.0% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 13:28:37",
+      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 13:28:50",
+      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1400 (+2.2%) | +1.0% since last\n  [DN] PACB 5sh @ $1.6500 -> $1.6150 (-2.1%) | -2.4% since last\n  [UP] CRSR 1sh @ $9.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 13:59:21",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1550 (+2.4%) | +0.2% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5950 (+1.4%) | +0.5% since last\n\nTOP CANDIDATES:\n  CRMT $3.52",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 14:28:52",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1150 (+1.9%) | -0.5% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5600 (+1.0%) | -0.4% since last\n\nTOP CANDIDATES:\n  CRMT $3.55",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 14:58:25",
+      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $7.9800 (+0.2%) | -1.7% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5550 (+1.0%) | -0.1% since last\n\nTOP CANDIDATES:\n  ILPT $8.96",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 15:05:14",
+      "message": "\ud83d\udcc9 EOD: P&L $-21.48 | 127 trades | 40% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-09 17:00:05",
+      "message": "Model refinement  \u2014 2026-07-09 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=130 corr=-0.01 good=54% mean_fwd=-0.07% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
