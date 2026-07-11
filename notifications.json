@@ -1,132 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-06-26 09:30:20",
-      "message": "\ud83d\udcc8 BUY: ANGI \u00d7 1 @ $5.6000 | $6 deployed | score 35",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:30:20",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] CLOV 1sh @ $5.3150 -> $5.4200 (+2.0%) | +1.3% since last\n  [UP] CRBU 5sh @ $1.6650 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 09:59:30",
-      "message": "\ud83d\udd34 STOP-LOSS: ALLO | loss -3.1% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:00:31",
-      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] CLOV 1sh @ $5.3150 -> $5.4100 (+1.8%) | -0.2% since last\n  [UP] CRBU 5sh @ $1.6650 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:08:36",
-      "message": "\ud83d\udcc8 BUY: RXRX \u00d7 2 @ $3.5499 | $7 deployed | score 31",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:31:13",
-      "message": "StopTrading Report \u2014 11:30 AM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] CLOV 1sh @ $5.3150 -> $5.4400 (+2.4%) | +0.6% since last\n  [UP] CRBU 5sh @ $1.6650 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:31:26",
-      "message": "\u2705 FINAL-EXIT: CLOV | Volume collapsed 0.0x (was 1.6x at entry) \u2014 exit 1.4% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:32:25",
-      "message": "\ud83d\udcc8 BUY: HCAT \u00d7 4 @ $1.9150 | $8 deployed | score 31",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:36:25",
-      "message": "\u2705 FINAL-EXIT: HCAT | Volume collapsed 0.0x (was 2.1x at entry) \u2014 exit 1.2% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:40:43",
-      "message": "\u2705 FINAL-EXIT: RXRX | Volume collapsed 0.0x (was 2.2x at entry) \u2014 exit 0.9% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:42:52",
-      "message": "\ud83d\udd34 FINAL-EXIT: INDO | Volume collapsed 0.0x (was 10.2x at entry) \u2014 exit 0.7% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:43:45",
-      "message": "\ud83d\udcc8 BUY: RXRX \u00d7 2 @ $3.6150 | $7 deployed | score 30",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:47:59",
-      "message": "\ud83d\udcc8 BUY: GTN \u00d7 2 @ $3.8350 | $8 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 10:51:33",
-      "message": "\ud83d\udcc8 BUY: SPCE \u00d7 2 @ $2.8028 | $6 deployed | score 43",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 11:00:54",
-      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [UP] CRBU 5sh @ $1.6650 -> $1.6900 (+1.5%) | +0.3% since last\n  [UP] LFMD 2sh @ $4.2250 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 11:09:24",
-      "message": "\ud83d\udd34 STOP-LOSS: RXRX | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 11:12:09",
-      "message": "\ud83d\udd34 STOP-LOSS: SANA | loss -3.2% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-06-26 11:30:46",
-      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [UP] SKLZ 1sh @ $8.8400 -> $8.8400 (+0.0%) | +0.0% since last\n  [DN] CRBU 5sh @ $1.6650 -> $1.6550 (-0.6%) | -2.1% since last\n  [DN] LFMD 2sh @ $4.2250 ->",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-06-26 12:00:11",
       "message": "\ud83d\udcb0 HARVEST #1: ANGI \u2014 sold 25% at 3.0% gain | +$0.17",
       "channel": "ntfy",
@@ -2094,8 +1968,134 @@
       "error": ""
     },
     {
-      "time": "2026-07-09 17:00:05",
-      "message": "Model refinement  \u2014 2026-07-09 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=130 corr=-0.01 good=54% mean_fwd=-0.07% | th",
+      "time": "2026-07-10 08:30:58",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.0600 (+1.2%) | +1.0% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5000 (+0.4%) | -0.6% since last\n\nTOP CANDIDATES:\n  CRMT $3.52",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 08:33:54",
+      "message": "\ud83d\udcb0 HARVEST #1: CRSR \u2014 sold 25% at 1.1% gain | +$0.11",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 08:55:45",
+      "message": "\ud83d\udd34 TRAIL-STOP: NEXT | 5.1% drop from HWM",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 09:00:29",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  REED $1.130 score:56 vol:5.3x SCANNING\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  UONE $4.865 score:50 vol:8.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 09:30:02",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CCC $5.755 score:58 vol:5.0x SCANNING\n  FRMI $6.193 score:40 vol:25.6x SCANNING\n  PERF $1.730 score:21 vol:3.6x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 09:59:29",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  DWSN $7.455 score:47 vol:1.5x SCANNING\n  FRMI $6.105 score:42 vol:19.3x SCANNING\n  OEC $5.380 score:35 vol:1.2x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 10:30:00",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FRMI $6.205 score:49 vol:16.0x SCANNING\n  SECZ $8.140 score:43 vol:0.8x SCANNING\n  PLBL $7.020 score:41 vol:0.5x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 10:59:29",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $7.145 score:64 vol:0.4x SCANNING\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  FRMI $6.280 score:45 vol:14.0x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 11:29:58",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  FRMI $6.415 score:36 vol:12.8x SCANNING\n  OPRT $6.050 score:33 vol:4.9x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 12:00:28",
+      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $7.880 score:47 vol:0.7x SCANNING\n  PERF $1.920 score:32 vol:159.6x SCANNING\n  FRMI $6.401 score:32 vol:11.5x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 12:29:57",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $8.390 score:72 vol:1.3x SCANNING\n  DWSN $7.689 score:28 vol:2.4x SCANNING\n  SECZ $7.680 score:21 vol:0.3x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 13:00:29",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $8.405 score:56 vol:1.8x SCANNING\n  AARD $5.690 score:43 vol:0.9x SCANNING\n  UFI $5.790 score:38 vol:2.7x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 13:29:58",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $8.460 score:48 vol:1.8x SCANNING\n  AARD $6.160 score:47 vol:1.5x SCANNING\n  SUPV $9.890 score:41 vol:1.1x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 14:00:04",
+      "message": "StopTrading Report \u2014 3:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  AARD $6.270 score:65 vol:2.1x SCANNING\n  PLBL $8.183 score:46 vol:2.2x SCANNING\n  UFI $5.703 score:32 vol:2.9x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 14:11:53",
+      "message": "\ud83d\udcc8 BUY: VRA \u00d7 2 @ $4.0650 | $8 deployed | score 27",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 14:30:38",
+      "message": "StopTrading Report \u2014 3:30 PM ET\n\nHOLDINGS:\n  [DN] VRA 2sh @ $4.0650 -> $4.0100 (-1.4%) | -1.4% since last\n\nTOP CANDIDATES:\n  AARD $7.271 score:93 vol:7.8x SCANNING\n  AMWL $9.790 score:72 vol:15.9x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 15:00:15",
+      "message": "StopTrading Report \u2014 3:59 PM ET\n\nHOLDINGS:\n  [DN] VRA 2sh @ $4.0650 -> $4.0350 (-0.7%) | +0.6% since last\n\nTOP CANDIDATES:\n  AARD $7.655 score:81 vol:15.1x SCANNING\n  PLBL $8.100 score:54 vol:2.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 15:05:15",
+      "message": "\ud83d\udcc9 EOD: P&L $-21.57 | 128 trades | 40% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-10 17:00:05",
+      "message": "Model refinement  \u2014 2026-07-10 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=132 corr=-0.01 good=55% mean_fwd=-0.08% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
