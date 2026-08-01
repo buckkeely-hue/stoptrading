@@ -1,125 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-07-09 13:28:35",
-      "message": "\ud83d\udd34 STOP-LOSS: PACB | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 13:28:37",
-      "message": "\ud83d\udea8 HALT: 3 consecutive losses \u2014 cooling off, no new buys",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 13:28:50",
-      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1400 (+2.2%) | +1.0% since last\n  [DN] PACB 5sh @ $1.6500 -> $1.6150 (-2.1%) | -2.4% since last\n  [UP] CRSR 1sh @ $9.4650 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 13:59:21",
-      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1550 (+2.4%) | +0.2% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5950 (+1.4%) | +0.5% since last\n\nTOP CANDIDATES:\n  CRMT $3.52",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 14:28:52",
-      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.1150 (+1.9%) | -0.5% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5600 (+1.0%) | -0.4% since last\n\nTOP CANDIDATES:\n  CRMT $3.55",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 14:58:25",
-      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $7.9800 (+0.2%) | -1.7% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5550 (+1.0%) | -0.1% since last\n\nTOP CANDIDATES:\n  ILPT $8.96",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-09 15:05:14",
-      "message": "\ud83d\udcc9 EOD: P&L $-21.48 | 127 trades | 40% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 08:30:58",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] NEXT 1sh @ $7.9650 -> $8.0600 (+1.2%) | +1.0% since last\n  [UP] CRSR 1sh @ $9.4650 -> $9.5000 (+0.4%) | -0.6% since last\n\nTOP CANDIDATES:\n  CRMT $3.52",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 08:33:54",
-      "message": "\ud83d\udcb0 HARVEST #1: CRSR \u2014 sold 25% at 1.1% gain | +$0.11",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 08:55:45",
-      "message": "\ud83d\udd34 TRAIL-STOP: NEXT | 5.1% drop from HWM",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 09:00:29",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  REED $1.130 score:56 vol:5.3x SCANNING\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  UONE $4.865 score:50 vol:8.4x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 09:30:02",
-      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CCC $5.755 score:58 vol:5.0x SCANNING\n  FRMI $6.193 score:40 vol:25.6x SCANNING\n  PERF $1.730 score:21 vol:3.6x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 09:59:29",
-      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  DWSN $7.455 score:47 vol:1.5x SCANNING\n  FRMI $6.105 score:42 vol:19.3x SCANNING\n  OEC $5.380 score:35 vol:1.2x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 10:30:00",
-      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FRMI $6.205 score:49 vol:16.0x SCANNING\n  SECZ $8.140 score:43 vol:0.8x SCANNING\n  PLBL $7.020 score:41 vol:0.5x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 10:59:29",
-      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $7.145 score:64 vol:0.4x SCANNING\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  FRMI $6.280 score:45 vol:14.0x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 11:29:58",
-      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CCC $6.080 score:50 vol:0.6x SCANNING\n  FRMI $6.415 score:36 vol:12.8x SCANNING\n  OPRT $6.050 score:33 vol:4.9x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-10 12:00:28",
-      "message": "StopTrading Report \u2014 1:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $7.880 score:47 vol:0.7x SCANNING\n  PERF $1.920 score:32 vol:159.6x SCANNING\n  FRMI $6.401 score:32 vol:11.5x SCANN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-07-10 12:29:57",
       "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  PLBL $8.390 score:72 vol:1.3x SCANNING\n  DWSN $7.689 score:28 vol:2.4x SCANNING\n  SECZ $7.680 score:21 vol:0.3x SCANNING",
       "channel": "ntfy",
@@ -2094,8 +1975,127 @@
       "error": ""
     },
     {
-      "time": "2026-07-30 17:00:06",
-      "message": "Model refinement  \u2014 2026-07-30 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=164 corr=-0.01 good=54% mean_fwd=-0.11% | th",
+      "time": "2026-07-31 08:30:32",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 09:00:05",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SEER $2.180 score:44 vol:0.4x SCANNING\n  TPCS $4.585 score:32 vol:6.5x SCANNING\n  WU $6.931 score:29 vol:13.1x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 09:29:32",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TU $9.380 score:51 vol:9.3x SCANNING\n  REPL $9.776 score:50 vol:6.2x SCANNING\n  SEER $2.180 score:44 vol:0.4x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 09:59:54",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  WU $6.635 score:50 vol:11.6x SCANNING\n  SEER $2.180 score:44 vol:0.4x SCANNING\n  TU $9.405 score:34 vol:7.7x SCANNING\n ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 10:06:12",
+      "message": "\ud83d\udcc8 BUY: IRWD \u00d7 2 @ $4.2100 | $8 deployed | score 36",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 10:30:03",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] IRWD 2sh @ $4.2100 -> $4.1400 (-1.7%) | -1.7% since last\n\nTOP CANDIDATES:\n  CTRM $1.960 score:25 vol:2.9x SCANNING\n  PGEN $6.100 score:19 vol:2.0x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 10:39:53",
+      "message": "\ud83d\udd34 STOP-LOSS: IRWD | loss -3.0% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 11:00:25",
+      "message": "StopTrading Report \u2014 12:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  FORR $9.740 score:20 vol:1.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 11:30:55",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LUNG $1.731 score:54 vol:1.6x SCANNING\n  LESL $0.939 score:33 vol:1.6x SCANNING\n  SOUN $6.125 score:28 vol:0.8x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 12:00:27",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LESL $0.995 score:56 vol:1.6x SCANNING\n  LUNG $1.805 score:45 vol:1.4x SCANNING\n  ZVIA $1.710 score:26 vol:1.0x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 12:29:57",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LESL $0.994 score:50 vol:1.4x SCANNING\n  LUNG $1.830 score:44 vol:1.5x SCANNING\n  JOBY $7.145 score:42 vol:0.9x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 13:00:37",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LUNG $1.791 score:35 vol:1.4x SCANNING\n  LESL $0.990 score:34 vol:1.3x SCANNING\n  ALTG $6.510 score:20 vol:1.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 13:30:15",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  GPMT $1.470 score:73 vol:9.4x SCANNING\n  LESL $1.030 score:48 vol:1.5x SCANNING\n  LUNG $1.739 score:38 vol:1.4x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 13:59:48",
+      "message": "StopTrading Report \u2014 2:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CSHR $4.520 score:68 vol:6.9x SCANNING\n  GPMT $1.460 score:65 vol:8.3x SCANNING\n  LESL $1.000 score:43 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 14:29:18",
+      "message": "StopTrading Report \u2014 3:28 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LESL $1.005 score:39 vol:1.4x SCANNING\n  LSPD $9.700 score:32 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 14:59:49",
+      "message": "StopTrading Report \u2014 3:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  MERC $0.632 score:55 vol:5.3x SCANNING\n  LESL $0.977 score:42 vol:1.6x SCANNING\n  LSPD $9.700 score:32 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 15:05:28",
+      "message": "\ud83d\udcc9 EOD: P&L $-26.52 | 159 trades | 39% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-07-31 17:00:03",
+      "message": "Model refinement  \u2014 2026-07-31 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=165 corr=-0.01 good=54% mean_fwd=-0.10% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
