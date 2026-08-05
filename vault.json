@@ -1,5 +1,5 @@
 {
-  "balance": 0.515,
+  "balance": 0.565,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -75,6 +75,13 @@
     {
       "ts": "2026-08-03 11:29:16",
       "symbol": "SSTK",
+      "gross_profit": 0.1,
+      "vault_amount": 0.05,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-08-04 09:59:52",
+      "symbol": "TTI",
       "gross_profit": 0.1,
       "vault_amount": 0.05,
       "harvest_num": 1

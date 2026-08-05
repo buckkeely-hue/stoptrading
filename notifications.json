@@ -1,188 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-07-14 12:31:30",
-      "message": "StopTrading Report \u2014 1:31 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  RGC $5.440 score:38 vol:0.8x SCANNING\n  BFRI $1.080 score:36 vol:1.9x SCANNING\n  WKHS $2.644 score:30 vol:3.0x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-14 13:01:58",
-      "message": "StopTrading Report \u2014 2:01 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  EAF $6.465 score:50 vol:1.2x SCANNING\n  PLBL $7.600 score:42 vol:0.6x SCANNING\n  WKHS $2.639 score:32 vol:3.2x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-14 13:32:25",
-      "message": "StopTrading Report \u2014 2:32 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  EAF $6.475 score:37 vol:1.2x SCANNING\n  INDO $2.935 score:33 vol:0.9x SCANNING\n  RGC $5.500 score:29 vol:0.7x SCANNING\n ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-14 14:02:53",
-      "message": "StopTrading Report \u2014 3:02 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  RGC $5.630 score:34 vol:0.6x SCANNING\n  EAF $6.440 score:30 vol:1.1x SCANNING\n  UONE $4.890 score:29 vol:49.6x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-14 14:33:21",
-      "message": "StopTrading Report \u2014 3:32 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  UONE $4.890 score:29 vol:49.6x SCANNING\n  WRD $6.125 score:23 vol:1.7x SCANNING\n  INDO $2.960 score:15 vol:0.9x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-14 15:05:01",
-      "message": "\ud83d\udcc9 EOD: P&L $-21.84 | 128 trades | 40% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 08:30:48",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CTRM $2.060 score:40 vol:5.7x SCANNING\n  INDO $2.950 score:35 vol:1.4x SCANNING\n  TOPS $0.737 score:21 vol:1.9x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 08:55:21",
-      "message": "\ud83d\udcc8 BUY: ALEC \u00d7 6 @ $1.4850 | $9 deployed | score 38",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:00:51",
-      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] ALEC 6sh @ $1.4850 -> $1.4740 (-0.7%) | -0.7% since last\n\nTOP CANDIDATES:\n  SSP $3.115 score:84 vol:6.4x SCANNING\n  ALEC $1.470 score:56 vol:3.8x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:16:41",
-      "message": "\ud83d\udd34 STOP-LOSS: ALEC | loss -3.2% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:17:36",
-      "message": "\ud83d\udcc8 BUY: OI \u00d7 1 @ $9.0200 | $9 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:18:39",
-      "message": "\ud83d\udd34 GAP-EXIT: OI | Overnight gap >10%",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:21:15",
-      "message": "\ud83d\udcc8 BUY: OI \u00d7 1 @ $9.0099 | $9 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:31:19",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS:\n  [DN] OI 1sh @ $9.0099 -> $9.0001 (-0.1%) | -0.1% since last\n\nTOP CANDIDATES:\n  SSP $3.134 score:61 vol:4.4x SCANNING\n  OI $8.530 score:52 vol:2.7x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:43:01",
-      "message": "\ud83d\udcc8 BUY: UA \u00d7 1 @ $6.8400 | $7 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:48:38",
-      "message": "\ud83d\udcc8 BUY: UAA \u00d7 1 @ $7.0100 | $7 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 09:54:10",
-      "message": "\ud83d\udcc8 BUY: GEMI \u00d7 1 @ $4.7000 | $5 deployed | score 26",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 10:01:48",
-      "message": "StopTrading Report \u2014 11:01 AM ET\n\nHOLDINGS:\n  [UP] OI 1sh @ $9.0099 -> $9.0200 (+0.1%) | +0.2% since last\n  [UP] UA 1sh @ $6.8400 -> $6.8900 (+0.7%) | +0.7% since last\n  [UP] UAA 1sh @ $7.0100 -> $7.0",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 10:03:53",
-      "message": "\ud83d\udcc8 BUY: GTN \u00d7 2 @ $4.1450 | $8 deployed | score 34",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 10:31:52",
-      "message": "StopTrading Report \u2014 11:31 AM ET\n\nHOLDINGS:\n  [DN] OI 1sh @ $9.0099 -> $8.9000 (-1.2%) | -1.3% since last\n  [UP] UA 1sh @ $6.8400 -> $6.8850 (+0.7%) | -0.1% since last\n  [UP] UAA 1sh @ $7.0100 -> $7.0",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 11:02:57",
-      "message": "StopTrading Report \u2014 12:01 PM ET\n\nHOLDINGS:\n  [DN] OI 1sh @ $9.0099 -> $8.8200 (-2.1%) | -0.9% since last\n  [UP] UA 1sh @ $6.8400 -> $6.9299 (+1.3%) | +0.7% since last\n  [UP] UAA 1sh @ $7.0100 -> $7.1",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 11:04:52",
-      "message": "\ud83d\udd34 FINAL-EXIT: UA | Volume collapsed 0.1x (was 5.2x at entry) \u2014 exit 0.7% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 11:25:19",
-      "message": "\ud83d\udd34 STOP-LOSS: GEMI | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 11:32:28",
-      "message": "StopTrading Report \u2014 12:32 PM ET\n\nHOLDINGS:\n  [UP] OI 1sh @ $9.0099 -> $9.0350 (+0.3%) | +2.4% since last\n  [UP] UAA 1sh @ $7.0100 -> $7.0950 (+1.2%) | -0.1% since last\n  [DN] GTN 2sh @ $4.1450 -> $4.",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 12:02:00",
-      "message": "StopTrading Report \u2014 1:01 PM ET\n\nHOLDINGS:\n  [UP] OI 1sh @ $9.0099 -> $9.0650 (+0.6%) | +0.3% since last\n  [UP] UAA 1sh @ $7.0100 -> $7.1150 (+1.5%) | +0.3% since last\n  [DN] GTN 2sh @ $4.1450 -> $4.0",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-15 12:09:39",
-      "message": "\ud83d\udd34 STOP-LOSS: GTN | loss -3.0% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-07-15 12:14:00",
       "message": "\u2705 FINAL-EXIT: OI | Volume collapsed 0.3x (was 5.4x at entry) \u2014 exit 1.0% gain",
       "channel": "ntfy",
@@ -2094,8 +1912,190 @@
       "error": ""
     },
     {
-      "time": "2026-08-03 17:00:03",
-      "message": "Model refinement  \u2014 2026-08-03 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=171 corr=-0.02 good=53% mean_fwd=-0.06% | th",
+      "time": "2026-08-04 08:30:48",
+      "message": "\ud83d\udd34 STOP-LOSS: UIS | loss -3.8% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 08:30:53",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5450 (+0.7%) | +0.7% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9900 (-1.5%) | +0.2% since last",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:00:25",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5501 (+1.0%) | +0.3% since last\n\nTOP CANDIDATES:\n  LESL $1.260 score:71 vol:4.3x SCANNING\n  BRCC $1.215 score:44 vol:10.1x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:04:27",
+      "message": "\ud83d\udcc8 BUY: GSIT \u00d7 1 @ $6.6000 | $7 deployed | score 31",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:12:07",
+      "message": "\ud83d\udcc8 BUY: TTI \u00d7 1 @ $8.4950 | $8 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:29:48",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5400 (+0.3%) | -0.7% since last\n  [DN] GSIT 1sh @ $6.6000 -> $6.5600 (-0.6%) | -0.6% since last\n  [DN] TTI 1sh @ $8.4950 -> $8",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:39:27",
+      "message": "\ud83d\udcc8 BUY: NMAX \u00d7 1 @ $8.3150 | $8 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:58:42",
+      "message": "\ud83d\udcc8 BUY: SSYS \u00d7 1 @ $8.7500 | $9 deployed | score 26",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 09:59:53",
+      "message": "\ud83d\udcb0 HARVEST #1: TTI \u2014 sold 25% at 1.2% gain | +$0.10",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 10:00:21",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5700 (+2.3%) | +1.9% since last\n  [DN] GSIT 1sh @ $6.6000 -> $6.5800 (-0.3%) | +0.3% since last\n  [UP] TTI 1sh @ $8.4950 -> $8",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 10:21:00",
+      "message": "\ud83d\udcc8 BUY: TTI \u00d7 1 @ $8.7200 | $9 deployed | score 31",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 10:29:30",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5700 (+2.3%) | +0.0% since last\n  [UP] GSIT 1sh @ $6.6000 -> $6.6465 (+0.7%) | +1.0% since last\n  [DN] NMAX 1sh @ $8.3150 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 10:48:11",
+      "message": "\u2705 FINAL-EXIT: TTI | Volume collapsed 0.3x (was 2.4x at entry) \u2014 exit 0.8% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 10:59:42",
+      "message": "\u2705 FINAL-EXIT: RC | Volume collapsed 0.0x (was 3.7x at entry) \u2014 exit 1.3% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 11:00:03",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5650 (+2.0%) | -0.3% since last\n  [UP] GSIT 1sh @ $6.6000 -> $6.6699 (+1.1%) | +0.4% since last\n  [DN] NMAX 1sh @ $8.3150 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 11:03:31",
+      "message": "\u2705 FINAL-EXIT: GSIT | Volume collapsed 0.1x (was 2.6x at entry) \u2014 exit 1.3% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 11:29:33",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [DN] NMAX 1sh @ $8.3150 -> $8.2750 (-0.5%) | -0.2% since last\n  [UP] SSYS 1sh @ $8.7500 -> $8.7700 (+0.2%) | +0.3% since last\n\nTOP CANDIDATES:\n  GENI $8.0",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 11:59:05",
+      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS:\n  [DN] NMAX 1sh @ $8.3150 -> $8.2850 (-0.4%) | +0.1% since last\n  [UP] SSYS 1sh @ $8.7500 -> $8.8200 (+0.8%) | +0.6% since last\n\nTOP CANDIDATES:\n  GENI $7.9",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 12:06:55",
+      "message": "\u2705 FINAL-EXIT: SSYS | Volume collapsed 0.1x (was 2.4x at entry) \u2014 exit 1.4% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 12:28:36",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS:\n  [DN] NMAX 1sh @ $8.3150 -> $8.3100 (-0.1%) | +0.3% since last\n\nTOP CANDIDATES:\n  GENI $7.865 score:29 vol:2.9x SCANNING\n  SXC $8.895 score:21 vol:0.7x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 12:58:05",
+      "message": "StopTrading Report \u2014 1:57 PM ET\n\nHOLDINGS:\n  [DN] NMAX 1sh @ $8.3150 -> $8.3100 (-0.1%) | +0.0% since last\n\nTOP CANDIDATES:\n  TSHA $6.100 score:20 vol:0.6x SCANNING\n  SXC $8.885 score:20 vol:0.6x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 13:28:19",
+      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [DN] NMAX 1sh @ $8.3150 -> $8.3100 (-0.1%) | +0.0% since last\n\nTOP CANDIDATES:\n  PYXS $3.220 score:20 vol:0.8x SCANNING\n  TSHA $6.121 score:19 vol:0.6x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 13:58:51",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [UP] NMAX 1sh @ $8.3150 -> $8.3500 (+0.4%) | +0.5% since last\n\nTOP CANDIDATES:\n  SANA $3.395 score:41 vol:0.6x SCANNING\n  TSHA $6.185 score:28 vol:0.7x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 14:28:22",
+      "message": "StopTrading Report \u2014 3:27 PM ET\n\nHOLDINGS:\n  [UP] NMAX 1sh @ $8.3150 -> $8.3600 (+0.5%) | +0.1% since last\n\nTOP CANDIDATES:\n  HNST $3.881 score:26 vol:1.2x SCANNING\n  TSHA $6.150 score:14 vol:0.7x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 14:57:53",
+      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] NMAX 1sh @ $8.3150 -> $8.3700 (+0.7%) | +0.1% since last",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 15:05:12",
+      "message": "\ud83d\udcc9 EOD: P&L $-27.58 | 172 trades | 40% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-04 17:00:00",
+      "message": "Model refinement  \u2014 2026-08-04 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=177 corr=-0.03 good=53% mean_fwd=-0.03% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
