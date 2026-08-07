@@ -1,160 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-07-17 08:30:43",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] GT 1sh @ $7.2200 -> $7.1000 (-1.7%) | +0.2% since last\n\nTOP CANDIDATES:\n  CTRM $1.960 score:51 vol:5.2x SCANNING\n  TOPS $0.782 score:31 vol:2.3x SCANN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 08:30:49",
-      "message": "\ud83d\udd34 STOP-LOSS: GT | loss -3.7% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 08:43:05",
-      "message": "\ud83d\udcc8 BUY: INDO \u00d7 3 @ $2.9700 | $9 deployed | score 37",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 08:58:27",
-      "message": "\u2705 FINAL-EXIT: INDO | Volume collapsed 0.0x (was 13.0x at entry) \u2014 exit 1.0% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:00:09",
-      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  SLAI $3.170 score:45 vol:4.4x SCANNING\n  TPCS $4.630 score:44 vol:4.4x SCANNING\n  INDO $3.000 score:30 vol:3.1x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:08:05",
-      "message": "\ud83d\udcc8 BUY: ATER \u00d7 7 @ $1.2800 | $9 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:13:49",
-      "message": "\u2705 FINAL-EXIT: ATER | Volume collapsed 0.0x (was 6.2x at entry) \u2014 exit 0.8% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:30:36",
-      "message": "StopTrading Report \u2014 10:30 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  INDO $3.032 score:23 vol:2.0x SCANNING\n  SG $6.390 score:10 vol:0.8x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:44:10",
-      "message": "\ud83d\udcc8 BUY: ATER \u00d7 6 @ $1.3100 | $8 deployed | score 40",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 09:46:44",
-      "message": "\u2705 FINAL-EXIT: ATER | Volume collapsed 0.0x (was 3.6x at entry) \u2014 exit 1.7% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:01:03",
-      "message": "StopTrading Report \u2014 11:00 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CNF $2.545 score:55 vol:106.7x SCANNING\n  KLTR $1.350 score:41 vol:3.4x SCANNING\n  CTRM $1.951 score:31 vol:25.6x SCANN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:02:45",
-      "message": "\ud83d\udcc8 BUY: NMRA \u00d7 5 @ $1.6900 | $8 deployed | score 26",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:19:19",
-      "message": "\ud83d\udd34 STOP-LOSS: NMRA | loss -3.3% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:31:07",
-      "message": "StopTrading Report \u2014 11:31 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  ATER $1.349 score:63 vol:4.3x SCANNING\n  CNF $2.595 score:56 vol:77.3x SCANNING\n  CTRM $1.985 score:32 vol:20.2x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:34:09",
-      "message": "\ud83d\udcc8 BUY: ATER \u00d7 6 @ $1.3491 | $8 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 10:56:30",
-      "message": "\ud83d\udd34 STOP-LOSS: ATER | stream stop -4.3%",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 11:01:34",
-      "message": "StopTrading Report \u2014 12:01 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CNF $2.530 score:51 vol:58.8x SCANNING\n  ATER $1.300 score:40 vol:3.7x SCANNING\n  CTRM $1.970 score:32 vol:19.1x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 11:32:14",
-      "message": "StopTrading Report \u2014 12:31 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TPCS $4.630 score:44 vol:4.4x SCANNING\n  CTRM $1.970 score:32 vol:19.1x SCANNING\n  NNBR $3.160 score:25 vol:1.3x SCANNI",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 12:01:48",
-      "message": "StopTrading Report \u2014 1:01 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CNF $2.770 score:63 vol:49.1x SCANNING\n  PAVS $4.060 score:40 vol:2.9x SCANNING\n  MGNX $4.400 score:33 vol:0.7x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 12:31:21",
-      "message": "StopTrading Report \u2014 1:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  MGNX $4.490 score:65 vol:0.7x SCANNING\n  CNF $2.450 score:54 vol:5.0x SCANNING\n  PAVS $4.078 score:44 vol:2.8x SCANNING\n",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 13:00:51",
-      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CNF $2.660 score:60 vol:44.5x SCANNING\n  ACRS $5.665 score:36 vol:0.8x SCANNING\n  KLTR $1.370 score:33 vol:2.8x SCANNING",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-17 13:31:31",
-      "message": "StopTrading Report \u2014 2:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CNF $2.675 score:68 vol:40.7x SCANNING\n  CTRM $1.965 score:40 vol:16.8x SCANNING\n  KLTR $1.375 score:33 vol:2.6x SCANNIN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-07-17 13:41:34",
       "message": "\ud83d\udcc8 BUY: WU \u00d7 1 @ $8.7750 | $9 deployed | score 27",
       "channel": "ntfy",
@@ -2094,8 +1940,162 @@
       "error": ""
     },
     {
-      "time": "2026-08-05 17:00:05",
-      "message": "Model refinement  \u2014 2026-08-05 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=182 corr=-0.03 good=52% mean_fwd=-0.01% | th",
+      "time": "2026-08-06 08:30:52",
+      "message": "\ud83d\udd34 STOP-LOSS: BOLD | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 08:31:19",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [UP] NMAX 1sh @ $8.3150 -> $8.4100 (+1.1%) | +0.6% since last\n  [DN] BOLD 3sh @ $2.8700 -> $2.8000 (-2.4%) | -0.5% since last\n\nTOP CANDIDATES:\n  SMRT $1.31",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 09:00:52",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [UP] NMAX 1sh @ $8.3150 -> $8.3650 (+0.6%) | -0.5% since last\n\nTOP CANDIDATES:\n  OPRT $7.154 score:70 vol:11.7x SCANNING\n  PEPG $2.285 score:60 vol:28.5x ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 09:12:39",
+      "message": "\u2705 FINAL-EXIT: NMAX | Volume collapsed 0.5x (was 2.0x at entry) \u2014 exit 1.0% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 09:30:24",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  GDRX $3.665 score:72 vol:4.7x SCANNING\n  PEPG $2.310 score:64 vol:22.9x SCANNING\n  RUN $9.705 score:59 vol:6.7x SCANNIN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 09:59:53",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  TASK $8.000 score:81 vol:8.9x SCANNING\n  OPRT $7.540 score:72 vol:8.9x SCANNING\n  KRO $8.090 score:71 vol:7.8x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 10:30:29",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  OPRT $7.590 score:62 vol:8.7x SCANNING\n  TASK $8.140 score:59 vol:7.2x SCANNING\n  KRO $8.250 score:59 vol:8.8x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 10:57:02",
+      "message": "\ud83d\udcc8 BUY: BBDC \u00d7 1 @ $9.0300 | $9 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 11:00:00",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [UP] BBDC 1sh @ $9.0300 -> $9.0301 (+0.0%) | +0.0% since last\n\nTOP CANDIDATES:\n  OPRT $7.760 score:79 vol:7.4x SCANNING\n  TASK $8.195 score:64 vol:6.0x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 11:29:31",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [UP] BBDC 1sh @ $9.0300 -> $9.1150 (+0.9%) | +0.9% since last\n\nTOP CANDIDATES:\n  FIP $3.645 score:47 vol:0.9x SCANNING\n  HAIN $0.595 score:45 vol:1.1x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 11:59:03",
+      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS:\n  [UP] BBDC 1sh @ $9.0300 -> $9.1650 (+1.5%) | +0.5% since last\n\nTOP CANDIDATES:\n  ZIP $4.610 score:54 vol:1.8x SCANNING\n  HAIN $0.615 score:46 vol:1.6x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 12:28:34",
+      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS:\n  [UP] BBDC 1sh @ $9.0300 -> $9.1600 (+1.4%) | -0.1% since last\n\nTOP CANDIDATES:\n  FIP $3.900 score:42 vol:0.9x SCANNING\n  SVC $8.305 score:42 vol:1.8x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 12:58:05",
+      "message": "StopTrading Report \u2014 1:57 PM ET\n\nHOLDINGS:\n  [UP] BBDC 1sh @ $9.0300 -> $9.1700 (+1.6%) | +0.1% since last\n\nTOP CANDIDATES:\n  FIP $3.935 score:36 vol:0.9x SCANNING\n  ZIP $4.350 score:20 vol:0.9x SCANN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 12:58:27",
+      "message": "\u2705 FINAL-EXIT: BBDC | Volume collapsed 0.0x (was 3.0x at entry) \u2014 exit 0.9% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 13:27:09",
+      "message": "StopTrading Report \u2014 2:27 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  HAIN $0.604 score:35 vol:1.6x SCANNING\n  FIP $3.900 score:28 vol:0.8x SCANNING\n  TRLV $8.895 score:21 vol:1.0x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 13:43:39",
+      "message": "\ud83d\udcc8 BUY: SVC \u00d7 1 @ $8.3950 | $8 deployed | score 27",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 13:57:40",
+      "message": "StopTrading Report \u2014 2:57 PM ET\n\nHOLDINGS:\n  [UP] SVC 1sh @ $8.3950 -> $8.4650 (+0.8%) | +0.8% since last\n\nTOP CANDIDATES:\n  SVC $8.480 score:63 vol:1.7x SCANNING\n  FIP $4.045 score:33 vol:0.8x SCANNI",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 14:05:22",
+      "message": "\ud83d\udcc8 BUY: ZIP \u00d7 1 @ $4.6250 | $5 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 14:27:15",
+      "message": "StopTrading Report \u2014 3:26 PM ET\n\nHOLDINGS:\n  [UP] SVC 1sh @ $8.3950 -> $8.6000 (+2.4%) | +1.6% since last\n  [UP] ZIP 1sh @ $4.6250 -> $4.6550 (+0.6%) | +0.6% since last\n\nTOP CANDIDATES:\n  ZIP $4.660 s",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 14:30:07",
+      "message": "\u2705 FINAL-EXIT: SVC | CLOSE session, day-1 position \u2014 taking 2.0% gain, no overnight",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 14:56:45",
+      "message": "StopTrading Report \u2014 3:56 PM ET\n\nHOLDINGS:\n  [UP] ZIP 1sh @ $4.6250 -> $4.6750 (+1.1%) | +0.4% since last\n\nTOP CANDIDATES:\n  ALXO $2.100 score:71 vol:0.8x SCANNING\n  LESL $1.500 score:51 vol:0.6x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 15:05:29",
+      "message": "\ud83d\udcc9 EOD: P&L $-28.56 | 181 trades | 41% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-06 17:00:06",
+      "message": "Model refinement  \u2014 2026-08-06 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=186 corr=-0.03 good=52% mean_fwd=-0.00% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
