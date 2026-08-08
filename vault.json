@@ -1,5 +1,5 @@
 {
-  "balance": 0.565,
+  "balance": 0.645,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -84,6 +84,13 @@
       "symbol": "TTI",
       "gross_profit": 0.1,
       "vault_amount": 0.05,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-08-07 08:31:19",
+      "symbol": "ZIP",
+      "gross_profit": 0.16,
+      "vault_amount": 0.08,
       "harvest_num": 1
     }
   ]
