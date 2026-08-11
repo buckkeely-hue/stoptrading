@@ -1,5 +1,5 @@
 {
-  "balance": 0.645,
+  "balance": 0.655,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -91,6 +91,13 @@
       "symbol": "ZIP",
       "gross_profit": 0.16,
       "vault_amount": 0.08,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-08-10 14:11:22",
+      "symbol": "RC",
+      "gross_profit": 0.02,
+      "vault_amount": 0.01,
       "harvest_num": 1
     }
   ]
