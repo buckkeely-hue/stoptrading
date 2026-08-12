@@ -1,216 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-07-22 08:44:04",
-      "message": "\ud83d\udcc8 BUY: WKHS \u00d7 3 @ $2.7800 | $8 deployed | score 30",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 09:00:21",
-      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS:\n  [DN] WKHS 3sh @ $2.7800 -> $2.7701 (-0.4%) | -0.4% since last\n\nTOP CANDIDATES:\n  NG $6.080 score:32 vol:5.8x SCANNING\n  TPCS $4.680 score:30 vol:6.5x SCANN",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 09:29:58",
-      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7900 (+0.4%) | +0.7% since last\n\nTOP CANDIDATES:\n  TOPS $0.812 score:43 vol:7.4x SCANNING\n  EXK $8.545 score:39 vol:2.4x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 09:34:09",
-      "message": "\ud83d\udcc8 BUY: NG \u00d7 1 @ $6.1000 | $6 deployed | score 40",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 09:59:25",
-      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] WKHS 3sh @ $2.7800 -> $2.7600 (-0.7%) | -1.1% since last\n  [DN] NG 1sh @ $6.1000 -> $6.0950 (-0.1%) | -0.1% since last\n\nTOP CANDIDATES:\n  TOPS $0.815",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 10:29:30",
-      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.8000 (+0.7%) | +1.4% since last\n  [DN] NG 1sh @ $6.1000 -> $6.0350 (-1.1%) | -1.0% since last\n\nTOP CANDIDATES:\n  SVM $9.720 ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 10:41:02",
-      "message": "\ud83d\udcc8 BUY: NMG \u00d7 6 @ $1.4100 | $8 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 10:59:42",
-      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.8000 (+0.7%) | +0.0% since last\n  [UP] NG 1sh @ $6.1000 -> $6.1250 (+0.4%) | +1.5% since last\n  [DN] NMG 6sh @ $1.4100 -> $1",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 11:14:43",
-      "message": "\ud83d\udd34 STOP-LOSS: NMG | loss -3.1% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 11:16:49",
-      "message": "\ud83d\udd34 STOP-LOSS: NG | loss -3.2% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 11:30:19",
-      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [DN] WKHS 3sh @ $2.7800 -> $2.7573 (-0.8%) | -1.5% since last\n\nTOP CANDIDATES:\n  TOPS $0.861 score:65 vol:4.7x SCANNING\n  PAVS $3.918 score:39 vol:4.5x SC",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 11:59:54",
-      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS:\n  [DN] WKHS 3sh @ $2.7800 -> $2.7600 (-0.7%) | +0.1% since last\n\nTOP CANDIDATES:\n  TOPS $0.844 score:47 vol:4.3x SCANNING\n  INDO $3.010 score:24 vol:2.1x SC",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 12:29:27",
-      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7900 (+0.4%) | +1.1% since last\n\nTOP CANDIDATES:\n  CANG $1.930 score:52 vol:1.0x SCANNING\n  KODK $8.260 score:52 vol:2.0x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 12:59:00",
-      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7900 (+0.4%) | +0.0% since last\n\nTOP CANDIDATES:\n  CANG $1.940 score:58 vol:1.2x SCANNING\n  TOPS $0.851 score:47 vol:4.0x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 13:28:35",
-      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7950 (+0.5%) | +0.2% since last\n\nTOP CANDIDATES:\n  TOPS $0.849 score:72 vol:3.8x SCANNING\n  CANG $1.955 score:45 vol:1.1x SCA",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 13:44:14",
-      "message": "\ud83d\udcc8 BUY: KODK \u00d7 1 @ $8.2100 | $8 deployed | score 28",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 13:52:18",
-      "message": "\ud83d\udcc8 BUY: INDO \u00d7 2 @ $3.1000 | $6 deployed | score 33",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 13:58:19",
-      "message": "StopTrading Report \u2014 2:57 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7800 (+0.0%) | -0.5% since last\n  [DN] KODK 1sh @ $8.2100 -> $8.1800 (-0.4%) | -0.4% since last\n  [UP] INDO 2sh @ $3.1000 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:19:13",
-      "message": "\ud83d\udcc8 BUY: DWSN \u00d7 1 @ $5.1069 | $5 deployed | score 31",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:27:27",
-      "message": "StopTrading Report \u2014 3:27 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7800 (+0.0%) | +0.0% since last\n  [DN] KODK 1sh @ $8.2100 -> $8.1800 (-0.4%) | +0.0% since last\n  [UP] INDO 2sh @ $3.1000 -> ",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:30:06",
-      "message": "\u26a1 EVASIVE: INDO \u2014 cascade sell detected, shed 1 shares @ $3.1410 | protected ~$-0.01",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:30:07",
-      "message": "\u2705 FINAL-EXIT: DWSN | Volume collapsed 0.2x (was 1.6x at entry) \u2014 exit 1.3% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:32:02",
-      "message": "\ud83d\udd34 FINAL-EXIT: INDO | CLOSE session, day-1 position \u2014 taking 0.8% gain, no overnight",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 14:58:04",
-      "message": "StopTrading Report \u2014 3:57 PM ET\n\nHOLDINGS:\n  [UP] WKHS 3sh @ $2.7800 -> $2.7850 (+0.2%) | +0.2% since last\n  [UP] KODK 1sh @ $8.2100 -> $8.2300 (+0.2%) | +0.6% since last\n\nTOP CANDIDATES:\n  CCM $4.300",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-22 15:05:19",
-      "message": "\ud83d\udcc9 EOD: P&L $-25.55 | 154 trades | 39% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-23 08:31:32",
-      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] WKHS 3sh @ $2.7800 -> $2.7500 (-1.1%) | -1.3% since last\n  [DN] KODK 1sh @ $8.2100 -> $8.1850 (-0.3%) | -0.5% since last\n\nTOP CANDIDATES:\n  PAVS $3.90",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-23 08:33:14",
-      "message": "\u2705 FINAL-EXIT: KODK | Volume collapsed 0.1x (was 2.5x at entry) \u2014 exit 1.5% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-23 08:38:02",
-      "message": "\ud83d\udcc8 BUY: CCM \u00d7 2 @ $4.3100 | $9 deployed | score 32",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-23 08:48:40",
-      "message": "\ud83d\udcc8 BUY: FEAM \u00d7 7 @ $1.2050 | $8 deployed | score 29",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-07-23 08:49:45",
-      "message": "\ud83d\udd34 STOP-LOSS: FEAM | loss -3.3% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-07-23 08:54:11",
       "message": "\ud83d\udcc8 BUY: INDO \u00d7 2 @ $3.2100 | $6 deployed | score 26",
       "channel": "ntfy",
@@ -2094,8 +1884,218 @@
       "error": ""
     },
     {
-      "time": "2026-08-10 17:00:05",
-      "message": "Model refinement  \u2014 2026-08-10 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=196 corr=-0.02 good=52% mean_fwd=+0.02% | th",
+      "time": "2026-08-11 08:30:41",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] TDOC 1sh @ $7.1050 -> $7.0500 (-0.8%) | +0.0% since last\n  [DN] GFR 1sh @ $6.5700 -> $6.4900 (-1.2%) | -0.2% since last\n\nTOP CANDIDATES:\n  UEIC $5.740",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 08:59:50",
+      "message": "StopTrading Report \u2014 9:59 AM ET\n\nHOLDINGS:\n  [UP] TDOC 1sh @ $7.1050 -> $7.1150 (+0.1%) | +0.9% since last\n  [DN] GFR 1sh @ $6.5700 -> $6.5600 (-0.2%) | +1.1% since last\n\nTOP CANDIDATES:\n  KPLT $8.810",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:14:18",
+      "message": "\ud83d\udcc8 BUY: MITT \u00d7 1 @ $6.6900 | $7 deployed | score 34",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:15:25",
+      "message": "\ud83d\udd34 GAP-EXIT: MITT | Overnight gap >10%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:19:20",
+      "message": "\ud83d\udcc8 BUY: MITT \u00d7 1 @ $6.7110 | $7 deployed | score 25",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:30:24",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [DN] TDOC 1sh @ $7.1050 -> $7.0550 (-0.7%) | -0.8% since last\n  [DN] GFR 1sh @ $6.5700 -> $6.4900 (-1.2%) | -1.1% since last\n  [UP] MITT 1sh @ $6.7110 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:51:20",
+      "message": "\ud83d\udcc8 BUY: SLDP \u00d7 3 @ $2.4650 | $7 deployed | score 30",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 09:59:57",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] TDOC 1sh @ $7.1050 -> $7.0450 (-0.8%) | -0.1% since last\n  [DN] GFR 1sh @ $6.5700 -> $6.5500 (-0.3%) | +0.9% since last\n  [DN] MITT 1sh @ $6.7110 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 10:01:40",
+      "message": "\ud83d\udcc8 BUY: AMPY \u00d7 1 @ $4.3850 | $4 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 10:12:36",
+      "message": "\ud83d\udd34 STOP-LOSS: TDOC | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 10:24:00",
+      "message": "\ud83d\udcc8 BUY: DOUG \u00d7 4 @ $1.9299 | $8 deployed | score 28",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 10:29:04",
+      "message": "StopTrading Report \u2014 11:28 AM ET\n\nHOLDINGS:\n  [DN] GFR 1sh @ $6.5700 -> $6.5250 (-0.7%) | -0.4% since last\n  [DN] MITT 1sh @ $6.7110 -> $6.6990 (-0.2%) | +0.1% since last\n  [DN] SLDP 3sh @ $2.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 10:59:08",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS:\n  [DN] GFR 1sh @ $6.5700 -> $6.5400 (-0.5%) | +0.2% since last\n  [UP] MITT 1sh @ $6.7110 -> $6.7400 (+0.4%) | +0.6% since last\n  [DN] SLDP 3sh @ $2.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 11:22:19",
+      "message": "\ud83d\udcb0 HARVEST #1: DOUG \u2014 sold 25% at 0.8% gain | +$0.01",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 11:24:58",
+      "message": "\ud83d\udd34 EXIT: DOUG | margin 0.8% after 1 harvests",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 11:29:41",
+      "message": "StopTrading Report \u2014 12:29 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.5900 (+0.3%) | +0.8% since last\n  [UP] MITT 1sh @ $6.7110 -> $6.7850 (+1.1%) | +0.7% since last\n  [DN] SLDP 3sh @ $2.4650 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 11:56:25",
+      "message": "\u2705 FINAL-EXIT: MITT | Volume collapsed 0.0x (was 3.2x at entry) \u2014 exit 0.9% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 11:59:09",
+      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.5800 (+0.2%) | -0.2% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4450 (-0.8%) | +0.2% since last\n  [DN] AMPY 1sh @ $4.3850 -> ",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 12:29:39",
+      "message": "StopTrading Report \u2014 1:29 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.5850 (+0.2%) | +0.1% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4400 (-1.0%) | -0.2% since last\n  [DN] AMPY 1sh @ $4.3850 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 12:59:07",
+      "message": "StopTrading Report \u2014 1:58 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.6450 (+1.1%) | +0.9% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4250 (-1.6%) | -0.6% since last\n  [DN] AMPY 1sh @ $4.3850 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 13:25:43",
+      "message": "\ud83d\udd34 FINAL-EXIT: AMPY | Volume collapsed 0.4x (was 3.0x at entry) \u2014 exit 0.8% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 13:29:38",
+      "message": "StopTrading Report \u2014 2:29 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.6450 (+1.1%) | +0.0% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4250 (-1.6%) | +0.0% since last\n\nTOP CANDIDATES:\n  ACVA $7.520",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 13:55:35",
+      "message": "\ud83d\udcc8 BUY: AMPY \u00d7 1 @ $4.5050 | $5 deployed | score 32",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 13:59:06",
+      "message": "StopTrading Report \u2014 2:58 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.6250 (+0.8%) | -0.3% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4450 (-0.8%) | +0.8% since last\n  [UP] AMPY 1sh @ $4.5050 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 13:59:48",
+      "message": "\ud83d\udcc8 BUY: BDTX \u00d7 4 @ $2.0850 | $8 deployed | score 27",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 14:29:18",
+      "message": "StopTrading Report \u2014 3:29 PM ET\n\nHOLDINGS:\n  [UP] GFR 1sh @ $6.5700 -> $6.6750 (+1.6%) | +0.8% since last\n  [DN] SLDP 3sh @ $2.4650 -> $2.4450 (-0.8%) | +0.0% since last\n  [UP] AMPY 1sh @ $4.5050 -> $",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 14:30:31",
+      "message": "\u2705 FINAL-EXIT: GFR | CLOSE session, day-2 position \u2014 taking 0.8% gain, no overnight",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 14:56:28",
+      "message": "\ud83d\udd34 STOP-LOSS: SLDP | loss -3.1% exceeds -3% limit",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 14:59:50",
+      "message": "StopTrading Report \u2014 3:59 PM ET\n\nHOLDINGS:\n  [UP] AMPY 1sh @ $4.5050 -> $4.5300 (+0.6%) | +0.1% since last\n  [UP] BDTX 4sh @ $2.0850 -> $2.1000 (+0.7%) | +1.7% since last\n\nTOP CANDIDATES:\n  TLRY $4.77",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 15:05:17",
+      "message": "\ud83d\udcc9 EOD: P&L $-30.04 | 198 trades | 42% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-11 17:00:04",
+      "message": "Model refinement  \u2014 2026-08-11 17:00\nn=40 base=35% | AUC model 0.133 vs heuristic 0.133 | Brier 0.241 (base 0.228)\nmode: shadow | blend_k=40\nexit ladder: n=204 corr=-0.02 good=52% mean_fwd=+0.06% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""

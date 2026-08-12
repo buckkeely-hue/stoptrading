@@ -1,5 +1,5 @@
 {
-  "balance": 0.655,
+  "balance": 0.66,
   "withdrawn": 0.0,
   "entries": [
     {
@@ -98,6 +98,13 @@
       "symbol": "RC",
       "gross_profit": 0.02,
       "vault_amount": 0.01,
+      "harvest_num": 1
+    },
+    {
+      "ts": "2026-08-11 11:22:19",
+      "symbol": "DOUG",
+      "gross_profit": 0.01,
+      "vault_amount": 0.005,
       "harvest_num": 1
     }
   ]
