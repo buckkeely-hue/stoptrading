@@ -1,132 +1,6 @@
 {
   "log": [
     {
-      "time": "2026-08-03 10:08:22",
-      "message": "\u2705 FINAL-EXIT: PYXS | Volume collapsed 0.1x (was 2.0x at entry) \u2014 exit 1.1% gain",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 10:23:51",
-      "message": "\ud83d\udd34 STOP-LOSS: CWH | loss -3.2% exceeds -3% limit",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 10:29:40",
-      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5100 (-1.6%) | -1.4% since last\n  [UP] UIS 2sh @ $3.0350 -> $3.0950 (+2.0%) | -0.5% since last\n  [UP] SSTK 1sh @ $5.7700 -> $5",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 10:58:46",
-      "message": "StopTrading Report \u2014 11:58 AM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5100 (-1.6%) | +0.0% since last\n  [UP] UIS 2sh @ $3.0350 -> $3.1000 (+2.1%) | +0.2% since last\n  [UP] SSTK 1sh @ $5.7700 -> $5",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 11:29:17",
-      "message": "\ud83d\udcb0 HARVEST #1: SSTK \u2014 sold 25% at 1.8% gain | +$0.10",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 11:29:19",
-      "message": "StopTrading Report \u2014 12:28 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5188 (-1.1%) | +0.6% since last\n  [UP] UIS 2sh @ $3.0350 -> $3.0600 (+0.8%) | -1.3% since last\n  [UP] SSTK 1sh @ $5.7700 -> $5",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 11:58:48",
-      "message": "StopTrading Report \u2014 12:58 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5150 (-1.3%) | -0.3% since last\n  [UP] UIS 2sh @ $3.0350 -> $3.0350 (+0.0%) | -0.8% since last\n\nTOP CANDIDATES:\n  AI $9.675 sc",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 12:29:16",
-      "message": "StopTrading Report \u2014 1:28 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5250 (-0.7%) | +0.7% since last\n  [DN] UIS 2sh @ $3.0350 -> $3.0150 (-0.7%) | -0.7% since last\n\nTOP CANDIDATES:\n  IQ $1.360 sco",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 12:59:48",
-      "message": "StopTrading Report \u2014 1:59 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5142 (-1.4%) | -0.7% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9950 (-1.3%) | -0.7% since last\n\nTOP CANDIDATES:\n  IQ $1.360 sco",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 13:22:57",
-      "message": "\u26a0\ufe0f RC \u2014 NO LIVE PRICE for held position (5 sh @ $1.5350); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error timed out>"
-    },
-    {
-      "time": "2026-08-03 13:22:57",
-      "message": "\u26a0\ufe0f RC \u2014 NO LIVE PRICE for held position (5 sh @ $1.5350); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-08-03 13:22:57",
-      "message": "\u26a0\ufe0f UIS \u2014 NO LIVE PRICE for held position (2 sh @ $3.0350); stop-loss is BLIND until feed returns",
-      "channel": "ntfy",
-      "ok": false,
-      "error": "<urlopen error timed out>"
-    },
-    {
-      "time": "2026-08-03 13:22:57",
-      "message": "\u26a0\ufe0f UIS \u2014 NO LIVE PRICE for held position (2 sh @ $3.0350); stop-loss is BLIND until feed returns",
-      "channel": "none",
-      "ok": false,
-      "error": "no channel configured"
-    },
-    {
-      "time": "2026-08-03 13:29:14",
-      "message": "StopTrading Report \u2014 2:28 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5212 (-0.9%) | +0.5% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9900 (-1.5%) | -0.2% since last\n\nTOP CANDIDATES:\n  AI $9.760 sco",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 13:59:21",
-      "message": "StopTrading Report \u2014 2:59 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5112 (-1.6%) | -0.7% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9800 (-1.8%) | -0.3% since last\n\nTOP CANDIDATES:\n  TOPS $0.720 s",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 14:29:53",
-      "message": "StopTrading Report \u2014 3:29 PM ET\n\nHOLDINGS:\n  [DN] RC 5sh @ $1.5350 -> $1.5288 (-0.4%) | +1.2% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9950 (-1.3%) | +0.5% since last\n\nTOP CANDIDATES:\n  IQ $1.345 sco",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 14:59:24",
-      "message": "StopTrading Report \u2014 3:58 PM ET\n\nHOLDINGS:\n  [UP] RC 5sh @ $1.5350 -> $1.5350 (+0.0%) | +0.4% since last\n  [DN] UIS 2sh @ $3.0350 -> $2.9850 (-1.6%) | -0.3% since last\n\nTOP CANDIDATES:\n  CAPR $4.180 s",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
-      "time": "2026-08-03 15:05:16",
-      "message": "\ud83d\udcc9 EOD: P&L $-27.51 | 167 trades | 39% win rate",
-      "channel": "ntfy",
-      "ok": true,
-      "error": ""
-    },
-    {
       "time": "2026-08-04 08:30:48",
       "message": "\ud83d\udd34 STOP-LOSS: UIS | loss -3.8% exceeds -3% limit",
       "channel": "ntfy",
@@ -2096,6 +1970,132 @@
     {
       "time": "2026-08-17 17:00:06",
       "message": "Model refinement  \u2014 2026-08-17 17:00\nn=41 base=37% | AUC model 0.127 vs heuristic 0.127 | Brier 0.246 (base 0.232)\nmode: shadow | blend_k=40\nexit ladder: n=223 corr=+0.01 good=51% mean_fwd=+0.09% | th",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 08:31:20",
+      "message": "StopTrading Report \u2014 9:30 AM ET\n\nHOLDINGS:\n  [DN] IMPP 1sh @ $4.9950 -> $4.9603 (-0.7%) | -0.7% since last",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 09:00:55",
+      "message": "StopTrading Report \u2014 10:00 AM ET\n\nHOLDINGS:\n  [DN] IMPP 1sh @ $4.9950 -> $4.9600 (-0.7%) | -0.0% since last\n\nTOP CANDIDATES:\n  CTRM $2.330 score:48 vol:3.3x SCANNING\n  CVRX $2.740 score:26 vol:0.6x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 09:29:56",
+      "message": "StopTrading Report \u2014 10:29 AM ET\n\nHOLDINGS:\n  [DN] IMPP 1sh @ $4.9950 -> $4.9600 (-0.7%) | +0.0% since last\n\nTOP CANDIDATES:\n  LVWR $1.240 score:54 vol:1.9x SCANNING\n  YALA $5.660 score:37 vol:4.2x SC",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 10:00:29",
+      "message": "StopTrading Report \u2014 10:59 AM ET\n\nHOLDINGS:\n  [DN] IMPP 1sh @ $4.9950 -> $4.9550 (-0.8%) | -0.1% since last\n\nTOP CANDIDATES:\n  DH $0.696 score:53 vol:6.5x SCANNING\n  YALA $5.660 score:28 vol:3.4x SCAN",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 10:19:25",
+      "message": "\ud83d\udd34 STOP-LOSS: IMPP | stream stop -3.0%",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 10:29:30",
+      "message": "StopTrading Report \u2014 11:29 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  DH $0.683 score:51 vol:5.3x SCANNING\n  CURV $2.030 score:32 vol:1.7x SCANNING\n  SECZ $5.382 score:12 vol:0.6x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 10:59:59",
+      "message": "StopTrading Report \u2014 11:59 AM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CURV $2.181 score:42 vol:2.5x SCANNING\n  DH $0.669 score:38 vol:4.7x SCANNING\n  SECZ $5.382 score:12 vol:0.6x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 11:30:36",
+      "message": "StopTrading Report \u2014 12:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  CURV $2.160 score:37 vol:2.0x SCANNING\n  GWH $0.649 score:34 vol:0.7x SCANNING\n  ALXO $2.065 score:20 vol:1.5x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 12:00:06",
+      "message": "StopTrading Report \u2014 12:59 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LVWR $1.226 score:47 vol:1.0x SCANNING\n  GWH $0.657 score:27 vol:0.9x SCANNING\n  CURV $2.132 score:25 vol:1.9x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 12:30:30",
+      "message": "StopTrading Report \u2014 1:30 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  GHI $6.470 score:36 vol:2.2x SCANNING\n  SECZ $5.850 score:31 vol:1.1x SCANNING\n  CURV $2.145 score:31 vol:1.7x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 13:00:59",
+      "message": "StopTrading Report \u2014 2:00 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  GHI $6.490 score:32 vol:2.3x SCANNING\n  SECZ $5.800 score:27 vol:1.0x SCANNING\n  LVWR $1.210 score:25 vol:0.9x SCANNING\n",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 13:31:28",
+      "message": "StopTrading Report \u2014 2:31 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  LVWR $1.210 score:18 vol:0.8x SCANNING\n  GWH $0.636 score:11 vol:0.8x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 14:01:57",
+      "message": "StopTrading Report \u2014 3:01 PM ET\n\nHOLDINGS: no open positions\n\nTOP CANDIDATES:\n  GWH $0.645 score:14 vol:0.8x SCANNING\n  NUVB $6.745 score:11 vol:0.8x SCANNING",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 14:24:16",
+      "message": "\ud83d\udcc8 BUY: ACRS \u00d7 1 @ $6.2250 | $6 deployed | score 30",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 14:32:36",
+      "message": "StopTrading Report \u2014 3:31 PM ET\n\nHOLDINGS:\n  [UP] ACRS 1sh @ $6.2250 -> $6.2400 (+0.2%) | +0.2% since last\n\nTOP CANDIDATES:\n  NMRA $1.615 score:50 vol:0.7x SCANNING\n  NUVB $6.820 score:40 vol:0.9x SCA",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 14:34:48",
+      "message": "\ud83d\udd34 FINAL-EXIT: ACRS | Volume collapsed 0.0x (was 1.7x at entry) \u2014 exit 0.6% gain",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 15:05:27",
+      "message": "\ud83d\udcc9 EOD: P&L $-32.26 | 215 trades | 42% win rate",
+      "channel": "ntfy",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "time": "2026-08-18 17:00:05",
+      "message": "Model refinement  \u2014 2026-08-18 17:00\nn=41 base=37% | AUC model 0.127 vs heuristic 0.127 | Brier 0.246 (base 0.232)\nmode: shadow | blend_k=40\nexit ladder: n=225 corr=+0.01 good=50% mean_fwd=+0.10% | th",
       "channel": "ntfy",
       "ok": true,
       "error": ""
